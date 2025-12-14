@@ -20,7 +20,14 @@ export async function POST(req: NextRequest) {
   const payload = await req.json().catch(() => null);
   const messages = Array.isArray(payload?.messages) ? payload.messages : null;
 
-  const allowedRoles: ChatRole[] = ["user", "assistant", "system"];
+  const allowedRoles: ChatRole[] = [
+    "user",
+    "assistant",
+    "system",
+    "tool",
+    "function",
+    "data",
+  ];
   const validMessages =
     messages &&
     messages.every(

@@ -49,7 +49,8 @@ export async function POST(request: Request) {
       openaiApiKey,
       elevenlabsApiKey,
     });
-  } catch {
+  } catch (storeError) {
+    console.error("Failed to store secrets", storeError);
     return NextResponse.json(
       { error: "Unable to store secrets" },
       { status: 500 }

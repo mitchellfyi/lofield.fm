@@ -83,13 +83,23 @@ export async function getElevenLabsKeyForUser(userId: string) {
     .select("elevenlabs_secret_id")
     .eq("user_id", userId)
     .maybeSingle();
+  return process.env.ELEVENLABS_API_KEY ?? null;
+}
+export async function storeSecretsForUser(
+  userId: string,
+  secrets: SecretPayload
+) {
+  const supabaseAdmin = getServiceRoleClient();
+  await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      { id: userId, updated_at: new Date().toISOString() },
+      { onConflict: "id" }
+    );
 
   const decrypted = await decryptSecret(data?.elevenlabs_secret_id);
   if (decrypted) return decrypted;
-
-  return process.env.ELEVENLABS_API_KEY ?? null;
-}
-
+ 
 export async function getUserSecretStatus(
   userId: string
 ): Promise<SecretStatus> {
@@ -105,7 +115,6 @@ export async function getUserSecretStatus(
     hasElevenLabsKey: !!data?.elevenlabs_secret_id,
   };
 }
-
 export async function storeSecretsForUser(
   userId: string,
   secrets: SecretPayload
@@ -119,6 +128,15 @@ export async function storeSecretsForUser(
       { id: userId, updated_at: new Date().toISOString() },
       { onConflict: "id" }
     );
+  const { error } = await supabaseAdmin.from("user_secrets").upsert(
+    {
+      user_id: userId,
+      openai_secret_id: openaiSecretId,
+      elevenlabs_secret_id: elevenlabsSecretId,
+      openai_api_key: secrets.openaiApiKey ?? null,
+    },
+    { onConflict: "user_id" }
+  );
 
   // Store each provided secret using vault helper functions
   const promises: Promise<unknown>[] = [];
