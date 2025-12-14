@@ -1,0 +1,36 @@
+version: 2
+
+multi-ecosystem-groups:
+  all-updates:
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "-"
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    multi-ecosystem-group: "all-updates"
+    patterns: ["*"]
+    groups:
+      security-all:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    multi-ecosystem-group: "all-updates"
+    patterns: ["*"]
+    groups:
+      security-all:
+        applies-to: security-updates
+        patterns: ["*"]
