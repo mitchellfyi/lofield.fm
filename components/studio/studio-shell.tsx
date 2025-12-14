@@ -35,11 +35,14 @@ type Track = {
       chill?: number;
     };
     tags?: string[];
+    instrumentation?: string[];
+    key?: string | null;
+    time_signature?: string | null;
   };
   length_ms: number;
   instrumental: boolean;
   status: "draft" | "generating" | "ready" | "failed";
-  error?: { message?: string } | null;
+  error?: { message?: string; suggestion?: string; type?: string } | null;
   storage_path: string | null;
   created_at: string;
 };
