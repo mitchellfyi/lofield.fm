@@ -17,7 +17,6 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
-    patterns: ["*"]
     multi-ecosystem-group: "all-updates"
     groups:
       security-all:
@@ -29,7 +28,6 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
-    patterns: ["*"]
     multi-ecosystem-group: "all-updates"
     groups:
       security-all:
