@@ -40,6 +40,15 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const userId = session.user.id;
 
+  // Parse request body for optional title override
+  let titleOverride: string | undefined;
+  try {
+    const body = await request.json();
+    titleOverride = body.titleOverride;
+  } catch {
+    // Body is optional, ignore parse errors
+  }
+
   // Check rate limit for generate operations
   const rateLimit = await checkRateLimit(userId, "generate");
   if (!rateLimit.allowed) {
@@ -163,7 +172,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     .insert({
       chat_id: chatId,
       user_id: userId,
-      title: validatedDraft.title,
+      title: titleOverride || validatedDraft.title,
       description: validatedDraft.description,
       final_prompt: validatedDraft.prompt_final,
       metadata: {

@@ -138,6 +138,13 @@ export function StudioShell({ userEmail }: Props) {
     setRefreshKey((k) => k + 1);
   }
 
+  function handleTrackGenerated(trackId: string) {
+    // Auto-select the newly generated track
+    setSelectedTrackId(trackId);
+    // Refresh to load the new track
+    handleRefresh();
+  }
+
   // Check if there's a draft_spec in any message
   const hasDraftSpec = messages.some((m) => m.draft_spec != null);
 
@@ -186,6 +193,7 @@ export function StudioShell({ userEmail }: Props) {
             messages={messages}
             onRefresh={handleRefresh}
             hasDraftSpec={hasDraftSpec}
+            onTrackGenerated={handleTrackGenerated}
           />
         </div>
 

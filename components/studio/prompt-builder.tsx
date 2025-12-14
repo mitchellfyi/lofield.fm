@@ -32,6 +32,7 @@ type Props = {
   messages: Message[];
   onRefresh: () => void;
   hasDraftSpec: boolean;
+  onTrackGenerated?: (trackId: string) => void;
 };
 
 const GENRE_PRESETS = [
@@ -84,6 +85,7 @@ export function PromptBuilder({
   messages,
   onRefresh,
   hasDraftSpec,
+  onTrackGenerated,
 }: Props) {
   const transport = useMemo(
     () =>
@@ -118,6 +120,8 @@ export function PromptBuilder({
   const [generateStatus, setGenerateStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [titleOverride, setTitleOverride] = useState("");
 
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -180,26 +184,61 @@ export function PromptBuilder({
     // The button is disabled if no draft spec, but show a message for clarity
     if (!hasDraftSpec) {
       setGenerateStatus("error");
+      setGenerateError("Please refine your prompt first to create a draft.");
       return;
     }
 
     setGenerateStatus("loading");
+    setGenerateError(null);
 
     try {
-      const response = await fetch(`/api/chats/${chatId}/generate`, {
+      const requestBody = titleOverride ? { titleOverride: titleOverride } : {};
+
+      const response = await fetch(`/api/chats/${chatId}/tracks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         setGenerateStatus("success");
         onRefresh();
+        // Notify parent of new track for auto-selection
+        if (onTrackGenerated && data.track?.id) {
+          onTrackGenerated(data.track.id);
+        }
+        // Clear title override after successful generation
+        setTitleOverride("");
         setTimeout(() => setGenerateStatus("idle"), 2000);
       } else {
         setGenerateStatus("error");
+        setGenerateError(
+          data.error || "Failed to generate track. Please try again."
+        );
+        // Keep error visible longer for rate limits
+        if (response.status === 429) {
+          setTimeout(() => {
+            setGenerateStatus("idle");
+            setGenerateError(null);
+          }, 10000);
+        } else {
+          setTimeout(() => {
+            setGenerateStatus("idle");
+            setGenerateError(null);
+          }, 5000);
+        }
       }
-    } catch {
+    } catch (error) {
       setGenerateStatus("error");
+      setGenerateError(
+        error instanceof Error ? error.message : "An unexpected error occurred."
+      );
+      setTimeout(() => {
+        setGenerateStatus("idle");
+        setGenerateError(null);
+      }, 5000);
     }
   }
 
@@ -461,6 +500,26 @@ export function PromptBuilder({
           </div>
         </div>
 
+        {/* Title override for generation */}
+        {hasDraftSpec && (
+          <div className="mt-4">
+            <label
+              htmlFor="title-override"
+              className="text-xs font-medium text-slate-700"
+            >
+              Override title (optional)
+            </label>
+            <input
+              id="title-override"
+              type="text"
+              value={titleOverride}
+              onChange={(e) => setTitleOverride(e.target.value)}
+              placeholder="Leave empty to use AI-generated title..."
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+          </div>
+        )}
+
         {/* CTAs */}
         <div className="mt-4 flex items-center gap-3">
           <button
@@ -494,6 +553,14 @@ export function PromptBuilder({
             </span>
           )}
         </div>
+
+        {/* Error display */}
+        {generateError && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
+            <p className="text-sm font-medium text-red-800">Generation Error</p>
+            <p className="mt-1 text-sm text-red-700">{generateError}</p>
+          </div>
+        )}
 
         {/* Free-form chat input */}
         <form onSubmit={handleSubmit} className="mt-4">

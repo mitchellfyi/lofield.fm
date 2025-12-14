@@ -584,6 +584,28 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
                 {selectedTrack.final_prompt}
               </p>
             </div>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(selectedTrack.final_prompt);
+                  // Could add a toast notification here
+                }}
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Copy Prompt
+              </button>
+              {/* TODO: Implement regenerate - needs to create a new track with same prompt */}
+              {/* <button
+                onClick={() => {
+                  // Would need to call the tracks API with the same prompt
+                }}
+                className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+              >
+                Regenerate
+              </button> */}
+            </div>
           </div>
         </div>
       )}
