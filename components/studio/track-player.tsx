@@ -195,6 +195,48 @@ function AudioPlayer({ track }: { track: Track }) {
 export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
   const selectedTrack = tracks.find((t) => t.id === selectedTrackId) ?? null;
 
+  // Filter state
+  const [genreFilter, setGenreFilter] = useState<string>("");
+  const [moodFilter, setMoodFilter] = useState<string>(""); // chill, focus, energy, or empty
+  const [bpmRange, setBpmRange] = useState<[number, number]>([0, 220]);
+
+  // Get unique genres from tracks
+  const genres = Array.from(
+    new Set(
+      tracks
+        .map((t) => t.metadata.genre)
+        .filter((g): g is string => g !== undefined)
+    )
+  ).sort();
+
+  // Apply filters
+  const filteredTracks = tracks.filter((track) => {
+    // Genre filter
+    if (genreFilter && track.metadata.genre !== genreFilter) {
+      return false;
+    }
+
+    // BPM filter
+    if (
+      track.metadata.bpm &&
+      (track.metadata.bpm < bpmRange[0] || track.metadata.bpm > bpmRange[1])
+    ) {
+      return false;
+    }
+
+    // Mood filter - check which mood is highest
+    if (moodFilter && track.metadata.mood) {
+      const { energy, focus, chill } = track.metadata.mood;
+      const maxMood = Math.max(energy ?? 0, focus ?? 0, chill ?? 0);
+
+      if (moodFilter === "energy" && (energy ?? 0) !== maxMood) return false;
+      if (moodFilter === "focus" && (focus ?? 0) !== maxMood) return false;
+      if (moodFilter === "chill" && (chill ?? 0) !== maxMood) return false;
+    }
+
+    return true;
+  });
+
   if (tracks.length === 0) {
     return (
       <aside className="flex h-full flex-col border-l border-slate-200 bg-white p-6">
@@ -224,44 +266,133 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
     );
   }
 
+  const hasActiveFilters =
+    genreFilter || moodFilter || bpmRange[0] > 0 || bpmRange[1] < 220;
+
   return (
     <aside className="flex h-full flex-col border-l border-slate-200 bg-white">
-      {/* Track list */}
+      {/* Track list header with filters */}
       <div className="border-b border-slate-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-900">Tracks</h2>
+
+        {/* Filters */}
+        {tracks.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {/* Genre filter */}
+            {genres.length > 0 && (
+              <select
+                value={genreFilter}
+                onChange={(e) => setGenreFilter(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+              >
+                <option value="">All genres</option>
+                {genres.map((genre) => (
+                  <option key={genre} value={genre}>
+                    {genre}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Mood filter */}
+            <select
+              value={moodFilter}
+              onChange={(e) => setMoodFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+            >
+              <option value="">All moods</option>
+              <option value="energy">Energy</option>
+              <option value="focus">Focus</option>
+              <option value="chill">Chill</option>
+            </select>
+
+            {/* BPM range filter */}
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">
+                BPM: {bpmRange[0]} - {bpmRange[1]}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={bpmRange[0]}
+                  onChange={(e) =>
+                    setBpmRange([Number(e.target.value), bpmRange[1]])
+                  }
+                  min={0}
+                  max={220}
+                  className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                  placeholder="Min"
+                />
+                <input
+                  type="number"
+                  value={bpmRange[1]}
+                  onChange={(e) =>
+                    setBpmRange([bpmRange[0], Number(e.target.value)])
+                  }
+                  min={0}
+                  max={220}
+                  className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+
+            {/* Clear filters button */}
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  setGenreFilter("");
+                  setMoodFilter("");
+                  setBpmRange([0, 220]);
+                }}
+                className="w-full rounded-lg bg-slate-100 px-2 py-1.5 text-xs text-slate-700 transition hover:bg-slate-200"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <div className="max-h-48 overflow-y-auto">
-        <ul className="divide-y divide-slate-100">
-          {tracks.map((track) => (
-            <li key={track.id}>
-              <button
-                onClick={() => onSelectTrack(track.id)}
-                className={`w-full px-4 py-2 text-left transition ${
-                  selectedTrackId === track.id
-                    ? "bg-emerald-50 text-emerald-900"
-                    : "text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="truncate text-sm font-medium">{track.title}</p>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      track.status === "ready"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : track.status === "generating"
-                          ? "bg-amber-100 text-amber-700"
-                          : track.status === "failed"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {track.status}
-                  </span>
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {filteredTracks.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-slate-500">
+            No tracks match your filters
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {filteredTracks.map((track) => (
+              <li key={track.id}>
+                <button
+                  onClick={() => onSelectTrack(track.id)}
+                  className={`w-full px-4 py-2 text-left transition ${
+                    selectedTrackId === track.id
+                      ? "bg-emerald-50 text-emerald-900"
+                      : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-sm font-medium">
+                      {track.title}
+                    </p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        track.status === "ready"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : track.status === "generating"
+                            ? "bg-amber-100 text-amber-700"
+                            : track.status === "failed"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {track.status}
+                    </span>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Selected track details */}
