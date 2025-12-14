@@ -19,7 +19,7 @@ async function decryptSecret(secretId: string | null | undefined) {
   });
 
   if (error) {
-    console.error("Failed to decrypt secret");
+    console.error("Failed to decrypt secret:", error.code, error.message);
     return null;
   }
 

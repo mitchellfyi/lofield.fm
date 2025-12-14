@@ -96,12 +96,11 @@ export function SettingsPanel({ userEmail }: Props) {
   }
 
   useEffect(() => {
-    // Schedule settings load asynchronously to avoid synchronous setState in effect
-    const timeoutId = setTimeout(() => {
-      fetchSettings();
-    }, 0);
+    // Load settings on mount - using IIFE for async operation
+    (async () => {
+      await fetchSettings();
+    })();
     return () => {
-      clearTimeout(timeoutId);
       if (resetTimerRef.current) {
         clearTimeout(resetTimerRef.current);
       }
