@@ -1,23 +1,9 @@
+import { TrackDraftSchema, type TrackDraft } from "@/lib/schemas/track-draft";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 type Params = {
   params: Promise<{ id: string }>;
-};
-
-type DraftSpec = {
-  title?: string;
-  genre?: string;
-  bpm?: number;
-  mood?: {
-    energy?: number;
-    focus?: number;
-    chill?: number;
-  };
-  instrumentation?: string[];
-  length_ms?: number;
-  instrumental?: boolean;
-  refined_prompt?: string;
 };
 
 // POST /api/chats/[id]/generate - generate a track from the latest draft_spec
@@ -63,7 +49,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
-  const draftSpec = messages[0].draft_spec as DraftSpec | null;
+  const draftSpec = messages[0].draft_spec as Partial<TrackDraft> | null;
 
   if (!draftSpec) {
     return NextResponse.json(
@@ -74,29 +60,42 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
-  // Build final prompt from draft_spec
-  const finalPrompt = draftSpec.refined_prompt ?? buildFinalPrompt(draftSpec);
-  const title =
-    draftSpec.title ?? `Track ${new Date().toISOString().slice(0, 10)}`;
+  // Validate the draft_spec against the TrackDraft schema
+  const validationResult = TrackDraftSchema.safeParse(draftSpec);
 
-  // Create a track record in "draft" status
-  // NOTE: In a future spec, this will trigger actual ElevenLabs generation and use "generating" status
+  if (!validationResult.success) {
+    return NextResponse.json(
+      {
+        error: "Invalid draft specification. Please refine your prompt again.",
+        details: validationResult.error.flatten(),
+      },
+      { status: 400 }
+    );
+  }
+
+  const validatedDraft = validationResult.data;
+
+  // Use the validated draft to create a track
   const { data: track, error: trackError } = await supabase
     .from("tracks")
     .insert({
       chat_id: chatId,
       user_id: session.user.id,
-      title,
-      description: buildDescription(draftSpec),
-      final_prompt: finalPrompt,
+      title: validatedDraft.title,
+      description: validatedDraft.description,
+      final_prompt: validatedDraft.prompt_final,
       metadata: {
-        genre: draftSpec.genre,
-        bpm: draftSpec.bpm,
-        mood: draftSpec.mood,
-        instrumentation: draftSpec.instrumentation,
+        genre: validatedDraft.genre,
+        bpm: validatedDraft.bpm,
+        mood: validatedDraft.mood,
+        instrumentation: validatedDraft.instrumentation,
+        tags: validatedDraft.tags,
+        key: validatedDraft.key,
+        time_signature: validatedDraft.time_signature,
+        negative: validatedDraft.negative,
       },
-      length_ms: draftSpec.length_ms ?? 240000,
-      instrumental: draftSpec.instrumental ?? true,
+      length_ms: validatedDraft.length_ms,
+      instrumental: validatedDraft.instrumental,
       status: "draft",
     })
     .select()
@@ -122,38 +121,4 @@ export async function POST(request: NextRequest, { params }: Params) {
     message:
       "Track created. ElevenLabs generation will be added in a future update.",
   });
-}
-
-function buildFinalPrompt(spec: DraftSpec): string {
-  const parts: string[] = [];
-
-  if (spec.genre) parts.push(spec.genre);
-  if (spec.bpm) parts.push(`${spec.bpm} BPM`);
-  if (spec.mood) {
-    const moods: string[] = [];
-    if (spec.mood.chill && spec.mood.chill > 0.5) moods.push("chill");
-    if (spec.mood.energy && spec.mood.energy > 0.5) moods.push("energetic");
-    if (spec.mood.focus && spec.mood.focus > 0.5) moods.push("focused");
-    if (moods.length > 0) parts.push(moods.join(", "));
-  }
-  if (spec.instrumentation && spec.instrumentation.length > 0) {
-    parts.push(`featuring ${spec.instrumentation.join(", ")}`);
-  }
-  if (spec.instrumental) {
-    parts.push("instrumental");
-  }
-
-  return parts.join(", ") || "lo-fi chill beats";
-}
-
-function buildDescription(spec: DraftSpec): string {
-  const parts: string[] = [];
-
-  if (spec.genre) parts.push(`A ${spec.genre} track`);
-  if (spec.bpm) parts.push(`at ${spec.bpm} BPM`);
-  if (spec.instrumentation && spec.instrumentation.length > 0) {
-    parts.push(`featuring ${spec.instrumentation.slice(0, 3).join(", ")}`);
-  }
-
-  return parts.join(" ") || "A lo-fi track";
 }
