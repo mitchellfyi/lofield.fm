@@ -6,6 +6,11 @@
 - Dev: `pnpm dev`
 - Lint: `pnpm lint`
 - Build: `pnpm build`
+- Format: `pnpm format` (writes)
+- Format check: `pnpm format:check` (no writes)
+- Typecheck: `pnpm typecheck`
+- Test: `pnpm test`
+- **Verify (pre-push):** `pnpm verify` — runs format:check, lint, typecheck, test in order
 
 If commands differ, read `package.json` and update this file.
 
@@ -29,7 +34,7 @@ Lofield Studio - Next.js + TypeScript app with Supabase Auth/DB/Storage, OpenAI 
 
 ## Workflow
 
-- Prefer: read relevant files -> propose plan -> implement -> run lint -> update docs -> commit.
+- Prefer: read relevant files -> propose plan -> implement -> run `pnpm verify` -> update docs -> commit.
 - Do not "fix" failing tests by deleting them.
 
 ## Code style

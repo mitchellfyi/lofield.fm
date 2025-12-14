@@ -18,10 +18,16 @@ export async function POST(request: Request) {
   const elevenlabsApiKey = body.elevenlabsApiKey as string | undefined;
 
   try {
-    await storeSecretsForUser(session.user.id, { openaiApiKey, elevenlabsApiKey });
+    await storeSecretsForUser(session.user.id, {
+      openaiApiKey,
+      elevenlabsApiKey,
+    });
   } catch (storeError) {
     console.error("Failed to store secrets", storeError);
-    return NextResponse.json({ error: "Unable to store secrets" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to store secrets" },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ok: true });
