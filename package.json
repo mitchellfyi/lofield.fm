@@ -14,7 +14,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.1",
-    "ai": "^3.2.34",
+    "ai": "^5.0.52",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1"
