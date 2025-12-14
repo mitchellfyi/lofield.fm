@@ -2,14 +2,15 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useChat } from "ai/react";
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const supabase = createClient();
 
 type Props = {
   userEmail?: string;
 };
 
 export function ChatPanel({ userEmail }: Props) {
-  const supabase = useMemo(() => createClient(), []);
   const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
     api: "/api/chat",
   });
@@ -18,6 +19,15 @@ export function ChatPanel({ userEmail }: Props) {
   const [elevenlabsApiKey, setElevenlabsApiKey] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+      }
+    };
+  }, []);
 
   async function saveSecrets() {
     setSaveState("saving");
@@ -30,7 +40,10 @@ export function ChatPanel({ userEmail }: Props) {
 
     if (response.ok) {
       setSaveState("saved");
-      setTimeout(() => setSaveState("idle"), 2000);
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+      }
+      resetTimerRef.current = setTimeout(() => setSaveState("idle"), 2000);
     } else {
       const data = await response.json().catch(() => null);
       setErrorMessage(data?.error ?? "Could not save secrets");
