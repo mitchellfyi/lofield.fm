@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Track = {
   id: string;
@@ -41,6 +41,9 @@ function formatTime(ms: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+// Constants for signed URL management
+const SIGNED_URL_REFRESH_INTERVAL = 50 * 1000; // Refresh every 50s (before 60s expiration)
+
 // Player component that resets when track changes via key prop
 function AudioPlayer({ track }: { track: Track }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -51,7 +54,7 @@ function AudioPlayer({ track }: { track: Track }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch signed URL when component mounts
-  async function fetchSignedUrl() {
+  const fetchSignedUrl = useCallback(async () => {
     try {
       setLoadError(null);
       const response = await fetch(`/api/tracks/${track.id}/play`);
@@ -65,16 +68,15 @@ function AudioPlayer({ track }: { track: Track }) {
       console.error("Failed to fetch signed URL", err);
       setLoadError(err instanceof Error ? err.message : "Failed to load track");
     }
-  }
+  }, [track.id]);
 
   // Fetch signed URL on mount and set up refresh timer
   useEffect(() => {
     fetchSignedUrl();
-    // Refresh signed URL every 50 seconds (before 60s expiration)
-    const interval = setInterval(fetchSignedUrl, 50000);
+    // Refresh signed URL periodically (before expiration)
+    const interval = setInterval(fetchSignedUrl, SIGNED_URL_REFRESH_INTERVAL);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track.id]);
+  }, [fetchSignedUrl]);
 
   function togglePlay() {
     if (!audioRef.current) return;

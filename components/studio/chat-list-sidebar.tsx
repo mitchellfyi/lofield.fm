@@ -39,16 +39,28 @@ export function ChatListSidebar({
 
       if (!isCancelled) {
         if (!error && chatsData) {
-          // Fetch track counts for each chat
-          const chatsWithCounts = await Promise.all(
-            chatsData.map(async (chat) => {
-              const { count } = await supabase
-                .from("tracks")
-                .select("*", { count: "exact", head: true })
-                .eq("chat_id", chat.id);
-              return { ...chat, track_count: count ?? 0 };
-            })
+          // Fetch all tracks in a single query, then count by chat_id
+          const chatIds = chatsData.map((chat) => chat.id);
+          const { data: tracksData } = await supabase
+            .from("tracks")
+            .select("chat_id")
+            .in("chat_id", chatIds);
+
+          // Count tracks per chat
+          const trackCountByChat = (tracksData ?? []).reduce(
+            (acc, track) => {
+              acc[track.chat_id] = (acc[track.chat_id] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
           );
+
+          // Merge track counts with chats
+          const chatsWithCounts = chatsData.map((chat) => ({
+            ...chat,
+            track_count: trackCountByChat[chat.id] ?? 0,
+          }));
+
           setChats(chatsWithCounts);
         }
         setLoading(false);

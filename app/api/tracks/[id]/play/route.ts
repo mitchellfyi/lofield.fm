@@ -5,6 +5,9 @@ type Params = {
   params: Promise<{ id: string }>;
 };
 
+// Constants
+const SIGNED_URL_EXPIRY_SECONDS = 60;
+
 /**
  * GET /api/tracks/[id]/play - Generate a signed URL for track playback
  *
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   // Generate signed URL (60 second expiration)
   const { data: signedData, error: signedError } = await supabase.storage
     .from("tracks")
-    .createSignedUrl(track.storage_path, 60);
+    .createSignedUrl(track.storage_path, SIGNED_URL_EXPIRY_SECONDS);
 
   if (signedError || !signedData) {
     console.error("Failed to create signed URL", {
@@ -82,6 +85,8 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   return NextResponse.json({
     signedUrl: signedData.signedUrl,
-    expiresAt: new Date(Date.now() + 60 * 1000).toISOString(),
+    expiresAt: new Date(
+      Date.now() + SIGNED_URL_EXPIRY_SECONDS * 1000
+    ).toISOString(),
   });
 }
