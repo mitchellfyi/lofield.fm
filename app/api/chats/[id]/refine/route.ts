@@ -10,7 +10,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import type { NextRequest } from "next/server";
 import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
-import { logUsageEvent } from "@/lib/usage-tracking";
+import { logUsageEvent, calculateOpenAICost } from "@/lib/usage-tracking";
 import { randomUUID } from "crypto";
 import { validateGenerationParams, checkPromptSafety } from "@/lib/validation";
 
@@ -167,14 +167,16 @@ export async function POST(request: NextRequest, { params }: Params) {
     const openai = createOpenAI({ apiKey });
     const actionGroupId = randomUUID(); // For correlating refine + generate sequences
     const startTime = Date.now();
+    const modelName = "gpt-4o-mini";
 
     // Use streamText with structured output
     const result = await streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai(modelName),
       system: systemPrompt,
       prompt: userPrompt,
-      onFinish: async ({ text, usage }) => {
-        const durationMs = Date.now() - startTime;
+      onFinish: async ({ text, usage, response }) => {
+        const latencyMs = Date.now() - startTime;
+        const occurredAt = new Date();
 
         // Parse the AI response to extract TrackDraft
         const trackDraft = parseTrackDraftFromResponse(
@@ -186,43 +188,58 @@ export async function POST(request: NextRequest, { params }: Params) {
         // Validate the TrackDraft
         const validationResult = TrackDraftSchema.safeParse(trackDraft);
 
+        // Save assistant message
+        const { data: assistantMsg } = await supabase.from("chat_messages").insert({
+          chat_id: chatId,
+          role: "assistant",
+          content: text,
+          draft_spec: validationResult.success ? validationResult.data : null,
+        }).select("id").single();
+
+        const chatMessageId = assistantMsg?.id;
+
         if (!validationResult.success) {
           console.error("TrackDraft validation failed", {
             errors: validationResult.error.flatten(),
             draft: trackDraft,
           });
-          // Still save the message but without draft_spec
-          await supabase.from("chat_messages").insert({
-            chat_id: chatId,
-            role: "assistant",
-            content: text,
-            draft_spec: null,
+
+          // Calculate cost even on error
+          const inputTokens = usage?.promptTokens ?? 0;
+          const outputTokens = usage?.completionTokens ?? 0;
+          const totalTokens = usage?.totalTokens ?? inputTokens + outputTokens;
+          
+          const costResult = await calculateOpenAICost({
+            model: modelName,
+            inputTokens,
+            outputTokens,
+            occurredAt,
           });
 
           // Log usage event with error
           await logUsageEvent({
             userId,
             chatId,
-            actionType: "refine",
+            chatMessageId,
             actionGroupId,
+            actionType: "refine_prompt",
             provider: "openai",
-            model: "gpt-4o-mini",
-            inputTokens: usage?.inputTokens,
-            outputTokens: usage?.outputTokens,
-            totalTokens: usage?.totalTokens,
-            durationMs,
-            error: { message: "TrackDraft validation failed" },
+            providerOperation: "responses.streamText",
+            providerRequestId: response?.id,
+            model: modelName,
+            inputTokens,
+            outputTokens,
+            totalTokens,
+            latencyMs,
+            status: "error",
+            errorCode: "validation_failed",
+            errorMessage: "TrackDraft validation failed",
+            costUsd: costResult.costUsd ?? undefined,
+            costNotes: costResult.costNotes ?? undefined,
+            occurredAt,
           });
           return;
         }
-
-        // Save assistant message with validated draft_spec
-        await supabase.from("chat_messages").insert({
-          chat_id: chatId,
-          role: "assistant",
-          content: text,
-          draft_spec: validationResult.data,
-        });
 
         // Update chat's updated_at
         await supabase
@@ -233,25 +250,46 @@ export async function POST(request: NextRequest, { params }: Params) {
         // Increment rate limit counter
         await incrementRateLimit(userId, "refine");
 
+        // Calculate cost
+        const inputTokens = usage?.promptTokens ?? 0;
+        const outputTokens = usage?.completionTokens ?? 0;
+        const totalTokens = usage?.totalTokens ?? inputTokens + outputTokens;
+        
+        const costResult = await calculateOpenAICost({
+          model: modelName,
+          inputTokens,
+          outputTokens,
+          occurredAt,
+        });
+
         // Log usage event
         await logUsageEvent({
           userId,
           chatId,
-          actionType: "refine",
+          chatMessageId,
           actionGroupId,
+          actionType: "refine_prompt",
           provider: "openai",
-          model: "gpt-4o-mini",
-          inputTokens: usage?.inputTokens,
-          outputTokens: usage?.outputTokens,
-          totalTokens: usage?.totalTokens,
-          durationMs,
+          providerOperation: "responses.streamText",
+          providerRequestId: response?.id,
+          model: modelName,
+          inputTokens,
+          outputTokens,
+          totalTokens,
+          latencyMs,
+          status: "ok",
+          costUsd: costResult.costUsd ?? undefined,
+          costNotes: costResult.costNotes ?? undefined,
+          occurredAt,
         });
       },
     });
 
     return result.toTextStreamResponse();
-  } catch {
-    console.error("Failed to refine prompt");
+  } catch (error) {
+    console.error("Failed to refine prompt", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return Response.json({ error: "Failed to refine prompt" }, { status: 500 });
   }
 }

@@ -263,6 +263,7 @@ async function generateTrackAsync(params: {
 
   const supabaseAdmin = getServiceRoleClient();
   const startTime = Date.now();
+  const occurredAt = new Date();
 
   try {
     // Call ElevenLabs API
@@ -273,7 +274,9 @@ async function generateTrackAsync(params: {
       instrumental,
     });
 
-    const { audioBuffer } = result;
+    const { audioBuffer, durationMs: generationLatencyMs } = result;
+    const audioBytes = audioBuffer.length;
+    const audioSeconds = lengthMs / 1000;
 
     // Upload to Supabase Storage
     // Path format: {user_id}/{chat_id}/{track_id}.mp3
@@ -309,11 +312,16 @@ async function generateTrackAsync(params: {
       userId,
       chatId,
       trackId,
-      actionType: "generate",
       actionGroupId,
+      actionType: "generate_track",
       provider: "elevenlabs",
+      providerOperation: "music.compose",
       model: "music_v1",
-      durationMs: Date.now() - startTime,
+      audioSeconds,
+      audioBytes,
+      latencyMs: generationLatencyMs,
+      status: "ok",
+      occurredAt,
     });
 
     console.log("Track generation completed", { trackId });
@@ -349,11 +357,13 @@ async function generateTrackAsync(params: {
     // Check if error suggests bad prompt
     const errorMessage =
       error instanceof Error ? error.message.toLowerCase() : "";
-    if (
-      errorMessage.includes("prompt") ||
-      errorMessage.includes("invalid") ||
-      errorMessage.includes("content")
-    ) {
+    const errorCode = errorMessage.includes("prompt") || 
+                      errorMessage.includes("invalid") || 
+                      errorMessage.includes("content")
+      ? "bad_prompt"
+      : "generation_failed";
+    
+    if (errorCode === "bad_prompt") {
       errorPayload = {
         ...errorPayload,
         type: "bad_prompt",
@@ -377,12 +387,17 @@ async function generateTrackAsync(params: {
       userId,
       chatId,
       trackId,
-      actionType: "generate",
       actionGroupId,
+      actionType: "generate_track",
       provider: "elevenlabs",
+      providerOperation: "music.compose",
       model: "music_v1",
-      durationMs: Date.now() - startTime,
-      error: errorPayload,
+      latencyMs: Date.now() - startTime,
+      status: "error",
+      errorCode,
+      errorMessage: errorPayload.message as string,
+      raw: errorPayload,
+      occurredAt,
     });
   }
 }
