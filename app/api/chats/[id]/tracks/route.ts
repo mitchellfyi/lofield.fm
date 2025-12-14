@@ -6,6 +6,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { logUsageEvent } from "@/lib/usage-tracking";
 import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "crypto";
+import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
+import { validateGenerationParams } from "@/lib/validation";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -38,6 +40,26 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const userId = session.user.id;
 
+  // Parse request body for optional title override
+  let titleOverride: string | undefined;
+  try {
+    const body = await request.json();
+    titleOverride = body.titleOverride;
+  } catch {
+    // Body is optional, ignore parse errors
+  }
+
+  // Check rate limit for generate operations
+  const rateLimit = await checkRateLimit(userId, "generate");
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: `Daily generation limit exceeded. You have used ${rateLimit.current} of ${rateLimit.limit} generations today. Please try again tomorrow.`,
+      },
+      { status: 429 }
+    );
+  }
+
   // Verify chat exists and belongs to user
   const { data: chat, error: chatError } = await supabase
     .from("chats")
@@ -58,6 +80,24 @@ export async function POST(request: NextRequest, { params }: Params) {
           "Missing ElevenLabs API key. Please add your key in Settings before generating tracks.",
       },
       { status: 400 }
+    );
+  }
+
+  // Check for in-progress generation for this chat
+  const { data: generatingTracks } = await supabase
+    .from("tracks")
+    .select("id")
+    .eq("chat_id", chatId)
+    .eq("status", "generating")
+    .limit(1);
+
+  if (generatingTracks && generatingTracks.length > 0) {
+    return NextResponse.json(
+      {
+        error:
+          "A track is already being generated for this chat. Please wait for it to complete before starting a new generation.",
+      },
+      { status: 409 } // 409 Conflict
     );
   }
 
@@ -109,14 +149,18 @@ export async function POST(request: NextRequest, { params }: Params) {
   const lengthMs = validatedDraft.length_ms ?? 240000; // Default 4 minutes
   const instrumental = validatedDraft.instrumental ?? true; // Default instrumental
 
-  // Validate length bounds (3s to 5min)
-  const MIN_LENGTH_MS = 3000;
-  const MAX_LENGTH_MS = 300000;
+  // Validate generation parameters (length, bpm, mood)
+  const paramValidation = validateGenerationParams({
+    length_ms: lengthMs,
+    bpm: validatedDraft.bpm,
+    mood: validatedDraft.mood,
+  });
 
-  if (lengthMs < MIN_LENGTH_MS || lengthMs > MAX_LENGTH_MS) {
+  if (!paramValidation.valid) {
     return NextResponse.json(
       {
-        error: `Track length must be between ${MIN_LENGTH_MS / 1000}s and ${MAX_LENGTH_MS / 1000}s`,
+        error: "Invalid generation parameters",
+        details: paramValidation.errors,
       },
       { status: 400 }
     );
@@ -128,7 +172,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     .insert({
       chat_id: chatId,
       user_id: userId,
-      title: validatedDraft.title,
+      title: titleOverride || validatedDraft.title,
       description: validatedDraft.description,
       final_prompt: validatedDraft.prompt_final,
       metadata: {
@@ -158,6 +202,9 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const trackId = track.id;
   const actionGroupId = randomUUID(); // Correlate this generation with any related actions
+
+  // Increment rate limit counter (do this before async generation to ensure it's counted)
+  await incrementRateLimit(userId, "generate");
 
   // Generate music in background (don't await to avoid timeout)
   generateTrackAsync({
@@ -276,10 +323,28 @@ async function generateTrackAsync(params: {
       error: error instanceof Error ? error.message : "Unknown error",
     });
 
-    // Extract error message and check for bad_prompt
-    let errorPayload: Record<string, unknown> = {
-      message: error instanceof Error ? error.message : "Unknown error",
+    // Sanitize error message to ensure no API keys or sensitive data leak
+    const sanitizeError = (err: unknown): Record<string, unknown> => {
+      if (err instanceof Error) {
+        // Remove any potential API keys or tokens from error message
+        let message = err.message;
+        // Replace potential API keys (strings starting with sk-, xi-, etc.)
+        message = message.replace(
+          /\b(sk|xi|pk|Bearer)[-_][a-zA-Z0-9]{20,}\b/gi,
+          "[REDACTED]"
+        );
+        // Replace authorization headers
+        message = message.replace(
+          /authorization[:\s]+.+/gi,
+          "authorization: [REDACTED]"
+        );
+        return { message };
+      }
+      return { message: "Unknown error" };
     };
+
+    // Extract error message and check for bad_prompt
+    let errorPayload = sanitizeError(error);
 
     // Check if error suggests bad prompt
     const errorMessage =

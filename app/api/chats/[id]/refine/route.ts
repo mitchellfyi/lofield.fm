@@ -9,6 +9,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import type { NextRequest } from "next/server";
+import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
+import { logUsageEvent } from "@/lib/usage-tracking";
+import { randomUUID } from "crypto";
+import { validateGenerationParams, checkPromptSafety } from "@/lib/validation";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -39,6 +43,19 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (authError || !session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
+  // Check rate limit for refine operations
+  const rateLimit = await checkRateLimit(userId, "refine");
+  if (!rateLimit.allowed) {
+    return Response.json(
+      {
+        error: `Daily refine limit exceeded. You have used ${rateLimit.current} of ${rateLimit.limit} refines today. Please try again tomorrow.`,
+      },
+      { status: 429 }
+    );
   }
 
   // Verify chat exists and belongs to user
@@ -73,8 +90,45 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { message, controls, latest_draft } = parseResult.data;
 
+  // Validate generation parameters from controls
+  if (controls) {
+    const validation = validateGenerationParams({
+      length_ms: controls.length_ms,
+      bpm: controls.bpm,
+      // Only validate mood if all values are present
+      mood:
+        controls.mood &&
+        controls.mood.energy !== undefined &&
+        controls.mood.focus !== undefined &&
+        controls.mood.chill !== undefined
+          ? (controls.mood as { energy: number; focus: number; chill: number })
+          : undefined,
+    });
+
+    if (!validation.valid) {
+      return Response.json(
+        {
+          error: "Invalid generation parameters",
+          details: validation.errors,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Check prompt safety
+  const safetyCheck = checkPromptSafety(message);
+  // We log warnings but don't block the request (as per spec: "Do not hard block unless you want to")
+  if (!safetyCheck.safe) {
+    console.log("Prompt safety warnings", {
+      userId,
+      chatId,
+      warnings: safetyCheck.warnings,
+    });
+  }
+
   // Get OpenAI key
-  const apiKey = await getOpenAIKeyForUser(session.user.id);
+  const apiKey = await getOpenAIKeyForUser(userId);
   if (!apiKey) {
     return Response.json({ error: "Missing OpenAI API key" }, { status: 400 });
   }
@@ -111,13 +165,17 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   try {
     const openai = createOpenAI({ apiKey });
+    const actionGroupId = randomUUID(); // For correlating refine + generate sequences
+    const startTime = Date.now();
 
     // Use streamText with structured output
     const result = await streamText({
       model: openai("gpt-4o-mini"),
       system: systemPrompt,
       prompt: userPrompt,
-      onFinish: async ({ text }) => {
+      onFinish: async ({ text, usage }) => {
+        const durationMs = Date.now() - startTime;
+
         // Parse the AI response to extract TrackDraft
         const trackDraft = parseTrackDraftFromResponse(
           text,
@@ -140,6 +198,21 @@ export async function POST(request: NextRequest, { params }: Params) {
             content: text,
             draft_spec: null,
           });
+
+          // Log usage event with error
+          await logUsageEvent({
+            userId,
+            chatId,
+            actionType: "refine",
+            actionGroupId,
+            provider: "openai",
+            model: "gpt-4o-mini",
+            inputTokens: usage?.inputTokens,
+            outputTokens: usage?.outputTokens,
+            totalTokens: usage?.totalTokens,
+            durationMs,
+            error: { message: "TrackDraft validation failed" },
+          });
           return;
         }
 
@@ -156,6 +229,23 @@ export async function POST(request: NextRequest, { params }: Params) {
           .from("chats")
           .update({ updated_at: new Date().toISOString() })
           .eq("id", chatId);
+
+        // Increment rate limit counter
+        await incrementRateLimit(userId, "refine");
+
+        // Log usage event
+        await logUsageEvent({
+          userId,
+          chatId,
+          actionType: "refine",
+          actionGroupId,
+          provider: "openai",
+          model: "gpt-4o-mini",
+          inputTokens: usage?.inputTokens,
+          outputTokens: usage?.outputTokens,
+          totalTokens: usage?.totalTokens,
+          durationMs,
+        });
       },
     });
 
