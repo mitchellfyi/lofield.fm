@@ -5,137 +5,93 @@ create extension if not exists "vault";
 
 -- Profile for each authenticated user
 create table if not exists public.profiles (
-  id uuid primary key default uuid_generate_v4(),
-  artist_name text,
+  id uuid primary key,
+  artist_name text null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Secrets are stored via Vault (ids only) but optionally cached for local dev
+-- Secrets are stored via Vault (ids only)
 create table if not exists public.user_secrets (
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  openai_secret_id uuid,
-  elevenlabs_secret_id uuid,
-  openai_api_key text,
+  openai_secret_id uuid null,
+  elevenlabs_secret_id uuid null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 create table if not exists public.user_settings (
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  openai_model text,
-  eleven_music_defaults jsonb,
-  prompt_defaults jsonb,
+  openai_model text default 'gpt-4.1-mini',
+  eleven_music_defaults jsonb default '{}'::jsonb,
+  prompt_defaults jsonb default '{}'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 create table if not exists public.chats (
-  id uuid primary key default uuid_generate_v4(),
-  user_id uuid references public.profiles(id) on delete cascade,
-  title text,
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null default 'New chat',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 create table if not exists public.chat_messages (
-  id uuid primary key default uuid_generate_v4(),
-  chat_id uuid references public.chats(id) on delete cascade,
-  role text not null,
+  id uuid primary key default gen_random_uuid(),
+  chat_id uuid not null references public.chats(id) on delete cascade,
+  role text not null check (role in ('user', 'assistant', 'system')),
   content text not null,
-  draft_spec jsonb,
+  draft_spec jsonb null,
   created_at timestamptz default now()
 );
 
 create table if not exists public.tracks (
-  id uuid primary key default uuid_generate_v4(),
-  chat_id uuid references public.chats(id) on delete cascade,
-  user_id uuid references public.profiles(id) on delete cascade,
-  title text,
-  description text,
-  final_prompt text,
-  metadata jsonb,
-  length_ms integer,
-  instrumental boolean,
-  status text default 'draft',
-  error jsonb,
-  storage_path text,
+  id uuid primary key default gen_random_uuid(),
+  chat_id uuid not null references public.chats(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null,
+  description text not null,
+  final_prompt text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  length_ms int not null,
+  instrumental boolean not null default true,
+  status text not null check (status in ('draft', 'generating', 'ready', 'failed')),
+  error jsonb null,
+  storage_path text null,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Storage bucket for generated tracks
-insert into storage.buckets (id, name, public)
-values ('tracks', 'tracks', false)
-on conflict (id) do nothing;
+-- Trigger function to update updated_at timestamp
+create or replace function public.update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
 
--- RLS
-alter table public.profiles enable row level security;
-alter table public.user_secrets enable row level security;
-alter table public.user_settings enable row level security;
-alter table public.chats enable row level security;
-alter table public.chat_messages enable row level security;
-alter table public.tracks enable row level security;
+-- Create updated_at triggers for all tables with updated_at column
+create trigger profiles_updated_at
+  before update on public.profiles
+  for each row execute function public.update_updated_at_column();
 
--- Profiles policies
-create policy "Users can view their profile" on public.profiles
-  for select using (auth.uid() = id);
-create policy "Users can create their profile" on public.profiles
-  for insert with check (auth.uid() = id);
-create policy "Users can update their profile" on public.profiles
-  for update using (auth.uid() = id);
+create trigger user_secrets_updated_at
+  before update on public.user_secrets
+  for each row execute function public.update_updated_at_column();
 
--- Secrets policies (ids only visible to owner)
-create policy "Users can view their secrets" on public.user_secrets
-  for select using (auth.uid() = user_id);
-create policy "Users manage their secrets" on public.user_secrets
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create trigger user_settings_updated_at
+  before update on public.user_settings
+  for each row execute function public.update_updated_at_column();
 
--- Settings policies
-create policy "Users can view their settings" on public.user_settings
-  for select using (auth.uid() = user_id);
-create policy "Users manage their settings" on public.user_settings
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create trigger chats_updated_at
+  before update on public.chats
+  for each row execute function public.update_updated_at_column();
 
--- Chats policies
-create policy "Users can view their chats" on public.chats
-  for select using (auth.uid() = user_id);
-create policy "Users manage their chats" on public.chats
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
--- Messages policies (match chat ownership)
-create policy "Users can view their chat messages" on public.chat_messages
-  for select using (
-    auth.uid() = (
-      select user_id from public.chats where chats.id = chat_id
-    )
-  );
-create policy "Users can insert their chat messages" on public.chat_messages
-  for insert with check (
-    auth.uid() = (
-      select user_id from public.chats where chats.id = chat_id
-    )
-  );
-
--- Tracks policies (match chat ownership)
-create policy "Users can view their tracks" on public.tracks
-  for select using (auth.uid() = user_id);
-create policy "Users manage their tracks" on public.tracks
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
--- Storage policies (bucket: tracks)
-create policy "Users can upload their own tracks" on storage.objects
-  for insert with check (
-    bucket_id = 'tracks' and split_part(name, '/', 1)::uuid = auth.uid()
-  );
-create policy "Users can access their own tracks" on storage.objects
-  for select using (
-    bucket_id = 'tracks' and split_part(name, '/', 1)::uuid = auth.uid()
-  );
-create policy "Users can delete their own tracks" on storage.objects
-  for delete using (
-    bucket_id = 'tracks' and split_part(name, '/', 1)::uuid = auth.uid()
-  );
+create trigger tracks_updated_at
+  before update on public.tracks
+  for each row execute function public.update_updated_at_column();
 
 -- Vault helpers
 create or replace function public.create_secret(secret_value text)
