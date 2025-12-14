@@ -2,6 +2,8 @@ version: 2
 
 multi-ecosystem-groups:
   all-updates:
+    schedule:
+      interval: "weekly"
     labels: ["dependencies"]
     commit-message:
       prefix: "deps"
