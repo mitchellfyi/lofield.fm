@@ -7,7 +7,7 @@ Follow these rules:
 - Never commit or log secrets. API keys are stored server-side in Supabase Vault.
 - Do not weaken RLS or make Supabase Storage public.
 - Prefer small, reviewable PRs with a clear test plan.
-- Before finishing: run lint (`pnpm lint`).
+- Before finishing: run `pnpm verify` (runs format:check, lint, typecheck, test).
 - If you change behaviour, update relevant docs/specs.
 
 When unsure:

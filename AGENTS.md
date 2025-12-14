@@ -6,6 +6,11 @@
 - Run dev: `pnpm dev`
 - Lint: `pnpm lint`
 - Build: `pnpm build`
+- Format: `pnpm format` (writes)
+- Format check: `pnpm format:check` (no writes)
+- Typecheck: `pnpm typecheck`
+- Test: `pnpm test`
+- **Verify (pre-push):** `pnpm verify` — runs format:check, lint, typecheck, test in order
 
 If these commands differ from `package.json`, update this file.
 
@@ -32,7 +37,7 @@ Lofield Studio - a Next.js app that lets users refine lo-fi music prompts with O
 
 ### ✅ Always
 
-- Run lint before finishing.
+- Run `pnpm verify` before finishing (runs format:check, lint, typecheck, test).
 - Validate external inputs with Zod (or equivalent) at the boundary.
 - Keep changes scoped and include a brief test plan in the PR.
 
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
 
 ## PR checklist
 
-- [ ] Lint passes (`pnpm lint`)
+- [ ] Verify passes (`pnpm verify`)
 - [ ] Build passes (`pnpm build`)
 - [ ] No secrets in diff
 - [ ] Migrations reviewed (if changed)

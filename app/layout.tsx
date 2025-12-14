@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Lofield Studio",
-  description: "AI-assisted lo-fi music drafting workspace powered by Supabase.",
+  description:
+    "AI-assisted lo-fi music drafting workspace powered by Supabase.",
 };
 
 export default function RootLayout({

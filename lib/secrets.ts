@@ -55,29 +55,32 @@ export async function getOpenAIKeyForUser(userId: string) {
   return process.env.OPENAI_API_KEY ?? null;
 }
 
-export async function storeSecretsForUser(userId: string, secrets: SecretPayload) {
+export async function storeSecretsForUser(
+  userId: string,
+  secrets: SecretPayload
+) {
   const supabaseAdmin = getServiceRoleClient();
-  await supabaseAdmin.from("profiles").upsert(
-    { id: userId, updated_at: new Date().toISOString() },
-    { onConflict: "id" },
-  );
+  await supabaseAdmin
+    .from("profiles")
+    .upsert(
+      { id: userId, updated_at: new Date().toISOString() },
+      { onConflict: "id" }
+    );
 
   const [openaiSecretId, elevenlabsSecretId] = await Promise.all([
     createSecret(secrets.openaiApiKey),
     createSecret(secrets.elevenlabsApiKey),
   ]);
 
-  const { error } = await supabaseAdmin
-    .from("user_secrets")
-    .upsert(
-      {
-        user_id: userId,
-        openai_secret_id: openaiSecretId,
-        elevenlabs_secret_id: elevenlabsSecretId,
-        openai_api_key: secrets.openaiApiKey ?? null,
-      },
-      { onConflict: "user_id" },
-    );
+  const { error } = await supabaseAdmin.from("user_secrets").upsert(
+    {
+      user_id: userId,
+      openai_secret_id: openaiSecretId,
+      elevenlabs_secret_id: elevenlabsSecretId,
+      openai_api_key: secrets.openaiApiKey ?? null,
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
     throw error;
