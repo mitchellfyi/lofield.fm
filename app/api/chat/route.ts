@@ -20,14 +20,7 @@ export async function POST(req: NextRequest) {
   const payload = await req.json().catch(() => null);
   const messages = Array.isArray(payload?.messages) ? payload.messages : null;
 
-  const allowedRoles: ChatRole[] = [
-    "user",
-    "assistant",
-    "system",
-    "tool",
-    "function",
-    "data",
-  ];
+  const allowedRoles = ["user", "assistant", "system"] as const;
   const validMessages =
     messages &&
     messages.every(
@@ -35,7 +28,9 @@ export async function POST(req: NextRequest) {
         typeof message === "object" &&
         message !== null &&
         typeof (message as { role?: unknown }).role === "string" &&
-        allowedRoles.includes((message as { role: string }).role as ChatRole) &&
+        allowedRoles.includes(
+          (message as { role: string }).role as (typeof allowedRoles)[number]
+        ) &&
         typeof (message as { content?: unknown }).content === "string"
     );
 
