@@ -6,10 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { logUsageEvent } from "@/lib/usage-tracking";
 import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "crypto";
-import {
-  checkRateLimit,
-  incrementRateLimit,
-} from "@/lib/rate-limiting";
+import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
 import { validateGenerationParams } from "@/lib/validation";
 
 type Params = {
@@ -323,9 +320,15 @@ async function generateTrackAsync(params: {
         // Remove any potential API keys or tokens from error message
         let message = err.message;
         // Replace potential API keys (strings starting with sk-, xi-, etc.)
-        message = message.replace(/\b(sk|xi|pk|Bearer)[-_][a-zA-Z0-9]{20,}\b/gi, "[REDACTED]");
+        message = message.replace(
+          /\b(sk|xi|pk|Bearer)[-_][a-zA-Z0-9]{20,}\b/gi,
+          "[REDACTED]"
+        );
         // Replace authorization headers
-        message = message.replace(/authorization[:\s]+.+/gi, "authorization: [REDACTED]");
+        message = message.replace(
+          /authorization[:\s]+.+/gi,
+          "authorization: [REDACTED]"
+        );
         return { message };
       }
       return { message: "Unknown error" };

@@ -9,10 +9,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import type { NextRequest } from "next/server";
-import {
-  checkRateLimit,
-  incrementRateLimit,
-} from "@/lib/rate-limiting";
+import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
 import { logUsageEvent } from "@/lib/usage-tracking";
 import { randomUUID } from "crypto";
 import { validateGenerationParams, checkPromptSafety } from "@/lib/validation";
@@ -98,7 +95,14 @@ export async function POST(request: NextRequest, { params }: Params) {
     const validation = validateGenerationParams({
       length_ms: controls.length_ms,
       bpm: controls.bpm,
-      mood: controls.mood,
+      // Only validate mood if all values are present
+      mood:
+        controls.mood &&
+        controls.mood.energy !== undefined &&
+        controls.mood.focus !== undefined &&
+        controls.mood.chill !== undefined
+          ? (controls.mood as { energy: number; focus: number; chill: number })
+          : undefined,
     });
 
     if (!validation.valid) {
@@ -203,8 +207,8 @@ export async function POST(request: NextRequest, { params }: Params) {
             actionGroupId,
             provider: "openai",
             model: "gpt-4o-mini",
-            inputTokens: usage?.promptTokens,
-            outputTokens: usage?.completionTokens,
+            inputTokens: usage?.inputTokens,
+            outputTokens: usage?.outputTokens,
             totalTokens: usage?.totalTokens,
             durationMs,
             error: { message: "TrackDraft validation failed" },
@@ -237,13 +241,11 @@ export async function POST(request: NextRequest, { params }: Params) {
           actionGroupId,
           provider: "openai",
           model: "gpt-4o-mini",
-          inputTokens: usage?.promptTokens,
-          outputTokens: usage?.completionTokens,
+          inputTokens: usage?.inputTokens,
+          outputTokens: usage?.outputTokens,
           totalTokens: usage?.totalTokens,
           durationMs,
         });
-          .update({ updated_at: new Date().toISOString() })
-          .eq("id", chatId);
       },
     });
 

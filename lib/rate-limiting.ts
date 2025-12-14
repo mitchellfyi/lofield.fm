@@ -35,8 +35,8 @@ export async function checkRateLimit(
 
   const current =
     type === "refine"
-      ? counter?.refine_count ?? 0
-      : counter?.generate_count ?? 0;
+      ? (counter?.refine_count ?? 0)
+      : (counter?.generate_count ?? 0);
 
   return {
     allowed: current < limit,
