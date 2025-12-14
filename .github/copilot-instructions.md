@@ -14,3 +14,13 @@ When unsure:
 
 - Read existing patterns in `lib/` and copy them.
 - Ask before changing migrations, auth flows, or usage tracking.
+
+## Environment Variables
+
+Environment variables required to run the app can be fetched from GitHub repository secrets if and when needed. The following secrets are available:
+
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` - Supabase publishable default key (client-safe)
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-only)
+- `OPENAI_API_KEY` - OpenAI API key (optional development fallback)
+- `ELEVENLABS_API_KEY` - ElevenLabs API key (optional development fallback)

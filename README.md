@@ -36,7 +36,7 @@ Create `.env.local` (see `.env.example`) with:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=<your-publishable-default-key>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key> # server only
 OPENAI_API_KEY=<optional fallback for development>
 ELEVENLABS_API_KEY=<optional fallback for development>
