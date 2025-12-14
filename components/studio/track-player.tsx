@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Track = {
   id: string;
@@ -16,11 +16,14 @@ type Track = {
       chill?: number;
     };
     tags?: string[];
+    instrumentation?: string[];
+    key?: string | null;
+    time_signature?: string | null;
   };
   length_ms: number;
   instrumental: boolean;
   status: "draft" | "generating" | "ready" | "failed";
-  error?: { message?: string } | null;
+  error?: { message?: string; suggestion?: string; type?: string } | null;
   storage_path: string | null;
   created_at: string;
 };
@@ -43,7 +46,35 @@ function AudioPlayer({ track }: { track: Track }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Fetch signed URL when component mounts
+  async function fetchSignedUrl() {
+    try {
+      setLoadError(null);
+      const response = await fetch(`/api/tracks/${track.id}/play`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to load track");
+      }
+      const data = await response.json();
+      setSignedUrl(data.signedUrl);
+    } catch (err) {
+      console.error("Failed to fetch signed URL", err);
+      setLoadError(err instanceof Error ? err.message : "Failed to load track");
+    }
+  }
+
+  // Fetch signed URL on mount and set up refresh timer
+  useEffect(() => {
+    fetchSignedUrl();
+    // Refresh signed URL every 50 seconds (before 60s expiration)
+    const interval = setInterval(fetchSignedUrl, 50000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track.id]);
 
   function togglePlay() {
     if (!audioRef.current) return;
@@ -77,47 +108,84 @@ function AudioPlayer({ track }: { track: Track }) {
 
   return (
     <div className="rounded-xl bg-slate-900 p-4 text-white">
-      <audio
-        ref={audioRef}
-        src={`/api/tracks/${track.id}/stream`}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
-      />
-      <div className="flex items-center gap-3">
-        <button
-          onClick={togglePlay}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 transition hover:bg-emerald-500"
-        >
-          {isPlaying ? (
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-            </svg>
-          ) : (
-            <svg
-              className="h-5 w-5 pl-0.5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </button>
-        <div className="flex-1">
-          <input
-            type="range"
-            min={0}
-            max={duration > 0 ? duration : track.length_ms}
-            value={currentTime}
-            onChange={handleSeek}
-            className="h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-700"
-          />
-          <div className="mt-1 flex justify-between text-xs text-slate-400">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration > 0 ? duration : track.length_ms)}</span>
-          </div>
+      {loadError ? (
+        <div className="rounded-lg bg-red-900/50 p-3 text-red-200">
+          <p className="text-sm font-medium">Playback error</p>
+          <p className="mt-1 text-xs">{loadError}</p>
         </div>
-      </div>
+      ) : !signedUrl ? (
+        <div className="flex items-center justify-center py-4">
+          <svg
+            className="h-5 w-5 animate-spin text-emerald-400"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+        </div>
+      ) : (
+        <>
+          <audio
+            ref={audioRef}
+            src={signedUrl}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onEnded={() => setIsPlaying(false)}
+          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={togglePlay}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 transition hover:bg-emerald-500"
+            >
+              {isPlaying ? (
+                <svg
+                  className="h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                </svg>
+              ) : (
+                <svg
+                  className="h-5 w-5 pl-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </button>
+            <div className="flex-1">
+              <input
+                type="range"
+                min={0}
+                max={duration > 0 ? duration : track.length_ms}
+                value={currentTime}
+                onChange={handleSeek}
+                className="h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-700"
+              />
+              <div className="mt-1 flex justify-between text-xs text-slate-400">
+                <span>{formatTime(currentTime)}</span>
+                <span>
+                  {formatTime(duration > 0 ? duration : track.length_ms)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -238,6 +306,14 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
               {selectedTrack.error?.message && (
                 <p className="mt-1 text-xs">{selectedTrack.error.message}</p>
               )}
+              {selectedTrack.error?.suggestion && (
+                <div className="mt-3">
+                  <p className="text-xs font-medium">Suggestion:</p>
+                  <p className="mt-1 text-xs">
+                    {selectedTrack.error.suggestion}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -281,7 +357,45 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
                   {selectedTrack.instrumental ? "Instrumental" : "With Vocals"}
                 </p>
               </div>
+              {selectedTrack.metadata.key && (
+                <div>
+                  <span className="text-xs text-slate-500">Key</span>
+                  <p className="font-medium text-slate-800">
+                    {selectedTrack.metadata.key}
+                  </p>
+                </div>
+              )}
+              {selectedTrack.metadata.time_signature && (
+                <div>
+                  <span className="text-xs text-slate-500">Time Signature</span>
+                  <p className="font-medium text-slate-800">
+                    {selectedTrack.metadata.time_signature}
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Instrumentation */}
+            {selectedTrack.metadata.instrumentation &&
+              selectedTrack.metadata.instrumentation.length > 0 && (
+                <div>
+                  <span className="text-xs text-slate-500">
+                    Instrumentation
+                  </span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {selectedTrack.metadata.instrumentation.map(
+                      (instrument) => (
+                        <span
+                          key={instrument}
+                          className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700"
+                        >
+                          {instrument}
+                        </span>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
 
             {/* Mood scores */}
             {selectedTrack.metadata.mood && (

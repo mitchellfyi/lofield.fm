@@ -8,6 +8,7 @@ type Chat = {
   title: string;
   created_at: string;
   updated_at: string;
+  track_count?: number;
 };
 
 type Props = {
@@ -31,14 +32,24 @@ export function ChatListSidebar({
 
     async function fetchChats() {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: chatsData, error } = await supabase
         .from("chats")
         .select("id, title, created_at, updated_at")
         .order("updated_at", { ascending: false });
 
       if (!isCancelled) {
-        if (!error && data) {
-          setChats(data);
+        if (!error && chatsData) {
+          // Fetch track counts for each chat
+          const chatsWithCounts = await Promise.all(
+            chatsData.map(async (chat) => {
+              const { count } = await supabase
+                .from("tracks")
+                .select("*", { count: "exact", head: true })
+                .eq("chat_id", chat.id);
+              return { ...chat, track_count: count ?? 0 };
+            })
+          );
+          setChats(chatsWithCounts);
         }
         setLoading(false);
       }
@@ -104,9 +115,15 @@ export function ChatListSidebar({
                   }`}
                 >
                   <p className="truncate text-sm font-medium">{chat.title}</p>
-                  <p className="text-xs text-slate-400">
-                    {new Date(chat.updated_at).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span>
+                      {new Date(chat.updated_at).toLocaleDateString()}
+                    </span>
+                    <span>
+                      {chat.track_count ?? 0} track
+                      {chat.track_count !== 1 ? "s" : ""}
+                    </span>
+                  </div>
                 </button>
               </li>
             ))}
