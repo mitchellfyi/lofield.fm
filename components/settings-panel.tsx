@@ -50,7 +50,9 @@ const GENRE_PRESETS = [
 export function SettingsPanel({ userEmail }: Props) {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Form state
@@ -183,7 +185,9 @@ export function SettingsPanel({ userEmail }: Props) {
       {/* User Info */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-emerald-700">Account</p>
+          <p className="text-xs uppercase tracking-wide text-emerald-700">
+            Account
+          </p>
           <h2 className="text-xl font-semibold text-slate-900">{userEmail}</h2>
         </div>
         <button
@@ -202,7 +206,9 @@ export function SettingsPanel({ userEmail }: Props) {
           <p className="text-sm text-slate-600">Your public artist identity</p>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-slate-800">Artist Name</label>
+          <label className="text-sm font-medium text-slate-800">
+            Artist Name
+          </label>
           <input
             type="text"
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
@@ -219,18 +225,23 @@ export function SettingsPanel({ userEmail }: Props) {
         <div>
           <h3 className="text-lg font-semibold text-slate-900">API Keys</h3>
           <p className="text-sm text-slate-600">
-            Keys are encrypted with Supabase Vault and never visible after saving
+            Keys are encrypted with Supabase Vault and never visible after
+            saving
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-800">OpenAI API Key</label>
+            <label className="text-sm font-medium text-slate-800">
+              OpenAI API Key
+            </label>
             <div className="flex items-center gap-2">
               <input
                 type="password"
                 className="flex-1 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
-                placeholder={settings?.hasOpenAIKey ? "••••••••••••••••" : "sk-..."}
+                placeholder={
+                  settings?.hasOpenAIKey ? "••••••••••••••••" : "sk-..."
+                }
                 value={openaiApiKey}
                 onChange={(e) => setOpenaiApiKey(e.target.value)}
               />
@@ -243,12 +254,16 @@ export function SettingsPanel({ userEmail }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-800">ElevenLabs API Key</label>
+            <label className="text-sm font-medium text-slate-800">
+              ElevenLabs API Key
+            </label>
             <div className="flex items-center gap-2">
               <input
                 type="password"
                 className="flex-1 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
-                placeholder={settings?.hasElevenLabsKey ? "••••••••••••••••" : "eleven-..."}
+                placeholder={
+                  settings?.hasElevenLabsKey ? "••••••••••••••••" : "eleven-..."
+                }
                 value={elevenlabsApiKey}
                 onChange={(e) => setElevenlabsApiKey(e.target.value)}
               />
@@ -265,7 +280,9 @@ export function SettingsPanel({ userEmail }: Props) {
           <button
             type="button"
             className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={saveState === "saving" || (!openaiApiKey && !elevenlabsApiKey)}
+            disabled={
+              saveState === "saving" || (!openaiApiKey && !elevenlabsApiKey)
+            }
             onClick={saveSecrets}
           >
             {saveState === "saving" ? "Saving..." : "Save API Keys"}
@@ -280,7 +297,9 @@ export function SettingsPanel({ userEmail }: Props) {
       <section className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">OpenAI Model</h3>
-          <p className="text-sm text-slate-600">Select or specify a custom model</p>
+          <p className="text-sm text-slate-600">
+            Select or specify a custom model
+          </p>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -325,8 +344,12 @@ export function SettingsPanel({ userEmail }: Props) {
       {/* ElevenLabs Default Settings */}
       <section className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">ElevenLabs Music Defaults</h3>
-          <p className="text-sm text-slate-600">Default settings for music generation</p>
+          <h3 className="text-lg font-semibold text-slate-900">
+            ElevenLabs Music Defaults
+          </h3>
+          <p className="text-sm text-slate-600">
+            Default settings for music generation
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -347,7 +370,9 @@ export function SettingsPanel({ userEmail }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-800">Track Type</label>
+            <label className="text-sm font-medium text-slate-800">
+              Track Type
+            </label>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -377,13 +402,19 @@ export function SettingsPanel({ userEmail }: Props) {
       {/* Prompt Defaults */}
       <section className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">Prompt Defaults</h3>
-          <p className="text-sm text-slate-600">Default presets for track generation prompts</p>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Prompt Defaults
+          </h3>
+          <p className="text-sm text-slate-600">
+            Default presets for track generation prompts
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-800">Genre Preset</label>
+            <label className="text-sm font-medium text-slate-800">
+              Genre Preset
+            </label>
             <select
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
               value={genre}
@@ -399,7 +430,9 @@ export function SettingsPanel({ userEmail }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-800">BPM: {bpm}</label>
+            <label className="text-sm font-medium text-slate-800">
+              BPM: {bpm}
+            </label>
             <input
               type="range"
               min={40}
@@ -477,7 +510,9 @@ export function SettingsPanel({ userEmail }: Props) {
           <p className="text-sm text-emerald-700">Settings saved!</p>
         )}
         {saveState === "error" && (
-          <p className="text-sm text-red-600">{errorMessage ?? "Failed to save"}</p>
+          <p className="text-sm text-red-600">
+            {errorMessage ?? "Failed to save"}
+          </p>
         )}
       </div>
     </div>

@@ -5,20 +5,26 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 // Schema for user_settings JSONB fields
-const ElevenMusicDefaultsSchema = z.object({
-  length_ms: z.number().int().min(1000).max(600000).optional(),
-  instrumental: z.boolean().optional(),
-}).passthrough();
+const ElevenMusicDefaultsSchema = z
+  .object({
+    length_ms: z.number().int().min(1000).max(600000).optional(),
+    instrumental: z.boolean().optional(),
+  })
+  .passthrough();
 
-const PromptDefaultsSchema = z.object({
-  genre: z.string().max(100).optional(),
-  bpm: z.number().int().min(40).max(220).optional(),
-  mood: z.object({
-    energy: z.number().min(0).max(1).optional(),
-    focus: z.number().min(0).max(1).optional(),
-    chill: z.number().min(0).max(1).optional(),
-  }).optional(),
-}).passthrough();
+const PromptDefaultsSchema = z
+  .object({
+    genre: z.string().max(100).optional(),
+    bpm: z.number().int().min(40).max(220).optional(),
+    mood: z
+      .object({
+        energy: z.number().min(0).max(1).optional(),
+        focus: z.number().min(0).max(1).optional(),
+        chill: z.number().min(0).max(1).optional(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
 // PATCH request body schema
 const PatchSettingsSchema = z.object({
@@ -96,11 +102,12 @@ export async function PATCH(request: Request) {
   if (!parseResult.success) {
     return NextResponse.json(
       { error: "Invalid request body", details: parseResult.error.flatten() },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
-  const { artist_name, openai_model, eleven_music_defaults, prompt_defaults } = parseResult.data;
+  const { artist_name, openai_model, eleven_music_defaults, prompt_defaults } =
+    parseResult.data;
   const userId = session.user.id;
   const supabaseAdmin = getServiceRoleClient();
 
@@ -110,22 +117,31 @@ export async function PATCH(request: Request) {
       .from("profiles")
       .upsert(
         { id: userId, artist_name, updated_at: new Date().toISOString() },
-        { onConflict: "id" },
+        { onConflict: "id" }
       );
 
     if (profileError) {
       console.error("Failed to update profile");
-      return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to update profile" },
+        { status: 500 }
+      );
     }
   }
 
   // Update user_settings if any settings fields provided
-  if (openai_model !== undefined || eleven_music_defaults !== undefined || prompt_defaults !== undefined) {
+  if (
+    openai_model !== undefined ||
+    eleven_music_defaults !== undefined ||
+    prompt_defaults !== undefined
+  ) {
     // Build the update object
     const settingsUpdate: Record<string, unknown> = { user_id: userId };
     if (openai_model !== undefined) settingsUpdate.openai_model = openai_model;
-    if (eleven_music_defaults !== undefined) settingsUpdate.eleven_music_defaults = eleven_music_defaults;
-    if (prompt_defaults !== undefined) settingsUpdate.prompt_defaults = prompt_defaults;
+    if (eleven_music_defaults !== undefined)
+      settingsUpdate.eleven_music_defaults = eleven_music_defaults;
+    if (prompt_defaults !== undefined)
+      settingsUpdate.prompt_defaults = prompt_defaults;
 
     const { error: settingsError } = await supabaseAdmin
       .from("user_settings")
@@ -133,7 +149,10 @@ export async function PATCH(request: Request) {
 
     if (settingsError) {
       console.error("Failed to update settings");
-      return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to update settings" },
+        { status: 500 }
+      );
     }
   }
 
