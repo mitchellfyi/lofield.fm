@@ -1,8 +1,9 @@
 "use client";
 
+import { TextStreamChatTransport } from "ai";
 import { createClient } from "@/lib/supabase/client";
-import { useChat } from "ai/react";
-import { useEffect, useRef, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 const supabase = createClient();
 
@@ -11,15 +12,17 @@ type Props = {
 };
 
 export function ChatPanel({ userEmail }: Props) {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } = useChat({
-    api: "/api/chat",
-  });
+  const transport = useMemo(() => new TextStreamChatTransport({ api: "/api/chat" }), []);
+  const { messages, sendMessage, status, stop } = useChat({ transport });
 
+  const [input, setInput] = useState("");
   const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [elevenlabsApiKey, setElevenlabsApiKey] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isLoading = status === "streaming" || status === "submitted";
 
   useEffect(() => {
     return () => {
@@ -51,6 +54,23 @@ export function ChatPanel({ userEmail }: Props) {
     }
   }
 
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage({ text: input });
+    setInput("");
+  }
+
+  // Extract text content from message parts
+  function getMessageContent(message: typeof messages[number]): string {
+    const parts = message.parts;
+    if (!parts || parts.length === 0) return "";
+    return parts
+      .filter((part): part is { type: "text"; text: string } => part.type === "text")
+      .map((part) => part.text)
+      .join("");
+  }
+
   return (
     <div className="flex flex-col gap-6 rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-xl backdrop-blur">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -60,13 +80,21 @@ export function ChatPanel({ userEmail }: Props) {
             {userEmail ? `Signed in as ${userEmail}` : "Signed in"}
           </h2>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-          onClick={() => supabase.auth.signOut()}
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/settings"
+            className="inline-flex items-center justify-center rounded-full border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50"
+          >
+            Settings
+          </a>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            onClick={() => supabase.auth.signOut()}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 rounded-xl border border-emerald-50 bg-emerald-50/60 p-4 sm:grid-cols-2">
@@ -142,7 +170,7 @@ export function ChatPanel({ userEmail }: Props) {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {message.role === "assistant" ? "Assistant" : "You"}
               </p>
-              <p className="whitespace-pre-wrap text-sm text-slate-800">{message.content}</p>
+              <p className="whitespace-pre-wrap text-sm text-slate-800">{getMessageContent(message)}</p>
             </div>
           ))}
         </div>
@@ -154,7 +182,7 @@ export function ChatPanel({ userEmail }: Props) {
             className="min-h-[120px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
             placeholder="Ask the assistant to refine your lo-fi brief..."
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-600">

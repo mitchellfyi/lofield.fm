@@ -1,10 +1,10 @@
 import { getOpenAIKeyForUser } from "@/lib/secrets";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
-import { convertToCoreMessages, streamText } from "ai";
+import { streamText, type CoreMessage } from "ai";
 import type { NextRequest } from "next/server";
 
-type ChatRole = "user" | "assistant" | "system" | "tool" | "function" | "data";
+type ChatRole = "user" | "assistant" | "system";
 type IncomingMessage = { role: ChatRole; content: string };
 
 export async function POST(req: NextRequest) {
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const payload = await req.json().catch(() => null);
   const messages = Array.isArray(payload?.messages) ? payload.messages : null;
 
-  const allowedRoles: ChatRole[] = ["user", "assistant", "system", "tool", "function", "data"];
+  const allowedRoles: ChatRole[] = ["user", "assistant", "system"];
   const validMessages =
     messages &&
     messages.every(
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return new Response("Invalid message payload", { status: 400 });
   }
 
-  const safeMessages = (messages as IncomingMessage[]).map(({ role, content }) => ({
+  const coreMessages: CoreMessage[] = (messages as IncomingMessage[]).map(({ role, content }) => ({
     role,
     content,
   }));
@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
   const openai = createOpenAI({ apiKey });
   const result = await streamText({
     model: openai("gpt-4o-mini"),
-    messages: convertToCoreMessages(safeMessages),
+    messages: coreMessages,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
