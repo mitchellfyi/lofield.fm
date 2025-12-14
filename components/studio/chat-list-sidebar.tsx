@@ -41,6 +41,14 @@ export function ChatListSidebar({
         if (!error && chatsData) {
           // Fetch all tracks in a single query, then count by chat_id
           const chatIds = chatsData.map((chat) => chat.id);
+
+          // Skip track query if there are no chats
+          if (chatIds.length === 0) {
+            setChats(chatsData);
+            setLoading(false);
+            return;
+          }
+
           const { data: tracksData } = await supabase
             .from("tracks")
             .select("chat_id")
