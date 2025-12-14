@@ -8,6 +8,12 @@ import { useMemo } from "react";
 export function AuthPanel() {
   const supabase = useMemo(() => createClient(), []);
 
+  // Redirect to auth callback which handles provisioning and redirects to /app
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/auth/callback`
+      : undefined;
+
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4 rounded-2xl border border-emerald-100 bg-white/80 p-6 shadow-lg backdrop-blur">
       <div>
@@ -26,9 +32,7 @@ export function AuthPanel() {
             button: { borderRadius: 12 },
           },
         }}
-        redirectTo={
-          typeof window !== "undefined" ? window.location.origin : undefined
-        }
+        redirectTo={redirectTo}
       />
     </div>
   );

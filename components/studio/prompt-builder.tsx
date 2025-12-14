@@ -1,0 +1,496 @@
+"use client";
+
+import { TextStreamChatTransport } from "ai";
+import { useChat } from "@ai-sdk/react";
+import { useMemo, useState, type FormEvent } from "react";
+
+type Message = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  draft_spec?: DraftSpec | null;
+  created_at: string;
+};
+
+type DraftSpec = {
+  title?: string;
+  genre?: string;
+  bpm?: number;
+  mood?: {
+    energy?: number;
+    focus?: number;
+    chill?: number;
+  };
+  instrumentation?: string[];
+  length_ms?: number;
+  instrumental?: boolean;
+};
+
+type Props = {
+  chatId: string | null;
+  chatTitle: string;
+  messages: Message[];
+  onRefresh: () => void;
+  hasDraftSpec: boolean;
+};
+
+const GENRE_PRESETS = [
+  "Lo-fi Hip Hop",
+  "Chillhop",
+  "Jazz Hop",
+  "Ambient",
+  "Downtempo",
+  "Trip Hop",
+];
+
+const INSTRUMENTATION_PRESETS = [
+  "Piano",
+  "Rhodes",
+  "Guitar",
+  "Bass",
+  "Drums",
+  "Vinyl crackle",
+  "Rain sounds",
+  "Lo-fi synth pads",
+];
+
+type StreamMessage = {
+  id: string;
+  role: string;
+  parts?: Array<{ type: string; text?: string }>;
+};
+
+function convertStreamMessage(msg: StreamMessage): Message {
+  const parts = msg.parts ?? [];
+  const textContent = parts
+    .filter(
+      (part): part is { type: "text"; text: string } =>
+        part.type === "text" && typeof part.text === "string"
+    )
+    .map((part) => part.text)
+    .join("");
+
+  return {
+    id: msg.id,
+    role: msg.role as "user" | "assistant",
+    content: textContent,
+    created_at: new Date().toISOString(),
+  };
+}
+
+export function PromptBuilder({
+  chatId,
+  chatTitle,
+  messages,
+  onRefresh,
+  hasDraftSpec,
+}: Props) {
+  const transport = useMemo(
+    () =>
+      new TextStreamChatTransport({
+        api: chatId ? `/api/chats/${chatId}/refine` : "/api/chat",
+      }),
+    [chatId]
+  );
+  const {
+    messages: streamMessages,
+    sendMessage,
+    status,
+    stop,
+  } = useChat({ transport });
+
+  const [input, setInput] = useState("");
+
+  // Prompt builder controls
+  const [title, setTitle] = useState("");
+  const [genre, setGenre] = useState("");
+  const [bpm, setBpm] = useState(90);
+  const [energy, setEnergy] = useState(50);
+  const [focus, setFocus] = useState(50);
+  const [chill, setChill] = useState(70);
+  const [instrumentation, setInstrumentation] = useState<string[]>([]);
+  const [lengthMins, setLengthMins] = useState(4);
+  const [instrumental, setInstrumental] = useState(true);
+
+  const [refineStatus, setRefineStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [generateStatus, setGenerateStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+
+  const isLoading = status === "streaming" || status === "submitted";
+
+  // Combine persisted messages with streaming messages
+  const allMessages = useMemo(() => {
+    // Show persisted messages first, then any streaming messages
+    if (streamMessages.length > 0) {
+      return [
+        ...messages,
+        ...streamMessages.map((msg) => convertStreamMessage(msg)),
+      ];
+    }
+    return messages;
+  }, [messages, streamMessages]);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage({ text: input });
+    setInput("");
+  }
+
+  async function handleRefine() {
+    if (!chatId) return;
+
+    setRefineStatus("loading");
+
+    const promptSpec = {
+      title: title || undefined,
+      genre: genre || undefined,
+      bpm,
+      mood: { energy: energy / 100, focus: focus / 100, chill: chill / 100 },
+      instrumentation: instrumentation.length > 0 ? instrumentation : undefined,
+      length_ms: lengthMins * 60 * 1000,
+      instrumental,
+    };
+
+    try {
+      const response = await fetch(`/api/chats/${chatId}/refine`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spec: promptSpec }),
+      });
+
+      if (response.ok) {
+        setRefineStatus("success");
+        onRefresh();
+        setTimeout(() => setRefineStatus("idle"), 2000);
+      } else {
+        setRefineStatus("error");
+      }
+    } catch {
+      setRefineStatus("error");
+    }
+  }
+
+  async function handleGenerate() {
+    if (!chatId) return;
+
+    if (!hasDraftSpec) {
+      alert("Please refine your prompt first before generating a track.");
+      return;
+    }
+
+    setGenerateStatus("loading");
+
+    try {
+      const response = await fetch(`/api/chats/${chatId}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        setGenerateStatus("success");
+        onRefresh();
+        setTimeout(() => setGenerateStatus("idle"), 2000);
+      } else {
+        setGenerateStatus("error");
+      }
+    } catch {
+      setGenerateStatus("error");
+    }
+  }
+
+  function toggleInstrumentation(preset: string) {
+    setInstrumentation((prev) =>
+      prev.includes(preset)
+        ? prev.filter((p) => p !== preset)
+        : [...prev, preset]
+    );
+  }
+
+  if (!chatId) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-slate-50 p-8 text-center">
+        <div className="max-w-md">
+          <h2 className="text-xl font-semibold text-slate-800">
+            Select or create a chat
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Choose a chat from the sidebar or create a new one to start building
+            your lo-fi track prompt.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col bg-white">
+      {/* Chat header */}
+      <div className="border-b border-slate-100 px-6 py-4">
+        <h2 className="text-lg font-semibold text-slate-900">{chatTitle}</h2>
+        <p className="text-xs text-slate-500">
+          Refine your prompt with AI, then generate your track
+        </p>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {allMessages.length === 0 ? (
+          <div className="py-8 text-center text-sm text-slate-500">
+            No messages yet. Use the prompt builder below to refine your track
+            idea.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {allMessages.map((message) => (
+              <div
+                key={message.id}
+                className={`rounded-lg p-3 ${
+                  message.role === "user"
+                    ? "ml-8 bg-emerald-50 text-emerald-900"
+                    : "mr-8 bg-slate-100 text-slate-800"
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {message.role === "assistant" ? "Assistant" : "You"}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm">
+                  {message.content}
+                </p>
+                {message.draft_spec && (
+                  <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
+                    Draft spec saved ✓
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Prompt builder controls */}
+      <div className="border-t border-slate-100 bg-slate-50 p-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* Title */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">
+              Title (optional)
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Track title..."
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          {/* Genre */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">Genre</label>
+            <select
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            >
+              <option value="">Select genre...</option>
+              {GENRE_PRESETS.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* BPM */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">
+              BPM: {bpm}
+            </label>
+            <input
+              type="range"
+              min={40}
+              max={220}
+              value={bpm}
+              onChange={(e) => setBpm(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+            />
+          </div>
+
+          {/* Energy */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">
+              Energy: {energy}%
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={energy}
+              onChange={(e) => setEnergy(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+            />
+          </div>
+
+          {/* Focus */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">
+              Focus: {focus}%
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={focus}
+              onChange={(e) => setFocus(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+            />
+          </div>
+
+          {/* Chill */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">
+              Chill: {chill}%
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={chill}
+              onChange={(e) => setChill(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+            />
+          </div>
+
+          {/* Length */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">
+              Length: {lengthMins} min
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={lengthMins}
+              onChange={(e) => setLengthMins(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+            />
+          </div>
+
+          {/* Instrumental toggle */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-700">Type</label>
+            <div className="flex items-center gap-4">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  checked={instrumental}
+                  onChange={() => setInstrumental(true)}
+                  className="h-4 w-4 border-slate-300 text-emerald-600"
+                />
+                <span className="text-sm text-slate-700">Instrumental</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  checked={!instrumental}
+                  onChange={() => setInstrumental(false)}
+                  className="h-4 w-4 border-slate-300 text-emerald-600"
+                />
+                <span className="text-sm text-slate-700">With Vocals</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Instrumentation presets */}
+        <div className="mt-4">
+          <label className="text-xs font-medium text-slate-700">
+            Instrumentation
+          </label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {INSTRUMENTATION_PRESETS.map((preset) => (
+              <button
+                key={preset}
+                onClick={() => toggleInstrumentation(preset)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  instrumentation.includes(preset)
+                    ? "bg-emerald-600 text-white"
+                    : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                }`}
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* CTAs */}
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            onClick={handleRefine}
+            disabled={refineStatus === "loading"}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {refineStatus === "loading"
+              ? "Refining..."
+              : refineStatus === "success"
+                ? "Refined ✓"
+                : "Refine with AI"}
+          </button>
+          <button
+            onClick={handleGenerate}
+            disabled={generateStatus === "loading" || !hasDraftSpec}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            title={
+              !hasDraftSpec ? "Refine your prompt first" : "Generate track"
+            }
+          >
+            {generateStatus === "loading"
+              ? "Generating..."
+              : generateStatus === "success"
+                ? "Generated ✓"
+                : "Generate Track"}
+          </button>
+          {!hasDraftSpec && (
+            <span className="text-xs text-slate-500">
+              Refine first to enable generation
+            </span>
+          )}
+        </div>
+
+        {/* Free-form chat input */}
+        <form onSubmit={handleSubmit} className="mt-4">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Chat with AI to refine your prompt..."
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoading ? "..." : "Send"}
+            </button>
+            {isLoading && (
+              <button
+                type="button"
+                onClick={stop}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Stop
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

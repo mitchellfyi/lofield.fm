@@ -38,7 +38,18 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // Protect /app/* routes - redirect unauthenticated users to login
+  const isAppRoute = request.nextUrl.pathname.startsWith("/app");
+  if (isAppRoute && !session) {
+    const redirectUrl = new URL("/", request.url);
+    redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
   return response;
 }
 
