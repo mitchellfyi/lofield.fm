@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   } = await supabase.auth.getSession();
 
   if (authError || !session) {
-    return new Response("Unauthorized", { status: 401 });
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Verify chat exists and belongs to user
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     .single();
 
   if (chatError || !chat) {
-    return new Response("Chat not found", { status: 404 });
+    return Response.json({ error: "Chat not found" }, { status: 404 });
   }
 
   // Parse and validate input
@@ -57,17 +57,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     body = await request.json();
   } catch {
-    return new Response("Invalid JSON body", { status: 400 });
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const parseResult = RefineInputSchema.safeParse(body);
   if (!parseResult.success) {
-    return new Response(
-      JSON.stringify({
+    return Response.json(
+      {
         error: "Invalid request body",
         details: parseResult.error.flatten(),
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      },
+      { status: 400 }
     );
   }
 
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Get OpenAI key
   const apiKey = await getOpenAIKeyForUser(session.user.id);
   if (!apiKey) {
-    return new Response("Missing OpenAI API key", { status: 400 });
+    return Response.json({ error: "Missing OpenAI API key" }, { status: 400 });
   }
 
   // Get user's artist name for context (optional)
@@ -103,7 +103,10 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (userMsgError) {
     console.error("Failed to save user message");
-    return new Response("Failed to save user message", { status: 500 });
+    return Response.json(
+      { error: "Failed to save user message" },
+      { status: 500 }
+    );
   }
 
   try {
@@ -159,7 +162,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     return result.toTextStreamResponse();
   } catch {
     console.error("Failed to refine prompt");
-    return new Response("Failed to refine prompt", { status: 500 });
+    return Response.json({ error: "Failed to refine prompt" }, { status: 500 });
   }
 }
 
@@ -224,8 +227,18 @@ function buildUserPrompt(
       controlParts.push(`Instruments: ${controls.instrumentation.join(", ")}`);
     }
     if (controls.length_ms) {
-      const minutes = Math.round(controls.length_ms / 60000);
-      controlParts.push(`Length: ${minutes} min`);
+      const seconds = Math.round(controls.length_ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (minutes > 0) {
+        controlParts.push(
+          remainingSeconds > 0
+            ? `Length: ${minutes}m ${remainingSeconds}s`
+            : `Length: ${minutes}m`
+        );
+      } else {
+        controlParts.push(`Length: ${seconds}s`);
+      }
     }
     if (controls.instrumental !== undefined) {
       controlParts.push(controls.instrumental ? "Instrumental" : "With vocals");
@@ -320,8 +333,18 @@ function generateTitleFromPrompt(prompt: string): string | null {
   if (words.length === 0) return null;
 
   const titleWords = words.slice(0, 5);
+  // Capitalize first letter of each word while preserving the rest
   return titleWords
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .map((w) => {
+      // Handle hyphenated words like "lo-fi"
+      if (w.includes("-")) {
+        return w
+          .split("-")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join("-");
+      }
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
     .join(" ");
 }
 
