@@ -45,7 +45,6 @@ type Track = {
 };
 
 type Props = {
-  userId: string;
   userEmail: string;
 };
 

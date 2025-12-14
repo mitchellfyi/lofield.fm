@@ -79,8 +79,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   const title =
     draftSpec.title ?? `Track ${new Date().toISOString().slice(0, 10)}`;
 
-  // Create a track record in "generating" status
-  // NOTE: In a future spec, this will trigger actual ElevenLabs generation
+  // Create a track record in "draft" status
+  // NOTE: In a future spec, this will trigger actual ElevenLabs generation and use "generating" status
   const { data: track, error: trackError } = await supabase
     .from("tracks")
     .insert({
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       },
       length_ms: draftSpec.length_ms ?? 240000,
       instrumental: draftSpec.instrumental ?? true,
-      status: "draft", // Will be "generating" when ElevenLabs integration is complete
+      status: "draft",
     })
     .select()
     .single();

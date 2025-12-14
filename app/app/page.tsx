@@ -15,10 +15,7 @@ export default async function AppPage() {
 
   return (
     <main className="h-screen bg-slate-50">
-      <StudioShell
-        userId={session.user.id}
-        userEmail={session.user.email ?? session.user.id}
-      />
+      <StudioShell userEmail={session.user.email ?? session.user.id} />
     </main>
   );
 }

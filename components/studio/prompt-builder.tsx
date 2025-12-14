@@ -177,8 +177,9 @@ export function PromptBuilder({
   async function handleGenerate() {
     if (!chatId) return;
 
+    // The button is disabled if no draft spec, but show a message for clarity
     if (!hasDraftSpec) {
-      alert("Please refine your prompt first before generating a track.");
+      setGenerateStatus("error");
       return;
     }
 
@@ -276,10 +277,14 @@ export function PromptBuilder({
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Title */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label
+              htmlFor="track-title"
+              className="text-xs font-medium text-slate-700"
+            >
               Title (optional)
             </label>
             <input
+              id="track-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -290,8 +295,14 @@ export function PromptBuilder({
 
           {/* Genre */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">Genre</label>
+            <label
+              htmlFor="track-genre"
+              className="text-xs font-medium text-slate-700"
+            >
+              Genre
+            </label>
             <select
+              id="track-genre"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
@@ -307,10 +318,14 @@ export function PromptBuilder({
 
           {/* BPM */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label
+              htmlFor="track-bpm"
+              className="text-xs font-medium text-slate-700"
+            >
               BPM: {bpm}
             </label>
             <input
+              id="track-bpm"
               type="range"
               min={40}
               max={220}
@@ -322,10 +337,14 @@ export function PromptBuilder({
 
           {/* Energy */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label
+              htmlFor="track-energy"
+              className="text-xs font-medium text-slate-700"
+            >
               Energy: {energy}%
             </label>
             <input
+              id="track-energy"
               type="range"
               min={0}
               max={100}
@@ -337,10 +356,14 @@ export function PromptBuilder({
 
           {/* Focus */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label
+              htmlFor="track-focus"
+              className="text-xs font-medium text-slate-700"
+            >
               Focus: {focus}%
             </label>
             <input
+              id="track-focus"
               type="range"
               min={0}
               max={100}
@@ -352,10 +375,14 @@ export function PromptBuilder({
 
           {/* Chill */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label
+              htmlFor="track-chill"
+              className="text-xs font-medium text-slate-700"
+            >
               Chill: {chill}%
             </label>
             <input
+              id="track-chill"
               type="range"
               min={0}
               max={100}
@@ -367,10 +394,14 @@ export function PromptBuilder({
 
           {/* Length */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">
+            <label
+              htmlFor="track-length"
+              className="text-xs font-medium text-slate-700"
+            >
               Length: {lengthMins} min
             </label>
             <input
+              id="track-length"
               type="range"
               min={1}
               max={10}
@@ -382,11 +413,12 @@ export function PromptBuilder({
 
           {/* Instrumental toggle */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-slate-700">Type</label>
+            <span className="text-xs font-medium text-slate-700">Type</span>
             <div className="flex items-center gap-4">
               <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
+                  name="track-type"
                   checked={instrumental}
                   onChange={() => setInstrumental(true)}
                   className="h-4 w-4 border-slate-300 text-emerald-600"
@@ -396,6 +428,7 @@ export function PromptBuilder({
               <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
+                  name="track-type"
                   checked={!instrumental}
                   onChange={() => setInstrumental(false)}
                   className="h-4 w-4 border-slate-300 text-emerald-600"

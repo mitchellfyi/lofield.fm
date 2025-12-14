@@ -107,14 +107,14 @@ function AudioPlayer({ track }: { track: Track }) {
           <input
             type="range"
             min={0}
-            max={duration || track.length_ms}
+            max={duration > 0 ? duration : track.length_ms}
             value={currentTime}
             onChange={handleSeek}
             className="h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-700"
           />
           <div className="mt-1 flex justify-between text-xs text-slate-400">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration || track.length_ms)}</span>
+            <span>{formatTime(duration > 0 ? duration : track.length_ms)}</span>
           </div>
         </div>
       </div>
