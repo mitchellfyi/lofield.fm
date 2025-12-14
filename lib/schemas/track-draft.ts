@@ -17,7 +17,7 @@ export const TrackDraftSchema = z.object({
     focus: z.number().min(0).max(100),
     chill: z.number().min(0).max(100),
   }),
-  length_ms: z.number().min(30000).max(600000),
+  length_ms: z.number().min(3000).max(300000), // ElevenLabs: 3s-5min
   instrumental: z.boolean(),
   tags: z.array(z.string()).default([]),
 
@@ -47,7 +47,7 @@ export const RefineInputSchema = z.object({
         })
         .optional(),
       instrumentation: z.array(z.string()).optional(),
-      length_ms: z.number().min(30000).max(600000).optional(),
+      length_ms: z.number().min(3000).max(300000).optional(), // ElevenLabs: 3s-5min
       instrumental: z.boolean().optional(),
     })
     .optional(),

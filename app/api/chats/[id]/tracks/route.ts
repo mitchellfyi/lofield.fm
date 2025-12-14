@@ -12,10 +12,17 @@ type Params = {
 };
 
 /**
- * POST /api/chats/[id]/generate - DEPRECATED - Use /api/chats/[id]/tracks instead
+ * POST /api/chats/[id]/tracks - Generate a track from the latest draft_spec
  *
- * This endpoint maintains backward compatibility by implementing the same logic as /tracks.
- * New code should use /api/chats/[id]/tracks directly.
+ * This endpoint:
+ * 1. Validates authentication and ElevenLabs key
+ * 2. Fetches latest TrackDraft from chat messages
+ * 3. Creates track record with status='generating'
+ * 4. Calls ElevenLabs API with prompt_final
+ * 5. Downloads MP3 and uploads to Supabase Storage
+ * 6. Updates track with status='ready' and storage_path
+ * 7. Logs usage event
+ * 8. Handles errors gracefully (status='failed', error payload)
  */
 export async function POST(request: NextRequest, { params }: Params) {
   const { id: chatId } = await params;
