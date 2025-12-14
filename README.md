@@ -65,6 +65,16 @@ pnpm dev
 # open http://localhost:3000
 ```
 
+### Verify before committing
+
+Run all checks (format, lint, typecheck, tests) with:
+
+```bash
+pnpm verify
+```
+
+This is the canonical "pre-push" command and matches CI behaviour.
+
 ## Supabase helpers
 
 - `lib/supabase/client.ts` — browser client (anon key)

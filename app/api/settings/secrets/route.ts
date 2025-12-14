@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   if (!parseResult.success) {
     return NextResponse.json(
       { error: "Invalid request body", details: parseResult.error.flatten() },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -40,14 +40,20 @@ export async function POST(request: Request) {
   if (!openaiApiKey && !elevenlabsApiKey) {
     return NextResponse.json(
       { error: "At least one API key must be provided" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   try {
-    await storeSecretsForUser(session.user.id, { openaiApiKey, elevenlabsApiKey });
+    await storeSecretsForUser(session.user.id, {
+      openaiApiKey,
+      elevenlabsApiKey,
+    });
   } catch {
-    return NextResponse.json({ error: "Unable to store secrets" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to store secrets" },
+      { status: 500 }
+    );
   }
 
   // Return masked status only - never return the actual keys

@@ -26,7 +26,9 @@ export function AuthPanel() {
             button: { borderRadius: 12 },
           },
         }}
-        redirectTo={typeof window !== "undefined" ? window.location.origin : undefined}
+        redirectTo={
+          typeof window !== "undefined" ? window.location.origin : undefined
+        }
       />
     </div>
   );

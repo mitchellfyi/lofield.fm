@@ -12,13 +12,18 @@ type Props = {
 };
 
 export function ChatPanel({ userEmail }: Props) {
-  const transport = useMemo(() => new TextStreamChatTransport({ api: "/api/chat" }), []);
+  const transport = useMemo(
+    () => new TextStreamChatTransport({ api: "/api/chat" }),
+    []
+  );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
   const [input, setInput] = useState("");
   const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [elevenlabsApiKey, setElevenlabsApiKey] = useState("");
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,11 +67,13 @@ export function ChatPanel({ userEmail }: Props) {
   }
 
   // Extract text content from message parts
-  function getMessageContent(message: typeof messages[number]): string {
+  function getMessageContent(message: (typeof messages)[number]): string {
     const parts = message.parts;
     if (!parts || parts.length === 0) return "";
     return parts
-      .filter((part): part is { type: "text"; text: string } => part.type === "text")
+      .filter(
+        (part): part is { type: "text"; text: string } => part.type === "text"
+      )
       .map((part) => part.text)
       .join("");
   }
@@ -75,7 +82,9 @@ export function ChatPanel({ userEmail }: Props) {
     <div className="flex flex-col gap-6 rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-xl backdrop-blur">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-emerald-700">Authenticated</p>
+          <p className="text-xs uppercase tracking-wide text-emerald-700">
+            Authenticated
+          </p>
           <h2 className="text-xl font-semibold text-slate-900">
             {userEmail ? `Signed in as ${userEmail}` : "Signed in"}
           </h2>
@@ -99,7 +108,9 @@ export function ChatPanel({ userEmail }: Props) {
 
       <div className="grid gap-4 rounded-xl border border-emerald-50 bg-emerald-50/60 p-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-slate-800">OpenAI API key</label>
+          <label className="text-sm font-medium text-slate-800">
+            OpenAI API key
+          </label>
           <input
             type="password"
             className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
@@ -109,7 +120,9 @@ export function ChatPanel({ userEmail }: Props) {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-slate-800">ElevenLabs API key</label>
+          <label className="text-sm font-medium text-slate-800">
+            ElevenLabs API key
+          </label>
           <input
             type="password"
             className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
@@ -127,20 +140,27 @@ export function ChatPanel({ userEmail }: Props) {
           >
             {saveState === "saving" ? "Saving..." : "Save provider keys"}
           </button>
-          {saveState === "saved" && <p className="text-sm text-emerald-700">Saved</p>}
+          {saveState === "saved" && (
+            <p className="text-sm text-emerald-700">Saved</p>
+          )}
           {saveState === "error" && (
-            <p className="text-sm text-red-600">{errorMessage ?? "Failed to save keys"}</p>
+            <p className="text-sm text-red-600">
+              {errorMessage ?? "Failed to save keys"}
+            </p>
           )}
         </div>
         <p className="sm:col-span-2 text-xs text-slate-600">
-          Keys are stored with Supabase Vault and never sent back to the browser after saving.
+          Keys are stored with Supabase Vault and never sent back to the browser
+          after saving.
         </p>
       </div>
 
       <div className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Chat</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              Chat
+            </p>
             <h3 className="text-lg font-semibold text-slate-900">
               Vercel AI SDK streaming (per-user OpenAI key)
             </h3>
@@ -170,7 +190,9 @@ export function ChatPanel({ userEmail }: Props) {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {message.role === "assistant" ? "Assistant" : "You"}
               </p>
-              <p className="whitespace-pre-wrap text-sm text-slate-800">{getMessageContent(message)}</p>
+              <p className="whitespace-pre-wrap text-sm text-slate-800">
+                {getMessageContent(message)}
+              </p>
             </div>
           ))}
         </div>
