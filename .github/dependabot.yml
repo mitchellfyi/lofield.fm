@@ -4,6 +4,7 @@ multi-ecosystem-groups:
   all-updates:
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 1
     labels: ["dependencies"]
     commit-message:
       prefix: "deps"
@@ -16,7 +17,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
     multi-ecosystem-group: "all-updates"
     patterns: ["*"]
     groups:
@@ -28,7 +28,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
     multi-ecosystem-group: "all-updates"
     patterns: ["*"]
     groups:
