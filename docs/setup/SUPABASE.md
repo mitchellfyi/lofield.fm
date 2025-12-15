@@ -7,6 +7,7 @@
 ## Overview
 
 Lofield Studio uses Supabase for:
+
 - **Auth**: Google and GitHub OAuth
 - **Database**: PostgreSQL with Row Level Security (RLS)
 - **Storage**: Private bucket for generated audio files
@@ -99,11 +100,13 @@ This pushes all migrations in `/supabase/migrations/` to your database.
 Add these URLs in Supabase Dashboard → Authentication → URL Configuration:
 
 **Development**:
+
 ```
 http://localhost:3003/auth/callback
 ```
 
 **Production**:
+
 ```
 https://your-domain.com/auth/callback
 ```
@@ -124,6 +127,7 @@ The migrations create a `tracks` bucket. Verify in Supabase Dashboard → Storag
 ### Storage Policies
 
 The bucket has RLS-style policies that enforce:
+
 - Users can only upload to `tracks/{user_id}/...`
 - Users can only read their own files
 - Files are served via short-lived signed URLs
@@ -134,20 +138,21 @@ See [Storage Policies](../security/STORAGE.md) for details.
 
 ### Core Tables
 
-| Table | Purpose | RLS |
-|-------|---------|-----|
-| `profiles` | User profile data | Users own their profile |
-| `user_settings` | Per-user app settings | Users own their settings |
-| `chats` | Chat sessions | Users own their chats |
-| `messages` | Chat messages | Users access via chat ownership |
-| `tracks` | Generated audio tracks | Users own their tracks |
-| `usage_events` | Provider API usage logs | Users see their own events |
-| `usage_daily_rollups` | Daily usage aggregates | Users see their own rollups |
-| `provider_pricing` | Provider cost data | Public read |
+| Table                 | Purpose                 | RLS                             |
+| --------------------- | ----------------------- | ------------------------------- |
+| `profiles`            | User profile data       | Users own their profile         |
+| `user_settings`       | Per-user app settings   | Users own their settings        |
+| `chats`               | Chat sessions           | Users own their chats           |
+| `messages`            | Chat messages           | Users access via chat ownership |
+| `tracks`              | Generated audio tracks  | Users own their tracks          |
+| `usage_events`        | Provider API usage logs | Users see their own events      |
+| `usage_daily_rollups` | Daily usage aggregates  | Users see their own rollups     |
+| `provider_pricing`    | Provider cost data      | Public read                     |
 
 ### Vault (Secrets)
 
 User API keys are stored in `vault.secrets` with:
+
 - `name`: Format is `{user_id}/openai` or `{user_id}/elevenlabs`
 - `secret`: Encrypted API key value
 - Only accessible via service role key
@@ -159,6 +164,7 @@ User API keys are stored in `vault.secrets` with:
 **Format**: `postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres`
 
 Use for:
+
 - Running migrations (`pnpm db:migrate`)
 - Installing extensions
 - Admin operations
@@ -168,6 +174,7 @@ Use for:
 **Format**: `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
 
 Use for:
+
 - Serverless functions (Vercel, AWS Lambda)
 - High-concurrency workloads
 
@@ -180,6 +187,7 @@ Use for:
 **Cause**: Vault extension not enabled or using pooled connection.
 
 **Fix**:
+
 1. Ensure you're using the primary connection (port 5432)
 2. Run `create extension if not exists "supabase_vault";` in SQL Editor
 3. Retry `pnpm db:migrate`
@@ -189,6 +197,7 @@ Use for:
 **Cause**: Redirect URL mismatch.
 
 **Fix**:
+
 1. Verify redirect URLs in Supabase Dashboard match your app URLs exactly
 2. Check site URL is set correctly
 3. Ensure OAuth provider settings have correct redirect URIs
@@ -198,6 +207,7 @@ Use for:
 **Cause**: Storage policies not applied or user ID mismatch.
 
 **Fix**:
+
 1. Check migrations created storage policies: `pnpm db:migrate`
 2. Verify file path uses correct user ID: `tracks/{auth.uid()}/...`
 3. See [Storage Policies](../security/STORAGE.md) for debugging

@@ -7,11 +7,13 @@
 ## Prerequisites (5 minutes)
 
 1. **Node.js**: Version 20.18+ or 24.x
+
    ```bash
    node --version  # Should be >= 20.18
    ```
 
 2. **pnpm**: Version 10.26.x
+
    ```bash
    npm install -g pnpm@10.26.0
    pnpm --version  # Should be 10.26.x
@@ -96,6 +98,7 @@ pnpm verify
 ```
 
 This runs:
+
 - `pnpm format:check` - Code formatting
 - `pnpm lint` - Linting
 - `pnpm typecheck` - TypeScript compilation
@@ -112,6 +115,7 @@ All checks must pass before committing.
 ## Troubleshooting
 
 If you encounter issues:
+
 1. Check [Troubleshooting Guide](../runbook/TROUBLESHOOTING.md)
 2. Verify your Supabase project is set up correctly (see [Supabase Setup](./SUPABASE.md))
 3. Ensure environment variables are correct (see [Environment Variables](./ENVIRONMENT.md))

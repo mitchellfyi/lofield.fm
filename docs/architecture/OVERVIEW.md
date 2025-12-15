@@ -74,25 +74,26 @@ Lofield Studio is a web app for creating lo-fi music tracks through an AI-powere
 
 ### User-Facing Pages
 
-| Route | Purpose | Auth Required |
-|-------|---------|---------------|
-| `/` | Main chat interface | Yes |
-| `/settings` | API key management | Yes |
-| `/usage` | Usage stats and costs | Yes |
-| `/auth/callback` | OAuth redirect handler | No |
+| Route            | Purpose                | Auth Required |
+| ---------------- | ---------------------- | ------------- |
+| `/`              | Main chat interface    | Yes           |
+| `/settings`      | API key management     | Yes           |
+| `/usage`         | Usage stats and costs  | Yes           |
+| `/auth/callback` | OAuth redirect handler | No            |
 
 ### API Routes
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/chat` | POST | Stream OpenAI chat responses |
-| `/api/settings/secrets` | POST | Store provider API keys in Vault |
-| `/api/usage/elevenlabs/subscription` | GET | Fetch ElevenLabs subscription info |
-| `/api/usage/elevenlabs/stats` | GET | Fetch ElevenLabs daily usage stats |
+| Endpoint                             | Method | Purpose                            |
+| ------------------------------------ | ------ | ---------------------------------- |
+| `/api/chat`                          | POST   | Stream OpenAI chat responses       |
+| `/api/settings/secrets`              | POST   | Store provider API keys in Vault   |
+| `/api/usage/elevenlabs/subscription` | GET    | Fetch ElevenLabs subscription info |
+| `/api/usage/elevenlabs/stats`        | GET    | Fetch ElevenLabs daily usage stats |
 
 ### Server Actions
 
 Server actions handle form submissions and mutations:
+
 - Profile updates
 - Chat management
 - Track generation
@@ -100,6 +101,7 @@ Server actions handle form submissions and mutations:
 ### Background Jobs
 
 Currently none. Future considerations:
+
 - Usage rollup aggregation (could be cron-triggered)
 - Cleanup of old tracks/chats
 

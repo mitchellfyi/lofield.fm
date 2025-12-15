@@ -19,6 +19,7 @@ User Browser → Sign In Button
 ```
 
 **Steps**:
+
 1. User clicks "Sign In" button
 2. App redirects to Supabase Auth with provider (Google or GitHub)
 3. Supabase redirects to OAuth provider
@@ -29,6 +30,7 @@ User Browser → Sign In Button
 8. User redirected to main app (`/`)
 
 **Server-Side Session Check**:
+
 - All protected pages use `createServerSupabaseClient()` (from `lib/supabase/server.ts`)
 - This reads the auth cookie and validates the session
 - If no session, redirects to sign-in
@@ -148,6 +150,7 @@ User Browser → Submit Keys Form
 7. **Browser confirms** with success message
 
 **Security Notes**:
+
 - Keys are **never** sent back to the client after storage
 - Keys are **never** logged or exposed in error messages
 - Vault access requires service role key (server-only)
@@ -167,6 +170,7 @@ Provider API Call Completes
 ```
 
 **Metadata Captured**:
+
 - `user_id`: From session
 - `chat_id` or `track_id`: Attribution
 - `action_type`: `refine`, `generate`, etc.
@@ -177,6 +181,7 @@ Provider API Call Completes
 - `action_group_id`: Correlates multi-step operations
 
 **Daily Rollup**:
+
 - Currently not automated
 - Future: Cron job or trigger to aggregate `usage_events` into `usage_daily_rollups`
 
@@ -218,7 +223,7 @@ All API routes and server actions follow this pattern:
 try {
   // 1. Validate session
   const session = await validateSession();
-  if (!session) return { error: 'Unauthorized' };
+  if (!session) return { error: "Unauthorized" };
 
   // 2. Validate input
   const validated = schema.parse(input);
@@ -230,16 +235,17 @@ try {
   return { data: result };
 } catch (error) {
   // 5. Log sanitized error (no secrets, no headers)
-  console.error('Operation failed:', sanitizeError(error));
+  console.error("Operation failed:", sanitizeError(error));
 
   // 6. Return typed error
-  return { error: 'Operation failed', details: error.message };
+  return { error: "Operation failed", details: error.message };
 }
 ```
 
 ### Retry Logic
 
 Currently none. Provider calls fail fast. Future considerations:
+
 - Exponential backoff for rate limits
 - Retry on transient network errors
 

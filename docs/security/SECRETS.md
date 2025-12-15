@@ -42,6 +42,7 @@ Response (no key exposed)
 ### What is Vault?
 
 Supabase Vault is a PostgreSQL extension (`supabase_vault`) that provides:
+
 - **Encrypted storage**: Secrets are encrypted at rest using `pgsodium`
 - **Key rotation**: Built-in support for key rotation
 - **Audit trail**: Access logging (if enabled)
@@ -51,13 +52,13 @@ Supabase Vault is a PostgreSQL extension (`supabase_vault`) that provides:
 
 Secrets are stored in the `vault.secrets` table:
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Unique identifier |
-| `name` | TEXT | Secret name (e.g., `{user_id}/openai`) |
-| `secret` | TEXT | Encrypted secret value |
-| `created_at` | TIMESTAMP | Creation time |
-| `updated_at` | TIMESTAMP | Last update time |
+| Column       | Type      | Description                            |
+| ------------ | --------- | -------------------------------------- |
+| `id`         | UUID      | Unique identifier                      |
+| `name`       | TEXT      | Secret name (e.g., `{user_id}/openai`) |
+| `secret`     | TEXT      | Encrypted secret value                 |
+| `created_at` | TIMESTAMP | Creation time                          |
+| `updated_at` | TIMESTAMP | Last update time                       |
 
 ### Naming Convention
 
@@ -76,7 +77,7 @@ Only the **admin Supabase client** (using service role key) can access Vault:
 
 ```typescript
 // lib/supabase/admin.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 export const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,6 +92,7 @@ export const supabaseAdmin = createClient(
 ```
 
 **⚠️ Critical**: The service role key **bypasses RLS**. Use it only for:
+
 - Vault operations
 - Admin operations requiring elevated privileges
 - **Never** import admin client in client components
@@ -133,31 +135,33 @@ These functions are called from server-side code via the admin client.
 Example from `/app/api/settings/secrets/route.ts`:
 
 ```typescript
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { openai_key, elevenlabs_key } = await request.json();
 
   // Store in Vault using admin client
   if (openai_key) {
-    await supabaseAdmin.rpc('store_user_secret', {
+    await supabaseAdmin.rpc("store_user_secret", {
       user_id: session.user.id,
-      secret_name: 'openai',
+      secret_name: "openai",
       secret_value: openai_key,
     });
   }
 
   if (elevenlabs_key) {
-    await supabaseAdmin.rpc('store_user_secret', {
+    await supabaseAdmin.rpc("store_user_secret", {
       user_id: session.user.id,
-      secret_name: 'elevenlabs',
+      secret_name: "elevenlabs",
       secret_value: elevenlabs_key,
     });
   }
@@ -171,20 +175,22 @@ export async function POST(request: Request) {
 Example from `/app/api/chat/route.ts`:
 
 ```typescript
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Fetch user's OpenAI key from Vault
-  const { data: openaiKey } = await supabaseAdmin.rpc('get_user_secret', {
+  const { data: openaiKey } = await supabaseAdmin.rpc("get_user_secret", {
     user_id: session.user.id,
-    secret_name: 'openai',
+    secret_name: "openai",
   });
 
   // Fallback to env var for development
@@ -192,7 +198,7 @@ export async function POST(request: Request) {
 
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'OpenAI API key not configured' },
+      { error: "OpenAI API key not configured" },
       { status: 400 }
     );
   }
@@ -212,6 +218,7 @@ ELEVENLABS_API_KEY=...
 ```
 
 **Behavior**:
+
 - If a user has not saved their own key, the app uses the fallback
 - Fallback keys are **never** used in production (must be per-user keys)
 - Fallback keys are **server-only** (never exposed to client)

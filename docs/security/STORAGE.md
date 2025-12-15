@@ -68,6 +68,7 @@ create policy "Users can delete their own files"
 **Key function**: `storage.foldername(name)` splits the path and returns an array.
 
 Example:
+
 - Path: `tracks/a1b2c3/track-123.mp3`
 - `storage.foldername(name)` returns `{a1b2c3}`
 - `(storage.foldername(name))[1]` returns `a1b2c3`
@@ -80,15 +81,19 @@ Example:
 Use the admin client to bypass RLS during initial upload (preferred for server actions):
 
 ```typescript
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
-export async function uploadTrack(userId: string, trackId: string, audioBuffer: Buffer) {
+export async function uploadTrack(
+  userId: string,
+  trackId: string,
+  audioBuffer: Buffer
+) {
   const filePath = `${userId}/${trackId}.mp3`;
 
   const { data, error } = await supabaseAdmin.storage
-    .from('tracks')
+    .from("tracks")
     .upload(filePath, audioBuffer, {
-      contentType: 'audio/mpeg',
+      contentType: "audio/mpeg",
       upsert: false, // Don't overwrite existing files
     });
 
@@ -101,6 +106,7 @@ export async function uploadTrack(userId: string, trackId: string, audioBuffer: 
 ```
 
 **Why admin client?**
+
 - Server actions may not have access to user's auth token
 - Admin client ensures upload succeeds regardless of policy timing
 
@@ -109,14 +115,18 @@ export async function uploadTrack(userId: string, trackId: string, audioBuffer: 
 If uploading from the browser (future feature):
 
 ```typescript
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-export async function uploadTrackFromBrowser(file: File, userId: string, trackId: string) {
+export async function uploadTrackFromBrowser(
+  file: File,
+  userId: string,
+  trackId: string
+) {
   const supabase = createBrowserSupabaseClient();
   const filePath = `${userId}/${trackId}.mp3`;
 
   const { data, error } = await supabase.storage
-    .from('tracks')
+    .from("tracks")
     .upload(filePath, file);
 
   if (error) {
@@ -136,14 +146,14 @@ export async function uploadTrackFromBrowser(file: File, userId: string, trackId
 Generate time-limited signed URLs for playback:
 
 ```typescript
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export async function getTrackUrl(userId: string, trackId: string) {
   const supabase = createBrowserSupabaseClient();
   const filePath = `${userId}/${trackId}.mp3`;
 
   const { data, error } = await supabase.storage
-    .from('tracks')
+    .from("tracks")
     .createSignedUrl(filePath, 3600); // 1 hour expiry
 
   if (error) {
@@ -155,6 +165,7 @@ export async function getTrackUrl(userId: string, trackId: string) {
 ```
 
 **Signed URL benefits**:
+
 - Works with private buckets
 - Expires automatically (security)
 - Doesn't require ongoing authentication
@@ -162,6 +173,7 @@ export async function getTrackUrl(userId: string, trackId: string) {
 ### Public URLs (Not Used)
 
 We **do not** use public URLs because:
+
 - Bucket is private
 - Users shouldn't be able to guess others' file paths
 - Signed URLs provide better control
@@ -171,13 +183,13 @@ We **do not** use public URLs because:
 ### Server-Side Deletion
 
 ```typescript
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function deleteTrack(userId: string, trackId: string) {
   const filePath = `${userId}/${trackId}.mp3`;
 
   const { error } = await supabaseAdmin.storage
-    .from('tracks')
+    .from("tracks")
     .remove([filePath]);
 
   if (error) {
@@ -189,15 +201,13 @@ export async function deleteTrack(userId: string, trackId: string) {
 ### Client-Side Deletion
 
 ```typescript
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export async function deleteTrackFromBrowser(userId: string, trackId: string) {
   const supabase = createBrowserSupabaseClient();
   const filePath = `${userId}/${trackId}.mp3`;
 
-  const { error } = await supabase.storage
-    .from('tracks')
-    .remove([filePath]);
+  const { error } = await supabase.storage.from("tracks").remove([filePath]);
 
   if (error) {
     throw new Error(`Failed to delete: ${error.message}`);
@@ -214,6 +224,7 @@ export async function deleteTrackFromBrowser(userId: string, trackId: string) {
 **Cause**: Path doesn't match user's `user_id`.
 
 **Fix**:
+
 ```typescript
 // WRONG
 const filePath = `someone-else/${trackId}.mp3`;
@@ -225,11 +236,13 @@ const filePath = `${session.user.id}/${trackId}.mp3`;
 ### Signed URL Returns 404
 
 **Possible causes**:
+
 1. File doesn't exist
 2. Path is incorrect
 3. User doesn't own the file
 
 **Debug steps**:
+
 1. Verify file exists in Supabase Dashboard → Storage → tracks
 2. Check path format: `{user_id}/{track_id}.mp3`
 3. Ensure user is authenticated
@@ -265,6 +278,7 @@ const filePath = `${session.user.id}/${trackId}.mp3`;
 ### Orphaned Files
 
 If a track record is deleted but the file remains:
+
 - Files accumulate in storage
 - Storage costs increase
 
@@ -273,6 +287,7 @@ If a track record is deleted but the file remains:
 ### User Deletion
 
 If a user deletes their account:
+
 - Delete all files in `{user_id}/` folder
 - Delete all database records (cascaded via foreign keys)
 

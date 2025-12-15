@@ -7,6 +7,7 @@
 ## Overview
 
 Every OpenAI and ElevenLabs API call is logged to the `usage_events` table with attribution (user, chat, track) and cost estimation. This enables:
+
 - **Transparency**: Users see their API usage and costs
 - **Attribution**: Link costs to specific chats and tracks
 - **Debugging**: Trace provider calls for troubleshooting
@@ -15,32 +16,32 @@ Every OpenAI and ElevenLabs API call is logged to the `usage_events` table with 
 
 ### usage_events Table
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Unique event ID |
-| `user_id` | UUID | User who triggered the call |
-| `chat_id` | UUID | Associated chat (if applicable) |
-| `track_id` | UUID | Associated track (if applicable) |
-| `provider` | TEXT | `'openai'` or `'elevenlabs'` |
-| `model` | TEXT | Model name (e.g., `'gpt-4o'`) |
-| `action_type` | TEXT | `'refine'`, `'generate'`, etc. |
-| `action_group_id` | UUID | Groups related actions (e.g., refine + generate) |
-| `tokens` | INTEGER | Token count (OpenAI) |
-| `characters` | INTEGER | Character count (ElevenLabs) |
-| `estimated_cost_usd` | NUMERIC | Estimated cost in USD |
-| `created_at` | TIMESTAMP | Event timestamp |
+| Column               | Type      | Description                                      |
+| -------------------- | --------- | ------------------------------------------------ |
+| `id`                 | UUID      | Unique event ID                                  |
+| `user_id`            | UUID      | User who triggered the call                      |
+| `chat_id`            | UUID      | Associated chat (if applicable)                  |
+| `track_id`           | UUID      | Associated track (if applicable)                 |
+| `provider`           | TEXT      | `'openai'` or `'elevenlabs'`                     |
+| `model`              | TEXT      | Model name (e.g., `'gpt-4o'`)                    |
+| `action_type`        | TEXT      | `'refine'`, `'generate'`, etc.                   |
+| `action_group_id`    | UUID      | Groups related actions (e.g., refine + generate) |
+| `tokens`             | INTEGER   | Token count (OpenAI)                             |
+| `characters`         | INTEGER   | Character count (ElevenLabs)                     |
+| `estimated_cost_usd` | NUMERIC   | Estimated cost in USD                            |
+| `created_at`         | TIMESTAMP | Event timestamp                                  |
 
 ### usage_daily_rollups Table
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Unique rollup ID |
-| `user_id` | UUID | User |
-| `date` | DATE | Date (UTC) |
-| `provider` | TEXT | `'openai'` or `'elevenlabs'` |
-| `total_cost_usd` | NUMERIC | Sum of costs for the day |
-| `event_count` | INTEGER | Number of events |
-| `created_at` | TIMESTAMP | Rollup timestamp |
+| Column           | Type      | Description                  |
+| ---------------- | --------- | ---------------------------- |
+| `id`             | UUID      | Unique rollup ID             |
+| `user_id`        | UUID      | User                         |
+| `date`           | DATE      | Date (UTC)                   |
+| `provider`       | TEXT      | `'openai'` or `'elevenlabs'` |
+| `total_cost_usd` | NUMERIC   | Sum of costs for the day     |
+| `event_count`    | INTEGER   | Number of events             |
+| `created_at`     | TIMESTAMP | Rollup timestamp             |
 
 **Note**: Daily rollups are not yet automated. Future enhancement: cron job to aggregate.
 
@@ -93,10 +94,10 @@ async function calculateCost(
 ) {
   // Fetch pricing for the provider and model
   const { data: pricing } = await supabase
-    .from('provider_pricing')
-    .select('*')
-    .eq('provider', provider)
-    .eq('model', model)
+    .from("provider_pricing")
+    .select("*")
+    .eq("provider", provider)
+    .eq("model", model)
     .single();
 
   if (!pricing) {
@@ -104,14 +105,14 @@ async function calculateCost(
     return 0;
   }
 
-  if (provider === 'openai') {
+  if (provider === "openai") {
     const inputCost = (usage.tokens! * pricing.input_cost_per_1m) / 1_000_000;
     const outputCost = (usage.tokens! * pricing.output_cost_per_1m) / 1_000_000;
     return inputCost + outputCost;
   }
 
-  if (provider === 'elevenlabs') {
-    return (usage.characters! * pricing.cost_per_character);
+  if (provider === "elevenlabs") {
+    return usage.characters! * pricing.cost_per_character;
   }
 
   return 0;
@@ -130,18 +131,18 @@ The `action_group_id` correlates multi-step operations:
 const actionGroupId = crypto.randomUUID();
 
 // Refine step
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   action_group_id: actionGroupId,
-  action_type: 'refine',
-  provider: 'openai',
+  action_type: "refine",
+  provider: "openai",
   // ...
 });
 
 // Generate step
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   action_group_id: actionGroupId,
-  action_type: 'generate',
-  provider: 'elevenlabs',
+  action_type: "generate",
+  provider: "elevenlabs",
   // ...
 });
 ```
@@ -207,11 +208,13 @@ group by track_id;
 ### Usage Page
 
 The `/usage` page displays:
+
 - **ElevenLabs subscription info**: Character quota, remaining, next reset
 - **Daily usage**: Bar chart of costs by day
 - **Breakdown**: Table of events with provider, model, cost
 
 **Data sources**:
+
 1. `GET /api/usage/elevenlabs/subscription` - Cached for 10 minutes
 2. `GET /api/usage/elevenlabs/stats` - Cached for 3 hours
 3. `usage_events` table - Queried in real-time
@@ -222,14 +225,14 @@ The `/usage` page displays:
 
 Stores current pricing for each provider and model:
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `provider` | TEXT | `'openai'` or `'elevenlabs'` |
-| `model` | TEXT | Model name |
-| `input_cost_per_1m` | NUMERIC | OpenAI: cost per 1M input tokens |
+| Column               | Type    | Description                       |
+| -------------------- | ------- | --------------------------------- |
+| `provider`           | TEXT    | `'openai'` or `'elevenlabs'`      |
+| `model`              | TEXT    | Model name                        |
+| `input_cost_per_1m`  | NUMERIC | OpenAI: cost per 1M input tokens  |
 | `output_cost_per_1m` | NUMERIC | OpenAI: cost per 1M output tokens |
-| `cost_per_character` | NUMERIC | ElevenLabs: cost per character |
-| `effective_date` | DATE | When pricing took effect |
+| `cost_per_character` | NUMERIC | ElevenLabs: cost per character    |
+| `effective_date`     | DATE    | When pricing took effect          |
 
 **Example rows**:
 
@@ -256,6 +259,7 @@ Pricing is updated manually when providers change rates:
 ### Estimated Costs
 
 Costs are **estimates** based on:
+
 - Provider pricing tables (may lag behind actual pricing)
 - Simplified calculations (e.g., not accounting for volume discounts)
 
@@ -264,12 +268,14 @@ Costs are **estimates** based on:
 ### Daily Rollups
 
 Currently **not automated**. Future enhancement:
+
 - Cron job (e.g., daily at midnight UTC) to aggregate `usage_events` into `usage_daily_rollups`
 - Speeds up queries for historical data
 
 ### No Alerts
 
 No alerts for high usage or quota limits. Future enhancement:
+
 - Email/notification when user approaches quota
 - Budget limits per user
 

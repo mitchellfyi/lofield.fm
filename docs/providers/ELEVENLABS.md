@@ -24,7 +24,7 @@ See [Secrets Management](../security/SECRETS.md) for details.
 Lofield Studio uses the official **ElevenLabs JavaScript SDK**:
 
 ```typescript
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 const client = new ElevenLabsClient({
   apiKey: userApiKey,
@@ -38,29 +38,31 @@ const client = new ElevenLabsClient({
 Located in server actions or API routes:
 
 ```typescript
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function generateTrack(prompt: string, chatId: string) {
   // 1. Validate session
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   // 2. Fetch user's ElevenLabs key from Vault
-  const { data: elevenLabsKey } = await supabaseAdmin.rpc('get_user_secret', {
+  const { data: elevenLabsKey } = await supabaseAdmin.rpc("get_user_secret", {
     user_id: session.user.id,
-    secret_name: 'elevenlabs',
+    secret_name: "elevenlabs",
   });
 
   const apiKey = elevenLabsKey || process.env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
-    throw new Error('ElevenLabs API key not configured');
+    throw new Error("ElevenLabs API key not configured");
   }
 
   // 3. Initialize ElevenLabs client
@@ -68,9 +70,9 @@ export async function generateTrack(prompt: string, chatId: string) {
 
   // 4. Generate audio
   const audio = await client.textToSpeech.convert({
-    voiceId: 'default-voice-id',
+    voiceId: "default-voice-id",
     text: prompt,
-    modelId: 'eleven_multilingual_v2',
+    modelId: "eleven_multilingual_v2",
   });
 
   // 5. Upload to Supabase Storage
@@ -78,28 +80,28 @@ export async function generateTrack(prompt: string, chatId: string) {
   const filePath = `${session.user.id}/${trackId}.mp3`;
 
   await supabaseAdmin.storage
-    .from('tracks')
-    .upload(filePath, audio, { contentType: 'audio/mpeg' });
+    .from("tracks")
+    .upload(filePath, audio, { contentType: "audio/mpeg" });
 
   // 6. Save track record
-  await supabase.from('tracks').insert({
+  await supabase.from("tracks").insert({
     id: trackId,
     user_id: session.user.id,
     chat_id: chatId,
     prompt,
-    model: 'eleven_multilingual_v2',
-    voice_id: 'default-voice-id',
+    model: "eleven_multilingual_v2",
+    voice_id: "default-voice-id",
     file_path: filePath,
   });
 
   // 7. Log usage event
-  await supabase.from('usage_events').insert({
+  await supabase.from("usage_events").insert({
     user_id: session.user.id,
     track_id: trackId,
     chat_id: chatId,
-    provider: 'elevenlabs',
-    model: 'eleven_multilingual_v2',
-    action_type: 'generate',
+    provider: "elevenlabs",
+    model: "eleven_multilingual_v2",
+    action_type: "generate",
     characters: prompt.length,
     estimated_cost_usd: calculateCost(prompt.length),
   });
@@ -117,7 +119,7 @@ ElevenLabs provides subscription details via the API:
 **Endpoint**: `GET /api/usage/elevenlabs/subscription`
 
 ```typescript
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 export async function getSubscriptionInfo(apiKey: string) {
   const client = new ElevenLabsClient({ apiKey });
@@ -141,7 +143,11 @@ export async function getSubscriptionInfo(apiKey: string) {
 **Endpoint**: `GET /api/usage/elevenlabs/stats`
 
 ```typescript
-export async function getDailyUsageStats(apiKey: string, startDate: string, endDate: string) {
+export async function getDailyUsageStats(
+  apiKey: string,
+  startDate: string,
+  endDate: string
+) {
   const client = new ElevenLabsClient({ apiKey });
 
   const usage = await client.user.getUsage({
@@ -149,7 +155,7 @@ export async function getDailyUsageStats(apiKey: string, startDate: string, endD
     endDate,
   });
 
-  return usage.usage.map(day => ({
+  return usage.usage.map((day) => ({
     date: day.date,
     characterCount: day.character_count,
   }));
@@ -164,12 +170,12 @@ export async function getDailyUsageStats(apiKey: string, startDate: string, endD
 
 ElevenLabs charges by character count. Pricing varies by tier:
 
-| Tier | Characters/month | Price |
-|------|------------------|-------|
-| Free | 10,000 | $0 |
-| Starter | 30,000 | $5/month |
-| Creator | 100,000 | $22/month |
-| Pro | 500,000 | $99/month |
+| Tier    | Characters/month | Price     |
+| ------- | ---------------- | --------- |
+| Free    | 10,000           | $0        |
+| Starter | 30,000           | $5/month  |
+| Creator | 100,000          | $22/month |
+| Pro     | 500,000          | $99/month |
 
 **Note**: Pricing stored in `provider_pricing` table.
 
@@ -240,7 +246,7 @@ try {
 Never log full error objects:
 
 ```typescript
-console.error('ElevenLabs call failed:', {
+console.error("ElevenLabs call failed:", {
   message: error.message,
   status: error.status,
   // DO NOT log: headers, request, apiKey
@@ -251,16 +257,16 @@ console.error('ElevenLabs call failed:', {
 
 Every ElevenLabs API call logs a `usage_events` record:
 
-| Field | Value |
-|-------|-------|
-| `user_id` | From session |
-| `track_id` | Generated track ID |
-| `chat_id` | Associated chat ID |
-| `provider` | `'elevenlabs'` |
-| `model` | Model used (e.g., `'eleven_multilingual_v2'`) |
-| `action_type` | `'generate'` |
-| `characters` | Length of prompt text |
-| `estimated_cost_usd` | Calculated cost |
+| Field                | Value                                         |
+| -------------------- | --------------------------------------------- |
+| `user_id`            | From session                                  |
+| `track_id`           | Generated track ID                            |
+| `chat_id`            | Associated chat ID                            |
+| `provider`           | `'elevenlabs'`                                |
+| `model`              | Model used (e.g., `'eleven_multilingual_v2'`) |
+| `action_type`        | `'generate'`                                  |
+| `characters`         | Length of prompt text                         |
+| `estimated_cost_usd` | Calculated cost                               |
 
 See [Usage Tracking](../usage/TRACKING.md) for details.
 
@@ -276,6 +282,7 @@ See [Usage Tracking](../usage/TRACKING.md) for details.
 ### Integration Tests
 
 Future: Add tests for:
+
 - API key retrieval from Vault
 - Audio generation and upload
 - Usage event logging

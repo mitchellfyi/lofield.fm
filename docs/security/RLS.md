@@ -52,6 +52,7 @@ create policy "Users can insert their own profile"
 ```
 
 **Tables using this pattern**:
+
 - `profiles`
 - `user_settings`
 - `chats`
@@ -87,6 +88,7 @@ create policy "Users can insert messages in their chats"
 ```
 
 **Tables using this pattern**:
+
 - `messages` (owned via `chats.user_id`)
 
 ### Pattern 3: Public Read-Only
@@ -101,6 +103,7 @@ create policy "Anyone can view provider pricing"
 ```
 
 **Tables using this pattern**:
+
 - `provider_pricing`
 
 ## Policy Operations
@@ -151,75 +154,75 @@ create policy "policy_name"
 
 ### profiles
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `auth.uid() = user_id` |
-| INSERT | `auth.uid() = user_id` |
-| UPDATE | `auth.uid() = user_id` |
-| DELETE | (not allowed) |
+| Operation | Policy                 |
+| --------- | ---------------------- |
+| SELECT    | `auth.uid() = user_id` |
+| INSERT    | `auth.uid() = user_id` |
+| UPDATE    | `auth.uid() = user_id` |
+| DELETE    | (not allowed)          |
 
 ### user_settings
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `auth.uid() = user_id` |
-| INSERT | `auth.uid() = user_id` |
-| UPDATE | `auth.uid() = user_id` |
-| DELETE | (not allowed) |
+| Operation | Policy                 |
+| --------- | ---------------------- |
+| SELECT    | `auth.uid() = user_id` |
+| INSERT    | `auth.uid() = user_id` |
+| UPDATE    | `auth.uid() = user_id` |
+| DELETE    | (not allowed)          |
 
 ### chats
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `auth.uid() = user_id` |
-| INSERT | `auth.uid() = user_id` |
-| UPDATE | `auth.uid() = user_id` |
-| DELETE | `auth.uid() = user_id` |
+| Operation | Policy                 |
+| --------- | ---------------------- |
+| SELECT    | `auth.uid() = user_id` |
+| INSERT    | `auth.uid() = user_id` |
+| UPDATE    | `auth.uid() = user_id` |
+| DELETE    | `auth.uid() = user_id` |
 
 ### messages
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `chat_id` in user's chats |
-| INSERT | `chat_id` in user's chats |
-| UPDATE | (not allowed) |
-| DELETE | (not allowed) |
+| Operation | Policy                    |
+| --------- | ------------------------- |
+| SELECT    | `chat_id` in user's chats |
+| INSERT    | `chat_id` in user's chats |
+| UPDATE    | (not allowed)             |
+| DELETE    | (not allowed)             |
 
 ### tracks
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `auth.uid() = user_id` |
-| INSERT | `auth.uid() = user_id` |
-| UPDATE | `auth.uid() = user_id` |
-| DELETE | `auth.uid() = user_id` |
+| Operation | Policy                 |
+| --------- | ---------------------- |
+| SELECT    | `auth.uid() = user_id` |
+| INSERT    | `auth.uid() = user_id` |
+| UPDATE    | `auth.uid() = user_id` |
+| DELETE    | `auth.uid() = user_id` |
 
 ### usage_events
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `auth.uid() = user_id` |
-| INSERT | `auth.uid() = user_id` |
-| UPDATE | (not allowed) |
-| DELETE | (not allowed) |
+| Operation | Policy                 |
+| --------- | ---------------------- |
+| SELECT    | `auth.uid() = user_id` |
+| INSERT    | `auth.uid() = user_id` |
+| UPDATE    | (not allowed)          |
+| DELETE    | (not allowed)          |
 
 ### usage_daily_rollups
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `auth.uid() = user_id` |
-| INSERT | (service role only) |
-| UPDATE | (service role only) |
-| DELETE | (not allowed) |
+| Operation | Policy                 |
+| --------- | ---------------------- |
+| SELECT    | `auth.uid() = user_id` |
+| INSERT    | (service role only)    |
+| UPDATE    | (service role only)    |
+| DELETE    | (not allowed)          |
 
 ### provider_pricing
 
-| Operation | Policy |
-|-----------|--------|
-| SELECT | `true` (public read) |
-| INSERT | (service role only) |
-| UPDATE | (service role only) |
-| DELETE | (not allowed) |
+| Operation | Policy               |
+| --------- | -------------------- |
+| SELECT    | `true` (public read) |
+| INSERT    | (service role only)  |
+| UPDATE    | (service role only)  |
+| DELETE    | (not allowed)        |
 
 ## Testing RLS Policies
 
@@ -250,10 +253,10 @@ Future: Add RLS tests using Supabase test framework or integration tests.
 
 ```typescript
 // WRONG: Admin client in client component
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export default function MyComponent() {
-  const data = await supabaseAdmin.from('chats').select();
+  const data = await supabaseAdmin.from("chats").select();
   // This bypasses RLS!
 }
 ```
@@ -290,11 +293,13 @@ create policy "bad_policy"
 ### Query Returns No Rows
 
 **Possible causes**:
+
 1. RLS policy is too restrictive
 2. User is not authenticated (`auth.uid()` is null)
 3. `user_id` doesn't match session
 
 **Debug steps**:
+
 1. Check if user is authenticated: `auth.uid()` should return a UUID
 2. Verify `user_id` in the row matches the session user ID
 3. Review the policy conditions in Supabase Dashboard → Database → Policies
@@ -302,10 +307,12 @@ create policy "bad_policy"
 ### Query Fails with Permission Denied
 
 **Possible causes**:
+
 1. RLS is enabled but no policies grant access
 2. Policy uses `with check` that fails
 
 **Debug steps**:
+
 1. Verify policies exist for the operation (SELECT, INSERT, UPDATE, DELETE)
 2. Check policy conditions match your use case
 3. Use `set local role authenticated;` in SQL Editor to test

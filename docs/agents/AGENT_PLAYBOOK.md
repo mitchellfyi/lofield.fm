@@ -9,6 +9,7 @@
 ### 1. Security First
 
 **Never compromise security**:
+
 - ✅ API keys stay server-side in Vault
 - ✅ RLS policies enforce user isolation
 - ✅ Storage is private with signed URLs
@@ -19,6 +20,7 @@
 ### 2. Test Everything
 
 **Every change needs tests**:
+
 - ✅ Write tests for new features
 - ✅ Write tests for bug fixes
 - ✅ Run `pnpm verify` before committing
@@ -28,6 +30,7 @@
 ### 3. Minimal Changes
 
 **Make surgical edits**:
+
 - ✅ Change only what's necessary
 - ✅ Follow existing patterns
 - ✅ Keep PRs small and focused
@@ -75,12 +78,14 @@
 ### After Changes
 
 1. **Verify locally**:
+
    ```bash
    pnpm dev
    # Test your changes in the browser
    ```
 
 2. **Check all verification passes**:
+
    ```bash
    pnpm verify  # Must pass 100%
    ```
@@ -96,17 +101,20 @@
 **Pattern**: Server-side auth, Vault access, error handling
 
 ```typescript
-import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   // 1. Validate session
   const supabase = await createServerSupabaseClient();
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
   if (error || !session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // 2. Validate input (use Zod or manual checks)
@@ -114,9 +122,9 @@ export async function POST(request: Request) {
   // ... validate body ...
 
   // 3. Fetch secrets from Vault (if needed)
-  const { data: apiKey } = await supabaseAdmin.rpc('get_user_secret', {
+  const { data: apiKey } = await supabaseAdmin.rpc("get_user_secret", {
     user_id: session.user.id,
-    secret_name: 'provider_name',
+    secret_name: "provider_name",
   });
 
   // 4. Perform operation
@@ -124,25 +132,22 @@ export async function POST(request: Request) {
     const result = await doWork(apiKey, body);
 
     // 5. Log usage event (if provider call)
-    await supabase.from('usage_events').insert({
+    await supabase.from("usage_events").insert({
       user_id: session.user.id,
-      provider: 'provider_name',
+      provider: "provider_name",
       // ... other fields ...
     });
 
     return NextResponse.json({ data: result });
   } catch (err) {
     // 6. Sanitize and log error
-    console.error('Operation failed:', {
+    console.error("Operation failed:", {
       message: err.message,
       status: err.status,
       // DO NOT log: headers, apiKey, full request
     });
 
-    return NextResponse.json(
-      { error: 'Operation failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Operation failed" }, { status: 500 });
   }
 }
 ```
@@ -152,17 +157,17 @@ export async function POST(request: Request) {
 **Pattern**: User-scoped queries with RLS
 
 ```typescript
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function getUserChats(userId: string) {
   const supabase = await createServerSupabaseClient();
 
   // RLS automatically filters to user's chats
   const { data, error } = await supabase
-    .from('chats')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .from("chats")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Failed to fetch chats: ${error.message}`);
@@ -179,7 +184,7 @@ export async function getUserChats(userId: string) {
 **Pattern**: User-scoped paths, signed URLs
 
 ```typescript
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export async function getTrackSignedUrl(userId: string, trackId: string) {
   const supabase = createBrowserSupabaseClient();
@@ -188,7 +193,7 @@ export async function getTrackSignedUrl(userId: string, trackId: string) {
   const filePath = `${userId}/${trackId}.mp3`;
 
   const { data, error } = await supabase.storage
-    .from('tracks')
+    .from("tracks")
     .createSignedUrl(filePath, 3600); // 1 hour expiry
 
   if (error) {
@@ -265,8 +270,10 @@ See [Supabase Instructions](../../.github/instructions/supabase.instructions.md)
 ### Check Session
 
 ```typescript
-const { data: { session } } = await supabase.auth.getSession();
-console.log('User ID:', session?.user?.id);
+const {
+  data: { session },
+} = await supabase.auth.getSession();
+console.log("User ID:", session?.user?.id);
 ```
 
 ### Check RLS
@@ -291,9 +298,9 @@ select name from vault.secrets where name like '%user-uuid%';
 ```typescript
 // List files in user's folder
 const { data: files } = await supabase.storage
-  .from('tracks')
+  .from("tracks")
   .list(`${userId}/`);
-console.log('Files:', files);
+console.log("Files:", files);
 ```
 
 ## Emergency Procedures

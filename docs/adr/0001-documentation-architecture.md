@@ -8,6 +8,7 @@
 ## Context
 
 Lofield Studio lacked a unified documentation structure. Docs were scattered across README, AGENTS.md, CLAUDE.md, and ad-hoc comments. This made it hard for:
+
 - New developers to get started
 - AI agents to find correct patterns
 - Team members to maintain consistency
@@ -44,6 +45,7 @@ We will implement a **centralized documentation architecture** under `/docs` wit
 ### Standard Format
 
 Every doc must include:
+
 - **Purpose**: 1-2 line summary
 - **Audience**: Human, AI agent, or both
 - **Last updated**: Date
@@ -61,10 +63,12 @@ Every doc must include:
 ### Option 1: Wiki (Rejected)
 
 **Pros**:
+
 - Easy to edit via web UI
 - Built-in search
 
 **Cons**:
+
 - Not in version control
 - Harder to review changes
 - Separate from code
@@ -73,9 +77,11 @@ Every doc must include:
 ### Option 2: Inline Comments Only (Rejected)
 
 **Pros**:
+
 - Docs live next to code
 
 **Cons**:
+
 - No high-level overview
 - Hard to find specific info
 - No cross-linking
@@ -84,10 +90,12 @@ Every doc must include:
 ### Option 3: External Docs Site (Rejected)
 
 **Pros**:
+
 - Professional appearance
 - Good search/navigation
 
 **Cons**:
+
 - Extra maintenance overhead
 - Docs drift from code
 - Requires separate deployment
@@ -96,6 +104,7 @@ Every doc must include:
 ### Option 4: Markdown in `/docs` (Selected)
 
 **Pros**:
+
 - ✅ Version controlled
 - ✅ Reviewable via PRs
 - ✅ Lives with code
@@ -104,6 +113,7 @@ Every doc must include:
 - ✅ No extra tools
 
 **Cons**:
+
 - No fancy UI (acceptable trade-off)
 - Manual cross-linking (mitigated by standards)
 

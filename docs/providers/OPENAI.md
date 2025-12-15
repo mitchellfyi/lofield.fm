@@ -62,6 +62,7 @@ export default function ChatPanel() {
 ```
 
 **What happens**:
+
 1. User types message and submits
 2. `useChat` sends POST to `/api/chat`
 3. Server streams response chunks
@@ -73,30 +74,33 @@ export default function ChatPanel() {
 Located in `/app/api/chat/route.ts`:
 
 ```typescript
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   // 1. Validate session
   const supabase = await createServerSupabaseClient();
-  const { data: { session }, error } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
   if (error || !session) {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   // 2. Fetch user's OpenAI key from Vault
-  const { data: openaiKey } = await supabaseAdmin.rpc('get_user_secret', {
+  const { data: openaiKey } = await supabaseAdmin.rpc("get_user_secret", {
     user_id: session.user.id,
-    secret_name: 'openai',
+    secret_name: "openai",
   });
 
   const apiKey = openaiKey || process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    return new Response('OpenAI API key not configured', { status: 400 });
+    return new Response("OpenAI API key not configured", { status: 400 });
   }
 
   // 3. Parse request body
@@ -104,34 +108,34 @@ export async function POST(request: Request) {
 
   // 4. Stream OpenAI response
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai("gpt-4o"),
     messages,
-    system: 'You are a helpful assistant for lo-fi music prompt creation.',
+    system: "You are a helpful assistant for lo-fi music prompt creation.",
   });
 
   // 5. Save messages and log usage (after stream completes)
   result.then(async (completion) => {
     // Save user message
-    await supabase.from('messages').insert({
+    await supabase.from("messages").insert({
       chat_id: chatId,
-      role: 'user',
+      role: "user",
       content: messages[messages.length - 1].content,
     });
 
     // Save assistant message
-    await supabase.from('messages').insert({
+    await supabase.from("messages").insert({
       chat_id: chatId,
-      role: 'assistant',
+      role: "assistant",
       content: completion.text,
     });
 
     // Log usage event
-    await supabase.from('usage_events').insert({
+    await supabase.from("usage_events").insert({
       user_id: session.user.id,
       chat_id: chatId,
-      provider: 'openai',
-      model: 'gpt-4o',
-      action_type: 'refine',
+      provider: "openai",
+      model: "gpt-4o",
+      action_type: "refine",
       tokens: completion.usage.totalTokens,
       estimated_cost_usd: calculateCost(completion.usage),
     });
@@ -169,14 +173,14 @@ Focus on mood, tempo, instrumentation, and atmosphere.`;
 
 Every OpenAI API call logs a `usage_events` record:
 
-| Field | Value |
-|-------|-------|
-| `user_id` | From session |
-| `chat_id` | Current chat ID |
-| `provider` | `'openai'` |
-| `model` | `'gpt-4o'` |
-| `action_type` | `'refine'` |
-| `tokens` | Total tokens (input + output) |
+| Field                | Value                              |
+| -------------------- | ---------------------------------- |
+| `user_id`            | From session                       |
+| `chat_id`            | Current chat ID                    |
+| `provider`           | `'openai'`                         |
+| `model`              | `'gpt-4o'`                         |
+| `action_type`        | `'refine'`                         |
+| `tokens`             | Total tokens (input + output)      |
 | `estimated_cost_usd` | Calculated from `provider_pricing` |
 
 See [Usage Tracking](../usage/TRACKING.md) for details.
@@ -200,9 +204,12 @@ OpenAI returns token counts in the response:
 ### Cost Formula
 
 ```typescript
-function calculateCost(usage: { promptTokens: number; completionTokens: number }) {
-  const inputCostPer1M = 2.50; // USD
-  const outputCostPer1M = 10.00; // USD
+function calculateCost(usage: {
+  promptTokens: number;
+  completionTokens: number;
+}) {
+  const inputCostPer1M = 2.5; // USD
+  const outputCostPer1M = 10.0; // USD
 
   const inputCost = (usage.promptTokens / 1_000_000) * inputCostPer1M;
   const outputCost = (usage.completionTokens / 1_000_000) * outputCostPer1M;
@@ -250,7 +257,7 @@ try {
 Never log full error objects (may contain API keys in headers):
 
 ```typescript
-console.error('OpenAI call failed:', {
+console.error("OpenAI call failed:", {
   message: error.message,
   status: error.status,
   // DO NOT log: headers, request, apiKey
@@ -269,6 +276,7 @@ console.error('OpenAI call failed:', {
 ### Integration Tests
 
 Future: Add tests for:
+
 - API key retrieval from Vault
 - Streaming response handling
 - Usage event logging

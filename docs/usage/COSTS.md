@@ -15,11 +15,12 @@ Lofield Studio operates on a **bring-your-own-API-key** model. Users pay provide
 **Model**: `gpt-4o`
 
 | Usage Type | Cost (per 1M tokens) |
-|------------|---------------------|
-| Input | $2.50 |
-| Output | $10.00 |
+| ---------- | -------------------- |
+| Input      | $2.50                |
+| Output     | $10.00               |
 
 **Example**:
+
 - User sends 150 tokens (input)
 - AI responds with 50 tokens (output)
 - Cost: `(150 / 1_000_000) * $2.50 + (50 / 1_000_000) * $10.00 = $0.000875`
@@ -30,14 +31,15 @@ Lofield Studio operates on a **bring-your-own-API-key** model. Users pay provide
 
 **Model**: `eleven_multilingual_v2`
 
-| Tier | Characters/month | Monthly Cost | Cost per Character |
-|------|------------------|--------------|-------------------|
-| Free | 10,000 | $0 | $0 (quota-based) |
-| Starter | 30,000 | $5 | ~$0.000167 |
-| Creator | 100,000 | $22 | ~$0.00022 |
-| Pro | 500,000 | $99 | ~$0.000198 |
+| Tier    | Characters/month | Monthly Cost | Cost per Character |
+| ------- | ---------------- | ------------ | ------------------ |
+| Free    | 10,000           | $0           | $0 (quota-based)   |
+| Starter | 30,000           | $5           | ~$0.000167         |
+| Creator | 100,000          | $22          | ~$0.00022          |
+| Pro     | 500,000          | $99          | ~$0.000198         |
 
 **Example**:
+
 - User generates 500 characters of audio
 - Cost (Creator tier): `500 * $0.00022 = $0.11`
 
@@ -50,11 +52,13 @@ Lofield Studio operates on a **bring-your-own-API-key** model. Users pay provide
 Each user pays for their own API usage. The app does **not** pool costs across users.
 
 **Benefits**:
+
 - No billing complexity for the app
 - Users control their spending via provider accounts
 - No revenue share or markup
 
 **Trade-offs**:
+
 - Users must manage API keys
 - No centralized billing or invoicing
 
@@ -63,6 +67,7 @@ Each user pays for their own API usage. The app does **not** pool costs across u
 Costs are attributed to specific chats via `usage_events.chat_id`:
 
 **Example query**:
+
 ```sql
 select
   chat_id,
@@ -79,6 +84,7 @@ group by chat_id;
 Costs are attributed to specific tracks via `usage_events.track_id`:
 
 **Example query**:
+
 ```sql
 select
   track_id,
@@ -114,20 +120,24 @@ Total: $0.114
 Providers enforce their own limits:
 
 **OpenAI**:
+
 - Rate limits (RPM, TPM, TPD) per API key
 - Limits vary by account tier (free, pay-as-you-go, enterprise)
 
 **ElevenLabs**:
+
 - Character quotas per subscription tier
 - Monthly resets
 
 **App behavior**:
+
 - If provider returns 429 (rate limit), display error to user
 - No retry logic (yet)
 
 ### App Limits
 
 Currently **none**. Future enhancements:
+
 - Per-user budget limits (soft cap with warning)
 - Admin-configurable quotas
 
@@ -136,14 +146,17 @@ Currently **none**. Future enhancements:
 ### Estimates vs. Actual
 
 The app provides **estimates** based on:
+
 - `provider_pricing` table (manually updated)
 - Token/character counts from provider responses
 
 **Accuracy**:
+
 - OpenAI: High (providers return exact token counts)
 - ElevenLabs: High (character count is exact)
 
 **Caveats**:
+
 - Volume discounts not reflected
 - Subscription overages not calculated
 - Currency conversion not included (all costs in USD)
@@ -171,6 +184,7 @@ values ('openai', 'gpt-4o', 2.50, 10.00, '2024-01-01');
 ### Usage Page (`/usage`)
 
 Displays:
+
 1. **ElevenLabs Subscription Info**:
    - Tier (Free, Starter, Creator, Pro)
    - Characters used / total quota
@@ -190,11 +204,13 @@ Future enhancement: Show per-chat and per-track costs directly in the UI.
 ### Current: BYOK (Bring Your Own Key)
 
 **Pros**:
+
 - Simple: no app-side billing
 - Transparent: users see costs in provider dashboards
 - Scalable: no payment processing overhead
 
 **Cons**:
+
 - Friction: users must sign up for provider accounts
 - No app revenue (if desired)
 - No centralized usage limits
@@ -204,11 +220,13 @@ Future enhancement: Show per-chat and per-track costs directly in the UI.
 **Not implemented**. If we wanted to manage keys centrally:
 
 **Pros**:
+
 - Simpler onboarding (users don't need provider accounts)
 - App can markup and generate revenue
 - Centralized usage limits and billing
 
 **Cons**:
+
 - Billing complexity (invoicing, payment processing)
 - Key management security risk
 - Provider rate limits shared across users

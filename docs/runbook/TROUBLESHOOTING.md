@@ -9,17 +9,21 @@
 ### `pnpm install` Fails
 
 **Symptoms**:
+
 - Dependency resolution errors
 - Lock file conflicts
 
 **Solutions**:
+
 1. **Check pnpm version**:
+
    ```bash
    pnpm --version  # Should be 10.26.x
    npm install -g pnpm@10.26.0
    ```
 
 2. **Clear cache and reinstall**:
+
    ```bash
    rm -rf node_modules pnpm-lock.yaml
    pnpm install
@@ -33,12 +37,14 @@
 ### `pnpm dev` Fails to Start
 
 **Symptoms**:
+
 - Port already in use
 - Environment variable errors
 
 **Solutions**:
 
 1. **Port conflict**:
+
    ```bash
    # Kill process on port 3003
    lsof -ti:3003 | xargs kill -9
@@ -46,6 +52,7 @@
    ```
 
 2. **Missing `.env.local`**:
+
    ```bash
    cp .env.example .env.local
    # Fill in required variables
@@ -59,17 +66,20 @@
 ### `pnpm verify` Fails
 
 **Symptoms**:
+
 - Format, lint, typecheck, or test errors
 
 **Solutions**:
 
 1. **Format errors**:
+
    ```bash
    pnpm format  # Auto-fix formatting
    pnpm verify
    ```
 
 2. **Lint errors**:
+
    ```bash
    pnpm lint  # See errors
    # Fix manually, then:
@@ -77,6 +87,7 @@
    ```
 
 3. **TypeScript errors**:
+
    ```bash
    pnpm typecheck  # See errors
    # Fix types, then:
@@ -95,6 +106,7 @@
 ### Migration Fails: "Extension Does Not Exist"
 
 **Symptoms**:
+
 ```
 ERROR: extension "supabase_vault" does not exist
 ```
@@ -102,11 +114,13 @@ ERROR: extension "supabase_vault" does not exist
 **Solutions**:
 
 1. **Enable Vault extension** in Supabase SQL Editor:
+
    ```sql
    create extension if not exists "supabase_vault";
    ```
 
 2. **Use primary (non-pooler) connection**:
+
    ```env
    # WRONG (pooler on port 6543)
    SUPABASE_DB_URL=postgresql://postgres...@aws-0-region.pooler.supabase.com:6543/postgres
@@ -123,6 +137,7 @@ ERROR: extension "supabase_vault" does not exist
 ### Migration Fails: "Permission Denied"
 
 **Symptoms**:
+
 ```
 ERROR: permission denied to create extension "supabase_vault"
 ```
@@ -142,18 +157,23 @@ ERROR: permission denied to create extension "supabase_vault"
 ### RLS Blocks All Queries
 
 **Symptoms**:
+
 - User can't see their own data
 - `SELECT` returns empty results
 
 **Solutions**:
 
 1. **Check user is authenticated**:
+
    ```typescript
-   const { data: { session } } = await supabase.auth.getSession();
-   console.log('User ID:', session?.user?.id);
+   const {
+     data: { session },
+   } = await supabase.auth.getSession();
+   console.log("User ID:", session?.user?.id);
    ```
 
 2. **Verify `user_id` matches**:
+
    ```sql
    select auth.uid();  -- Should match user_id in tables
    ```
@@ -175,6 +195,7 @@ ERROR: permission denied to create extension "supabase_vault"
 ### OAuth Redirect Fails
 
 **Symptoms**:
+
 - Redirect loop
 - "Invalid redirect URL" error
 
@@ -197,6 +218,7 @@ ERROR: permission denied to create extension "supabase_vault"
 ### Session Expires Immediately
 
 **Symptoms**:
+
 - User signs in but immediately signed out
 - Session is null after redirect
 
@@ -212,8 +234,10 @@ ERROR: permission denied to create extension "supabase_vault"
 
 3. **Inspect session cookie**:
    ```typescript
-   const { data: { session } } = await supabase.auth.getSession();
-   console.log('Session:', session);
+   const {
+     data: { session },
+   } = await supabase.auth.getSession();
+   console.log("Session:", session);
    ```
 
 ## Storage
@@ -221,6 +245,7 @@ ERROR: permission denied to create extension "supabase_vault"
 ### Upload Fails with 403
 
 **Symptoms**:
+
 ```
 StorageError: new row violates row-level security policy
 ```
@@ -228,6 +253,7 @@ StorageError: new row violates row-level security policy
 **Solutions**:
 
 1. **Verify file path includes user ID**:
+
    ```typescript
    // WRONG
    const path = `tracks/${trackId}.mp3`;
@@ -249,17 +275,19 @@ StorageError: new row violates row-level security policy
 ### Signed URL Returns 404
 
 **Symptoms**:
+
 - File exists but signed URL returns 404
 
 **Solutions**:
 
 1. **Verify file path is correct**:
+
    ```typescript
    // Check file exists
    const { data: files } = await supabase.storage
-     .from('tracks')
+     .from("tracks")
      .list(`${userId}/`);
-   console.log('Files:', files);
+   console.log("Files:", files);
    ```
 
 2. **Check ownership**:
@@ -269,7 +297,7 @@ StorageError: new row violates row-level security policy
 3. **Regenerate signed URL**:
    ```typescript
    const { data } = await supabase.storage
-     .from('tracks')
+     .from("tracks")
      .createSignedUrl(`${userId}/${trackId}.mp3`, 3600);
    ```
 
@@ -278,6 +306,7 @@ StorageError: new row violates row-level security policy
 ### OpenAI API Key Invalid
 
 **Symptoms**:
+
 ```
 401 Unauthorized: Invalid API key
 ```
@@ -289,6 +318,7 @@ StorageError: new row violates row-level security policy
    - Key should start with `sk-`
 
 2. **Check key in Vault**:
+
    ```sql
    select name from vault.secrets where name like '%/openai';
    ```
@@ -302,6 +332,7 @@ StorageError: new row violates row-level security policy
 ### ElevenLabs Character Limit Exceeded
 
 **Symptoms**:
+
 ```
 429 Too Many Requests: Character quota exceeded
 ```
@@ -324,6 +355,7 @@ StorageError: new row violates row-level security policy
 ### Provider Call Fails with Network Error
 
 **Symptoms**:
+
 ```
 Error: connect ETIMEDOUT
 ```
@@ -331,6 +363,7 @@ Error: connect ETIMEDOUT
 **Solutions**:
 
 1. **Check internet connection**:
+
    ```bash
    ping api.openai.com
    ```
@@ -346,11 +379,13 @@ Error: connect ETIMEDOUT
 ### Vercel Build Fails
 
 **Symptoms**:
+
 - Build fails on Vercel with TypeScript or missing env var errors
 
 **Solutions**:
 
 1. **Run `pnpm verify` locally first**:
+
    ```bash
    pnpm verify
    # Fix all errors before pushing
@@ -367,6 +402,7 @@ Error: connect ETIMEDOUT
 ### Next.js Build Fails: "Module Not Found"
 
 **Symptoms**:
+
 ```
 Error: Cannot find module '@/lib/...'
 ```
@@ -374,6 +410,7 @@ Error: Cannot find module '@/lib/...'
 **Solutions**:
 
 1. **Verify imports use correct path aliases**:
+
    ```typescript
    // Check tsconfig.json paths
    {
