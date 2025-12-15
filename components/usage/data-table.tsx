@@ -12,6 +12,7 @@ type DataTableProps<T> = {
   data: T[];
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
+  getRowKey?: (item: T, index: number) => string | number;
 };
 
 export function DataTable<T>({
@@ -19,6 +20,7 @@ export function DataTable<T>({
   data,
   onRowClick,
   emptyMessage = "No data available",
+  getRowKey = (_, idx) => idx,
 }: DataTableProps<T>) {
   return (
     <div className="overflow-x-auto">
@@ -50,7 +52,7 @@ export function DataTable<T>({
           ) : (
             data.map((item, idx) => (
               <tr
-                key={idx}
+                key={getRowKey(item, idx)}
                 onClick={() => onRowClick?.(item)}
                 className={`border-b border-slate-100 last:border-0 ${
                   onRowClick

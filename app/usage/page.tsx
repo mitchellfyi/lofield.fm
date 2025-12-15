@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { DateRangePicker } from "@/components/usage/date-range-picker";
 import { MultiSelect } from "@/components/usage/multi-select";
@@ -24,12 +24,23 @@ function getDefaultDateRange() {
 function exportToCSV(data: unknown[], filename: string) {
   if (data.length === 0) return;
 
+  // Helper to escape CSV values according to RFC 4180
+  const escapeCSV = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    const str = String(value);
+    // If the value contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
   const headers = Object.keys(data[0] as object);
   const csvContent = [
-    headers.join(","),
+    headers.map(escapeCSV).join(","),
     ...data.map((row) =>
       headers
-        .map((header) => (row as Record<string, unknown>)[header])
+        .map((header) => escapeCSV((row as Record<string, unknown>)[header]))
         .join(",")
     ),
   ].join("\n");
@@ -190,6 +201,9 @@ export default function UsagePage() {
     []
   );
 
+  // Track if we've initialized filters
+  const filtersInitialized = useRef(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -204,7 +218,7 @@ export default function UsagePage() {
         // Populate available models
         const models = summaryData.topModels.map((m: ModelSummary) => m.model);
         setAvailableModels(models);
-        if (selectedModels.length === 0) {
+        if (!filtersInitialized.current) {
           setSelectedModels(models);
         }
       }
@@ -235,8 +249,9 @@ export default function UsagePage() {
           ),
         ] as string[];
         setAvailableActionTypes(actionTypes);
-        if (selectedActionTypes.length === 0) {
+        if (!filtersInitialized.current) {
           setSelectedActionTypes(actionTypes);
+          filtersInitialized.current = true;
         }
       }
 
@@ -271,14 +286,7 @@ export default function UsagePage() {
     } finally {
       setLoading(false);
     }
-  }, [
-    startDate,
-    endDate,
-    selectedProviders,
-    selectedModels,
-    selectedActionTypes,
-    selectedStatus,
-  ]);
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchData();
@@ -651,6 +659,7 @@ export default function UsagePage() {
                     },
                   ]}
                   data={filteredModels}
+                  getRowKey={(m) => `${m.provider}-${m.model}`}
                   emptyMessage="No model usage in this date range"
                 />
               </div>
@@ -696,6 +705,7 @@ export default function UsagePage() {
                     },
                   ]}
                   data={filteredChats}
+                  getRowKey={(c) => c.chatId}
                   onRowClick={openChatDrawer}
                   emptyMessage="No chat usage in this date range"
                 />
@@ -744,6 +754,7 @@ export default function UsagePage() {
                     },
                   ]}
                   data={filteredTracks}
+                  getRowKey={(t) => t.trackId}
                   onRowClick={openTrackDrawer}
                   emptyMessage="No track usage in this date range"
                 />
