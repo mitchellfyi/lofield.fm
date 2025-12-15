@@ -273,7 +273,8 @@ async function generateTrackAsync(params: {
       instrumental,
     });
 
-    const { audioBuffer, audioBytes, audioSeconds, requestId } = result;
+    const { audioBuffer, audioBytes, audioSeconds, requestId, latencyMs } =
+      result;
 
     // Upload to Supabase Storage
     // Path format: {user_id}/{chat_id}/{track_id}.mp3
@@ -318,7 +319,7 @@ async function generateTrackAsync(params: {
       audioSeconds,
       audioBytes,
       status: "ok",
-      latencyMs: Date.now() - startTime,
+      latencyMs,
     });
 
     console.log("Track generation completed", { trackId });

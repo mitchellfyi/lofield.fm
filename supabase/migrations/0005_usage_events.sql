@@ -47,13 +47,12 @@ create table if not exists public.usage_events (
 -- Enable RLS
 alter table public.usage_events enable row level security;
 
--- RLS policies: users can select/insert only their own usage events
+-- RLS policies: users can only view their own usage events
 create policy "Users can view their usage events" on public.usage_events
   for select using (auth.uid() = user_id);
 
--- Removed insert policy: only service role can insert into usage_events
--- Server-side insert will use service role which bypasses RLS
--- But RLS policies ensure client-side access is still protected
+-- No insert policy: only service role can insert into usage_events
+-- This ensures usage events are created only by trusted server code
 
 -- Create indexes for efficient queries
 create index if not exists usage_events_user_id_occurred_at_idx 

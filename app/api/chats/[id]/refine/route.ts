@@ -163,10 +163,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
+  // Generate action group ID and start time for usage tracking
+  const actionGroupId = randomUUID(); // For correlating refine + generate sequences
+  const startTime = Date.now();
+
   try {
     const openai = createOpenAI({ apiKey });
-    const actionGroupId = randomUUID(); // For correlating refine + generate sequences
-    const startTime = Date.now();
 
     // Use streamText with structured output
     const result = await streamText({
@@ -220,7 +222,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         }
 
         // Save assistant message with validated draft_spec
-        const { data: savedMessage } = await supabase
+        const { data: savedMessage, error: saveMsgError } = await supabase
           .from("chat_messages")
           .insert({
             chat_id: chatId,
@@ -230,6 +232,13 @@ export async function POST(request: NextRequest, { params }: Params) {
           })
           .select("id")
           .single();
+
+        if (saveMsgError) {
+          console.error("Failed to save assistant message", {
+            chatId,
+            error: saveMsgError.message,
+          });
+        }
 
         // Update chat's updated_at
         await supabase
@@ -260,7 +269,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         await logUsageEvent({
           userId,
           chatId,
-          chatMessageId: savedMessage?.id,
+          chatMessageId: savedMessage?.id ?? undefined,
           actionGroupId,
           actionType: "refine_prompt",
           provider: "openai",
@@ -280,9 +289,25 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     return result.toTextStreamResponse();
   } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error("Failed to refine prompt", {
-      error: err instanceof Error ? err.message : "Unknown error",
+      error: errorMessage,
     });
+
+    // Log usage event for failed API call
+    await logUsageEvent({
+      userId,
+      chatId,
+      actionGroupId,
+      actionType: "refine_prompt",
+      provider: "openai",
+      providerOperation: "responses.streamText",
+      model: "gpt-4o-mini",
+      status: "error",
+      errorMessage,
+      latencyMs: Date.now() - startTime,
+    });
+
     return Response.json({ error: "Failed to refine prompt" }, { status: 500 });
   }
 }
