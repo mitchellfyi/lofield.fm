@@ -1,5 +1,7 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 /* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const { spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
@@ -43,7 +45,7 @@ function isMissingTableError(error) {
     code === "42P01" || // Postgres undefined table
     message.includes("not found") ||
     message.includes("does not exist") ||
-    message.includes("relation") && message.includes("does not exist")
+    (message.includes("relation") && message.includes("does not exist"))
   );
 }
 
@@ -235,4 +237,3 @@ module.exports = {
   hasSupabaseCLI,
   runSupabaseMigrations,
 };
-

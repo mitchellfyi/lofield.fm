@@ -55,7 +55,6 @@ ELEVENLABS_API_KEY=<optional fallback for development>
    ```
 
    Migrations live in `/supabase/migrations/0001_init.sql` and create tables for profiles, user settings, chats, messages, tracks, Storage bucket policies, and Vault helper functions.
-
    - Make sure Vault is enabled in your Supabase project (SQL editor):
      ```sql
      create extension if not exists "supabase_vault";

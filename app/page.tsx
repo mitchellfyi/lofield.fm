@@ -31,7 +31,12 @@ export default async function Home() {
         </div>
 
         {user ? (
-          <ChatPanel userEmail={user.email ?? user.id} />
+          <ChatPanel
+            userEmail={
+              (user as { email?: string; id: string }).email ??
+              (user as { id: string }).id
+            }
+          />
         ) : (
           <AuthPanel />
         )}

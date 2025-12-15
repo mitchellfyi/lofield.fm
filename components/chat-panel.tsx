@@ -14,7 +14,11 @@ type Props = {
 
 export function ChatPanel({ userEmail, chatId }: Props) {
   const transport = useMemo(
-    () => new TextStreamChatTransport({ api: "/api/chat", body: { chat_id: chatId } }),
+    () =>
+      new TextStreamChatTransport({
+        api: "/api/chat",
+        body: { chat_id: chatId },
+      }),
     [chatId]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });

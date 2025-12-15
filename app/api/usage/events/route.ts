@@ -35,15 +35,15 @@ export async function GET(request: NextRequest) {
 
   // Parse and validate filters
   const parseResult = EventFiltersSchema.safeParse({
-    start: searchParams.get("start"),
-    end: searchParams.get("end"),
-    provider: searchParams.get("provider"),
-    model: searchParams.get("model"),
-    chat_id: searchParams.get("chat_id"),
-    track_id: searchParams.get("track_id"),
-    status: searchParams.get("status"),
-    page: searchParams.get("page"),
-    per_page: searchParams.get("per_page"),
+    start: searchParams.get("start") ?? undefined,
+    end: searchParams.get("end") ?? undefined,
+    provider: searchParams.get("provider") ?? undefined,
+    model: searchParams.get("model") ?? undefined,
+    chat_id: searchParams.get("chat_id") ?? undefined,
+    track_id: searchParams.get("track_id") ?? undefined,
+    status: searchParams.get("status") ?? undefined,
+    page: searchParams.get("page") ?? undefined,
+    per_page: searchParams.get("per_page") ?? undefined,
   });
 
   if (!parseResult.success) {

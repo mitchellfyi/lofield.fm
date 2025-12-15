@@ -1,6 +1,9 @@
 export type ChatRole = "user" | "assistant" | "system";
 
-export function getMessageContent(message: any): unknown {
+export function getMessageContent(message: {
+  content?: unknown;
+  parts?: unknown[];
+}): unknown {
   if (message.content !== undefined && message.content !== null) {
     return message.content;
   }
@@ -41,7 +44,9 @@ export function normalizeContent(content: unknown): string {
   }
 }
 
-export function hasAnyContent(messages: Array<{ role: ChatRole; content: unknown }>): boolean {
+export function hasAnyContent(
+  messages: Array<{ role: ChatRole; content: unknown }>
+): boolean {
   return messages.some((m) => normalizeContent(m.content).trim().length > 0);
 }
 
@@ -56,4 +61,3 @@ export function firstEmptyMessageIndex(
   }
   return null;
 }
-

@@ -20,20 +20,14 @@ export function GlobalNav({ userEmail }: Props) {
     <header className="border-b border-slate-200 bg-white px-4 py-3">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link
-            href="/app"
-            className="text-lg font-semibold text-emerald-700"
-          >
+          <Link href="/app" className="text-lg font-semibold text-emerald-700">
             Lofield Studio
           </Link>
           <nav className="hidden items-center gap-3 text-sm text-slate-700 sm:flex">
             <Link href="/app" className="transition hover:text-emerald-700">
               App
             </Link>
-            <Link
-              href="/usage"
-              className="transition hover:text-emerald-700"
-            >
+            <Link href="/usage" className="transition hover:text-emerald-700">
               Usage
             </Link>
             <Link
@@ -70,4 +64,3 @@ export function GlobalNav({ userEmail }: Props) {
     </header>
   );
 }
-

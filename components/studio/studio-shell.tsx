@@ -51,7 +51,10 @@ type Props = {
   userEmail: string;
 };
 
-export function StudioShell({ userEmail }: Props) {
+export function StudioShell({
+  userEmail: _userEmail, // keeping prop for interface but marking unused
+}: Props) {
+  void _userEmail; // Suppress unused warning
   const supabase = useMemo(() => createClient(), []);
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -145,10 +148,12 @@ export function StudioShell({ userEmail }: Props) {
   }
 
   function handleTrackGenerated(trackId: string) {
-    // Auto-select the newly generated track
-    setSelectedTrackId(trackId);
-    // Refresh to load the new track
+    // Refresh to load the new track FIRST
     handleRefresh();
+    // Then select it after a tiny delay to ensure list is populated
+    setTimeout(() => {
+        setSelectedTrackId(trackId);
+    }, 100);
   }
 
   // Check if there's a draft_spec in any message

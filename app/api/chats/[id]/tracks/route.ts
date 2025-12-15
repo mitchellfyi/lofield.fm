@@ -193,12 +193,18 @@ export async function POST(request: NextRequest, { params }: Params) {
     .single();
 
   if (trackError || !track) {
-    console.error("Failed to create track");
+    console.error("Failed to create track", trackError);
     return NextResponse.json(
       { error: "Failed to create track" },
       { status: 500 }
     );
   }
+
+  // Ensure chat timestamp is updated immediately so sidebar reflects activity
+  await supabase
+    .from("chats")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", chatId);
 
   const trackId = track.id;
   const actionGroupId = randomUUID(); // Correlate this generation with any related actions
@@ -222,12 +228,6 @@ export async function POST(request: NextRequest, { params }: Params) {
       error: error instanceof Error ? error.message : "Unknown error",
     });
   });
-
-  // Update chat's updated_at
-  await supabase
-    .from("chats")
-    .update({ updated_at: new Date().toISOString() })
-    .eq("id", chatId);
 
   return NextResponse.json({
     ok: true,

@@ -5,7 +5,6 @@ import { streamText, type CoreMessage } from "ai";
 import type { NextRequest } from "next/server";
 import {
   normalizeContent,
-  hasAnyContent,
   firstEmptyMessageIndex,
   getMessageContent,
   type ChatRole,
@@ -29,7 +28,10 @@ export async function POST(req: NextRequest) {
 
   // Log raw messages for debugging empty content issues
   if (messages) {
-    console.log("[api/chat] Received messages:", JSON.stringify(messages, null, 2));
+    console.log(
+      "[api/chat] Received messages:",
+      JSON.stringify(messages, null, 2)
+    );
   }
 
   const chatId =
@@ -79,7 +81,10 @@ export async function POST(req: NextRequest) {
     console.warn("[api/chat] Message content empty after normalization", {
       count: normalizedMessages.length,
     });
-    return Response.json({ error: "Message content is empty" }, { status: 400 });
+    return Response.json(
+      { error: "Message content is empty" },
+      { status: 400 }
+    );
   }
 
   // If chatId is provided, verify ownership
@@ -99,7 +104,12 @@ export async function POST(req: NextRequest) {
     .reverse()
     .find((m) => m.role === "user" && typeof m.content === "string");
 
-  if (chatId && (!lastUser || lastUser.content.trim().length === 0)) {
+  if (
+    chatId &&
+    (!lastUser ||
+      typeof lastUser.content !== "string" ||
+      lastUser.content.trim().length === 0)
+  ) {
     return Response.json(
       { error: "No user message to persist" },
       { status: 400 }
@@ -107,11 +117,13 @@ export async function POST(req: NextRequest) {
   }
 
   if (chatId && lastUser) {
-    const { error: userMsgError } = await supabase.from("chat_messages").insert({
-      chat_id: chatId,
-      role: "user",
-      content: lastUser.content,
-    });
+    const { error: userMsgError } = await supabase
+      .from("chat_messages")
+      .insert({
+        chat_id: chatId,
+        role: "user",
+        content: lastUser.content,
+      });
     if (userMsgError) {
       console.error("[api/chat] Failed to save user message", userMsgError);
       return Response.json(
@@ -130,10 +142,27 @@ export async function POST(req: NextRequest) {
   const actionGroupId = crypto.randomUUID();
   const startTime = Date.now();
 
+  // Inject system prompt if not present
+  const hasSystemPrompt = filteredMessages.some((m) => m.role === "system");
+  const messagesToSend = hasSystemPrompt
+    ? filteredMessages
+    : [
+        {
+          role: "system",
+          content: `You are an AI music production assistant for "Lofield Studio".
+Your goal is to help users conceptualize and refine lo-fi hip hop, chillhop, and ambient tracks.
+Focus on discussing musical elements: genre, mood, instruments, BPM, and atmosphere.
+Do not write lyrics or poems unless explicitly asked.
+Do not recommend existing real-world tracks or artists.
+If the user asks for a specific style (e.g. "west coast rap"), discuss the musical characteristics (instruments, tempo, rhythm) that define that style and how to apply them to a lo-fi context.`,
+        } as CoreMessage,
+        ...filteredMessages,
+      ];
+
   const openai = createOpenAI({ apiKey });
   const result = await streamText({
     model: openai("gpt-4o-mini"),
-    messages: filteredMessages,
+    messages: messagesToSend,
     onFinish: async ({ text, usage, response }) => {
       const durationMs = Date.now() - startTime;
       let costUsd: number | undefined;
@@ -180,8 +209,17 @@ export async function POST(req: NextRequest) {
             draft_spec: null,
           });
         if (assistantError) {
-          console.error("[api/chat] Failed to save assistant message", assistantError);
+          console.error(
+            "[api/chat] Failed to save assistant message",
+            assistantError
+          );
         }
+
+        // Update chat updated_at
+        await supabase
+          .from("chats")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", chatId);
       }
     },
   });

@@ -13,6 +13,11 @@ export default defineConfig({
     alias: {
       "@": resolve(__dirname, "./"),
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      include: ["app/api/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+      exclude: ["**/*.d.ts", "**/*.test.{ts,tsx}", "**/node_modules/**"],
+    },
   },
 });
-

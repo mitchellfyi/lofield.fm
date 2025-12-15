@@ -103,6 +103,9 @@ export function PromptBuilder({
     setMessages,
   } = useChat({
     transport,
+    onFinish: () => {
+      onRefresh();
+    },
     onError: (err) => {
       setChatError(
         err instanceof Error ? err.message : "Failed to send chat message."
@@ -223,7 +226,9 @@ export function PromptBuilder({
           const text = await response.text().catch(() => "");
           return text ? { error: text } : null;
         });
-        setRefineError(data?.error ?? "Failed to refine prompt. Please try again.");
+        setRefineError(
+          data?.error ?? "Failed to refine prompt. Please try again."
+        );
       }
     } catch (error) {
       setRefineStatus("error");
@@ -258,6 +263,10 @@ export function PromptBuilder({
       const data = await response.json();
 
       if (response.ok) {
+        // Wait a bit to ensure server processing completes and DB is consistent
+        // We'll wait a shorter time since we want feedback fast, but long enough for DB replication/consistency
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         setGenerateStatus("success");
         onRefresh();
         // Notify parent of new track for auto-selection
@@ -304,6 +313,13 @@ export function PromptBuilder({
         : [...prev, preset]
     );
   }
+
+  // Scroll to bottom on messages change
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [allMessages, isLoading]); // Scroll on new messages or loading state change
 
   if (!chatId) {
     return (
@@ -364,6 +380,7 @@ export function PromptBuilder({
             ))}
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Prompt builder controls */}
