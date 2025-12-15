@@ -6,6 +6,7 @@ import { DateRangePicker } from "@/components/usage/date-range-picker";
 import { MultiSelect } from "@/components/usage/multi-select";
 import { SummaryCard, MetricItem } from "@/components/usage/summary-card";
 import { BarChart } from "@/components/usage/bar-chart";
+import { StackedBarChart } from "@/components/usage/stacked-bar-chart";
 import { DataTable } from "@/components/usage/data-table";
 import { DetailDrawer } from "@/components/usage/detail-drawer";
 
@@ -585,12 +586,22 @@ export default function UsagePage() {
                 <h2 className="mb-4 text-lg font-semibold text-slate-900">
                   Daily Volume
                 </h2>
-                <BarChart
+                <StackedBarChart
                   data={volumeChartData.map((d) => ({
                     label: d.label,
-                    value: d.refineCount + d.generateCount,
+                    values: [
+                      {
+                        name: "Refine Actions",
+                        value: d.refineCount,
+                        color: "#10b981",
+                      },
+                      {
+                        name: "Generate Tracks",
+                        value: d.generateCount,
+                        color: "#3b82f6",
+                      },
+                    ],
                   }))}
-                  primaryLabel="Actions"
                   formatValue={(v) => v.toLocaleString()}
                 />
               </div>
