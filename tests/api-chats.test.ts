@@ -1,31 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, POST } from "@/app/api/chats/route";
 import { NextRequest } from "next/server";
+import { mockSupabase } from "@/lib/supabase/__mocks__/server";
+import { mockSupabaseAdmin } from "@/lib/supabase/__mocks__/admin";
 
-// Mock Supabase
-const mockSupabase = {
-  auth: {
-    getUser: vi.fn(),
-  },
-  from: vi.fn(),
-};
-
-// Mock Admin Client
-const mockSupabaseAdmin = {
-  from: vi.fn(),
-};
-
-vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabaseClient: () => Promise.resolve(mockSupabase),
-}));
-
-vi.mock("@/lib/supabase/admin", () => ({
-  getServiceRoleClient: () => mockSupabaseAdmin,
-}));
+// Enable auto-mocking
+vi.mock("@/lib/supabase/server");
+vi.mock("@/lib/supabase/admin");
 
 describe("/api/chats", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset default behaviors
+    mockSupabase.from.mockReturnThis();
+    mockSupabaseAdmin.from.mockReturnThis();
+    mockSupabaseAdmin.upsert.mockReturnThis();
   });
 
   describe("GET", () => {
@@ -39,12 +28,11 @@ describe("/api/chats", () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: "user-1" } },
       });
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [{ id: "c1", title: "Chat 1" }],
-          error: null,
-        }),
+      
+      // Override for specific return
+      mockSupabase.order.mockResolvedValue({
+        data: [{ id: "c1", title: "Chat 1" }],
+        error: null,
       });
 
       const res = await GET();
@@ -58,9 +46,9 @@ describe("/api/chats", () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: "user-1" } },
       });
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({ data: null, error: { message: "err" } }),
+      mockSupabase.order.mockResolvedValue({
+        data: null,
+        error: { message: "err" },
       });
 
       const res = await GET();
@@ -82,17 +70,12 @@ describe("/api/chats", () => {
       });
 
       // Provisioning mocks
-      const upsertMock = vi.fn().mockResolvedValue({ error: null });
-      mockSupabaseAdmin.from.mockReturnValue({ upsert: upsertMock });
+      mockSupabaseAdmin.upsert.mockResolvedValue({ error: null });
 
       // Create chat mock
-      mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: "new-chat", title: "My Chat" },
-          error: null,
-        }),
+      mockSupabase.single.mockResolvedValue({
+        data: { id: "new-chat", title: "My Chat" },
+        error: null,
       });
 
       const req = new NextRequest("http://localhost", {
@@ -104,7 +87,7 @@ describe("/api/chats", () => {
 
       expect(res.status).toBe(201);
       expect(json.chat.title).toBe("My Chat");
-      expect(upsertMock).toHaveBeenCalledTimes(3); // profiles, settings, secrets
+      expect(mockSupabaseAdmin.upsert).toHaveBeenCalledTimes(3); // profiles, settings, secrets
     });
 
     it("handles invalid body", async () => {
@@ -112,9 +95,7 @@ describe("/api/chats", () => {
         data: { user: { id: "user-1" } },
       });
       // Provisioning succeeds
-      mockSupabaseAdmin.from.mockReturnValue({
-        upsert: vi.fn().mockResolvedValue({ error: null }),
-      });
+      mockSupabaseAdmin.upsert.mockResolvedValue({ error: null });
 
       const req = new NextRequest("http://localhost", {
         method: "POST",
@@ -129,9 +110,7 @@ describe("/api/chats", () => {
         data: { user: { id: "user-1" } },
       });
       // Provisioning fails
-      mockSupabaseAdmin.from.mockReturnValue({
-        upsert: vi.fn().mockResolvedValue({ error: { message: "fail" } }),
-      });
+      mockSupabaseAdmin.upsert.mockResolvedValue({ error: { message: "fail" } });
 
       const req = new NextRequest("http://localhost", { method: "POST" });
       const res = await POST(req);
@@ -139,4 +118,3 @@ describe("/api/chats", () => {
     });
   });
 });
-

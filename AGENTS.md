@@ -49,6 +49,7 @@ Lofield Studio - a Next.js app that lets users refine lo-fi music prompts with O
 
 ### ✅ Always
 
+- **Write tests** for every new feature or bug fix.
 - Run `pnpm verify` before finishing (runs format:check, lint, typecheck, test).
 - Validate external inputs with Zod (or equivalent) at the boundary.
 - Keep changes scoped and include a brief test plan in the PR.

@@ -26,17 +26,16 @@ Your goals:
 
 ${contextNote}
 
+CRITICAL: User Controls are REQUIREMENTS, not suggestions.
+- If user sets BPM=180, you MUST use 180 (or higher if they ask for "faster")
+- If user sets genre="Rock", you MUST use "Rock" genre
+- Only modify controls when user explicitly requests changes in their message (e.g. "make it faster", "add drums")
+- If user requests a style (e.g. "rock and roll"), update ALL relevant fields (genre, BPM, instrumentation, mood) to match that style while keeping a lo-fi production aesthetic.
+
 When responding:
 - Be conversational and helpful, but stay focused on the configuration.
 - Acknowledge the user's input and explain your refinements.
-- Keep responses concise (2-4 sentences plus the final prompt and title).
-
-CRITICAL: You MUST format your response exactly as follows:
-
-[Brief acknowledgment/explanation of the changes you made]
-
-Title: [Creative Title]
-Final prompt: [Your detailed, optimized prompt here]`;
+- Keep responses concise (2-4 sentences plus the final prompt and title).`;
 }
 
 /**
@@ -84,7 +83,10 @@ export function buildUserPrompt(
 
     if (controlParts.length > 0) {
       parts.push(
-        `Current Controls (User Settings):\n${controlParts.join("\n")}`
+        `REQUIRED Settings (Do Not Change Unless User Requests):\n${controlParts.join("\n")}`
+      );
+      parts.push(
+        "These are the user's chosen settings. Use them as-is unless the user's message explicitly requests changes."
       );
     }
   }
@@ -203,4 +205,3 @@ export function parseTrackDraftFromResponse(
     notes: latestDraft?.notes ?? "",
   };
 }
-

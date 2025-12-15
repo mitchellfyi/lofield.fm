@@ -39,6 +39,7 @@ Lofield Studio - Next.js + TypeScript app with Supabase Auth/DB/Storage, OpenAI 
 
 ## Non-negotiables
 
+- **Testing**: All new features and fixes must include tests.
 - Secrets: never in the browser. Store per-user provider keys in Supabase Vault and retrieve server-side only.
 - Security: RLS must prevent cross-user access by guessed IDs.
 - Storage: private bucket; playback via signed URLs only.
@@ -46,7 +47,7 @@ Lofield Studio - Next.js + TypeScript app with Supabase Auth/DB/Storage, OpenAI 
 
 ## Workflow
 
-- Prefer: read relevant files -> propose plan -> implement -> run `pnpm verify` -> update docs -> commit.
+- Prefer: read relevant files -> propose plan -> **write tests** -> implement -> run `pnpm verify` -> update docs -> commit.
 - Do not "fix" failing tests by deleting them.
 
 ## Code style

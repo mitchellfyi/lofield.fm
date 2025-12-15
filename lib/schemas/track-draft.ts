@@ -11,15 +11,22 @@ export const TrackDraftSchema = z.object({
   prompt_final: z.string().min(1).max(2000), // Eleven-ready, single prompt
   genre: z.string().min(1).max(100),
   bpm: z.number().min(40).max(220),
-  instrumentation: z.array(z.string()).default([]),
+  instrumentation: z
+    .array(z.string())
+    .default([])
+    .describe("List of instruments"),
   mood: z.object({
-    energy: z.number().min(0).max(100),
-    focus: z.number().min(0).max(100),
-    chill: z.number().min(0).max(100),
+    energy: z.number().min(0).max(100).describe("0-100 energy level"),
+    focus: z.number().min(0).max(100).describe("0-100 focus level"),
+    chill: z.number().min(0).max(100).describe("0-100 chill level"),
   }),
-  length_ms: z.number().min(3000).max(300000), // ElevenLabs: 3s-5min
-  instrumental: z.boolean(),
-  tags: z.array(z.string()).default([]),
+  length_ms: z
+    .number()
+    .min(3000)
+    .max(300000)
+    .describe("Length in milliseconds (3000-300000)"),
+  instrumental: z.boolean().describe("Whether the track is instrumental"),
+  tags: z.array(z.string()).default([]).describe("Relevant tags for the track"),
 
   // Optional fields
   key: z.string().nullable().optional(),

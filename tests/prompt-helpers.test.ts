@@ -38,14 +38,11 @@ describe("prompt-helpers", () => {
     });
 
     it("includes previous draft", () => {
-      const prompt = buildUserPrompt(
-        "tweak it",
-        undefined,
-        {
-          title: "Old Title",
-          prompt_final: "Old Prompt",
-        } as any
-      );
+      const draft = {
+        title: "Old Title",
+        prompt_final: "Old Prompt",
+      };
+      const prompt = buildUserPrompt("tweak it", undefined, draft);
       expect(prompt).toContain("Title: Old Title");
       expect(prompt).toContain('Previous Prompt: "Old Prompt"');
     });
@@ -81,23 +78,24 @@ Final prompt: A super cool track with drums.
     });
 
     it("falls back to previous values", () => {
+      const draftInput = {
+        title: "Old Title",
+        prompt_final: "Old Prompt",
+      };
       const draft = parseTrackDraftFromResponse(
         "Just text",
         undefined,
-        { title: "Old Title", prompt_final: "Old Prompt" } as any
+        draftInput
       );
       expect(draft.title).toBe("Old Title");
       expect(draft.prompt_final).toBe("Old Prompt");
     });
 
     it("merges controls", () => {
-      const draft = parseTrackDraftFromResponse(
-        "resp",
-        { bpm: 100 } as any,
-        { bpm: 80 } as any
-      );
+      const controls = { bpm: 100 };
+      const latestDraft = { bpm: 80 };
+      const draft = parseTrackDraftFromResponse("resp", controls, latestDraft);
       expect(draft.bpm).toBe(100);
     });
   });
 });
-

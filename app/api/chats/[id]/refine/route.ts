@@ -1,23 +1,15 @@
 import { getOpenAIKeyForUser } from "@/lib/secrets";
-import {
-  RefineInputSchema,
-  TrackDraftSchema,
-  type TrackDraft,
-  type RefineInput,
-} from "@/lib/schemas/track-draft";
+import { RefineInputSchema, TrackDraftSchema } from "@/lib/schemas/track-draft";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { generateObject } from "ai";
+import { z } from "zod";
 import type { NextRequest } from "next/server";
 import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
 import { logUsageEvent, calculateOpenAICost } from "@/lib/usage-tracking";
 import { randomUUID } from "crypto";
 import { validateGenerationParams, checkPromptSafety } from "@/lib/validation";
-import {
-  buildSystemPrompt,
-  buildUserPrompt,
-  parseTrackDraftFromResponse,
-} from "@/lib/prompt-helpers";
+import { buildSystemPrompt, buildUserPrompt } from "@/lib/prompt-helpers";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -183,129 +175,115 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const openai = createOpenAI({ apiKey });
 
-    // Use streamText with structured output
-    const result = await streamText({
+    // We need to modify the System Prompt to remove the "text format" instructions
+    // because `generateObject` handles the formatting.
+    const systemPromptForObject = systemPrompt.replace(
+      /CRITICAL: You MUST format your response exactly as follows:[\s\S]*$/,
+      "Return a JSON object with a 'reply' field (conversational explanation) and a 'draft' field (the track configuration)."
+    );
+
+    const {
+      object: aiData,
+      usage,
+      response: providerResponse,
+    } = await generateObject({
       model: openai("gpt-4o-mini"),
-      system: systemPrompt,
+      schema: z.object({
+        reply: z
+          .string()
+          .describe(
+            "Conversational response to the user explaining the changes"
+          ),
+        draft: TrackDraftSchema.describe("The updated track configuration"),
+      }),
+      system: systemPromptForObject,
       prompt: userPrompt,
-      onFinish: async ({ text, usage, response }) => {
-        const durationMs = Date.now() - startTime;
+    });
 
-        // Parse the AI response to extract TrackDraft
-        const trackDraft = parseTrackDraftFromResponse(
-          text,
-          controls,
-          latest_draft
-        );
+    const durationMs = Date.now() - startTime;
+    const trackDraft = aiData.draft;
+    const textReply = aiData.reply;
 
-        // Validate the TrackDraft
-        const validationResult = TrackDraftSchema.safeParse(trackDraft);
+    // Save assistant message
+    const { data: savedMessage, error: saveMsgError } = await supabase
+      .from("chat_messages")
+      .insert({
+        chat_id: chatId,
+        role: "assistant",
+        content: textReply,
+        draft_spec: trackDraft, // It is already validated by generateObject!
+      })
+      .select("id")
+      .single();
 
-        if (!validationResult.success) {
-          console.error("TrackDraft validation failed", {
-            errors: validationResult.error.flatten(),
-            draft: trackDraft,
-          });
-          // Still save the message but without draft_spec
-          await supabase.from("chat_messages").insert({
-            chat_id: chatId,
-            role: "assistant",
-            content: text,
-            draft_spec: null,
-          });
+    if (saveMsgError) {
+      console.error("Failed to save assistant message", {
+        chatId,
+        error: saveMsgError.message,
+      });
+    }
 
-          // Log usage event with error
-          await logUsageEvent({
-            userId,
-            chatId,
-            actionGroupId,
-            actionType: "refine_prompt",
-            provider: "openai",
-            providerOperation: "responses.streamText",
-            providerRequestId: response?.id,
-            model: "gpt-4o-mini",
-            inputTokens: usage?.inputTokens,
-            outputTokens: usage?.outputTokens,
-            totalTokens: usage?.totalTokens,
-            status: "error",
-            errorMessage: "TrackDraft validation failed",
-            latencyMs: durationMs,
-          });
-          return;
-        }
+    // Update chat's updated_at and title if available
+    const updatePayload: Record<string, string> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (trackDraft.title) {
+      updatePayload.title = trackDraft.title;
+    }
 
-        // Save assistant message with validated draft_spec
-        const { data: savedMessage, error: saveMsgError } = await supabase
-          .from("chat_messages")
-          .insert({
-            chat_id: chatId,
-            role: "assistant",
-            content: text,
-            draft_spec: validationResult.data,
-          })
-          .select("id")
-          .single();
+    await supabase.from("chats").update(updatePayload).eq("id", chatId);
 
-        if (saveMsgError) {
-          console.error("Failed to save assistant message", {
-            chatId,
-            error: saveMsgError.message,
-          });
-        }
+    // Rate limits & Usage tracking
+    await incrementRateLimit(userId, "refine");
 
-        // Update chat's updated_at and title if available
-        const updatePayload: Record<string, string> = { updated_at: new Date().toISOString() };
-        if (trackDraft.title) {
-          updatePayload.title = trackDraft.title;
-        }
+    let costUsd: number | undefined;
+    let costNotes: string | undefined;
 
-        await supabase
-          .from("chats")
-          .update(updatePayload)
-          .eq("id", chatId);
+    if (usage?.inputTokens && usage?.outputTokens) {
+      const cost = await calculateOpenAICost({
+        model: "gpt-4o-mini",
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+      });
+      if (cost) {
+        costUsd = cost.costUsd;
+        costNotes = cost.costNotes;
+      }
+    }
 
-        // Increment rate limit counter
-        await incrementRateLimit(userId, "refine");
+    await logUsageEvent({
+      userId,
+      chatId,
+      chatMessageId: savedMessage?.id ?? undefined,
+      actionGroupId,
+      actionType: "refine_prompt",
+      provider: "openai",
+      providerOperation: "generateObject",
+      providerRequestId: providerResponse?.id,
+      model: "gpt-4o-mini",
+      inputTokens: usage?.inputTokens,
+      outputTokens: usage?.outputTokens,
+      totalTokens: usage?.totalTokens,
+      costUsd,
+      costNotes,
+      status: "ok",
+      latencyMs: durationMs,
+    });
 
-        // Calculate cost from pricing table
-        let costUsd: number | undefined;
-        let costNotes: string | undefined;
-
-        if (usage?.inputTokens && usage?.outputTokens) {
-          const cost = await calculateOpenAICost({
-            model: "gpt-4o-mini",
-            inputTokens: usage.inputTokens,
-            outputTokens: usage.outputTokens,
-          });
-          if (cost) {
-            costUsd = cost.costUsd;
-            costNotes = cost.costNotes;
-          }
-        }
-
-        // Log usage event
-        await logUsageEvent({
-          userId,
-          chatId,
-          chatMessageId: savedMessage?.id ?? undefined,
-          actionGroupId,
-          actionType: "refine_prompt",
-          provider: "openai",
-          providerOperation: "responses.streamText",
-          providerRequestId: response?.id,
-          model: "gpt-4o-mini",
-          inputTokens: usage?.inputTokens,
-          outputTokens: usage?.outputTokens,
-          totalTokens: usage?.totalTokens,
-          costUsd,
-          costNotes,
-          status: "ok",
-          latencyMs: durationMs,
-        });
+    // Stream the text reply back to the client
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(textReply);
+        controller.close();
       },
     });
 
-    return result.toTextStreamResponse();
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Vercel-AI-Data-Stream": "v1",
+      },
+    });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     console.error("Failed to refine prompt", {
@@ -319,7 +297,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       actionGroupId,
       actionType: "refine_prompt",
       provider: "openai",
-      providerOperation: "responses.streamText",
+      providerOperation: "generateObject",
       model: "gpt-4o-mini",
       status: "error",
       errorMessage,

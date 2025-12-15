@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, PATCH, DELETE } from "@/app/api/chats/[id]/route";
 import { NextRequest } from "next/server";
+import { mockSupabase } from "@/lib/supabase/__mocks__/server";
 
-// Mock Supabase
+vi.mock("@/lib/supabase/server");
+
 const mockUser = { id: "user-123", email: "test@example.com" };
 const mockChat = { id: "chat-1", user_id: "user-123", title: "My Chat" };
 const mockOtherUserChat = {
@@ -10,18 +12,6 @@ const mockOtherUserChat = {
   user_id: "other-user",
   title: "Other Chat",
 };
-
-const mockSupabase = {
-  auth: {
-    getUser: vi.fn(),
-    getSession: vi.fn(),
-  },
-  from: vi.fn(),
-};
-
-vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabaseClient: () => Promise.resolve(mockSupabase),
-}));
 
 describe("/api/chats/[id]", () => {
   beforeEach(() => {
@@ -34,16 +24,12 @@ describe("/api/chats/[id]", () => {
       data: { session: { user: mockUser } },
       error: null,
     });
+    mockSupabase.from.mockReturnThis();
   });
 
   describe("GET", () => {
     it("returns chat if owned by user", async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: mockChat, error: null }),
-      });
+      mockSupabase.single.mockResolvedValue({ data: mockChat, error: null });
 
       const req = new NextRequest(`http://localhost/api/chats/${mockChat.id}`);
       const res = await GET(req, {
@@ -56,13 +42,9 @@ describe("/api/chats/[id]", () => {
     });
 
     it("returns 404 if chat not found", async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi
-          .fn()
-          .mockResolvedValue({ data: null, error: { code: "PGRST116" } }),
+      mockSupabase.single.mockResolvedValue({
+        data: null,
+        error: { code: "PGRST116" },
       });
 
       const req = new NextRequest("http://localhost/api/chats/missing");
@@ -76,20 +58,12 @@ describe("/api/chats/[id]", () => {
   describe("PATCH", () => {
     it("updates chat if owned by user", async () => {
       // First call checks ownership, second updates
-      const selectMock = vi
-        .fn()
+      mockSupabase.single
         .mockResolvedValueOnce({ data: mockChat, error: null }) // ownership check
         .mockResolvedValueOnce({
           data: { ...mockChat, title: "Updated" },
           error: null,
         }); // update result
-
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: selectMock,
-        update: vi.fn().mockReturnThis(),
-      });
 
       const req = new NextRequest(`http://localhost/api/chats/${mockChat.id}`, {
         method: "PATCH",
@@ -105,12 +79,9 @@ describe("/api/chats/[id]", () => {
     });
 
     it("returns 403 if chat owned by another user", async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi
-          .fn()
-          .mockResolvedValue({ data: mockOtherUserChat, error: null }),
+      mockSupabase.single.mockResolvedValue({
+        data: mockOtherUserChat,
+        error: null,
       });
 
       const req = new NextRequest(
@@ -129,12 +100,7 @@ describe("/api/chats/[id]", () => {
 
   describe("DELETE", () => {
     it("deletes chat if owned by user", async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: mockChat, error: null }),
-        delete: vi.fn().mockReturnThis(),
-      });
+      mockSupabase.single.mockResolvedValue({ data: mockChat, error: null });
 
       const req = new NextRequest(`http://localhost/api/chats/${mockChat.id}`, {
         method: "DELETE",
@@ -146,12 +112,9 @@ describe("/api/chats/[id]", () => {
     });
 
     it("returns 403 if chat owned by another user", async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi
-          .fn()
-          .mockResolvedValue({ data: mockOtherUserChat, error: null }),
+      mockSupabase.single.mockResolvedValue({
+        data: mockOtherUserChat,
+        error: null,
       });
 
       const req = new NextRequest(

@@ -35,7 +35,10 @@ describe("secrets", () => {
       });
 
       // Mock decryption RPC
-      mockSupabase.rpc.mockResolvedValue({ data: "decrypted-key", error: null });
+      mockSupabase.rpc.mockResolvedValue({
+        data: "decrypted-key",
+        error: null,
+      });
 
       const key = await getOpenAIKeyForUser("user-1");
       expect(key).toBe("decrypted-key");
@@ -168,4 +171,3 @@ describe("secrets", () => {
     });
   });
 });
-

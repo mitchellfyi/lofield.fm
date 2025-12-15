@@ -4,6 +4,7 @@ You are working on Lofield Studio (Next.js + TypeScript + Supabase + Vercel).
 
 Follow these rules:
 
+- **Write tests** for every new feature or bug fix you implement.
 - Never commit or log secrets. API keys are stored server-side in Supabase Vault.
 - Do not weaken RLS or make Supabase Storage public.
 - Prefer small, reviewable PRs with a clear test plan.

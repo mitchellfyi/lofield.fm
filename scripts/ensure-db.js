@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /* eslint-disable @typescript-eslint/no-require-imports */
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 const { spawnSync } = require("child_process");
 const path = require("path");

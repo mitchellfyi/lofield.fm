@@ -148,6 +148,44 @@ export function PromptBuilder({
     prevMessagesLengthRef.current = messages.length;
   }, [messages, streamMessages, setMessages]);
 
+  const [lastProcessedDraftId, setLastProcessedDraftId] = useState<
+    string | null
+  >(null);
+
+  // Sync UI controls with latest draft from messages
+  const latestDraftMessage = useMemo(() => {
+    return [...messages]
+      .filter((m) => m.draft_spec)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
+  }, [messages]);
+
+  if (latestDraftMessage && latestDraftMessage.id !== lastProcessedDraftId) {
+    const latestDraft = latestDraftMessage.draft_spec;
+    if (latestDraft) {
+      setLastProcessedDraftId(latestDraftMessage.id);
+      if (latestDraft.title) setTitle(latestDraft.title);
+      if (latestDraft.genre) setGenre(latestDraft.genre);
+      if (latestDraft.bpm) setBpm(latestDraft.bpm);
+      if (latestDraft.mood) {
+        if (latestDraft.mood.energy !== undefined)
+          setEnergy(Math.round(latestDraft.mood.energy * 100));
+        if (latestDraft.mood.focus !== undefined)
+          setFocus(Math.round(latestDraft.mood.focus * 100));
+        if (latestDraft.mood.chill !== undefined)
+          setChill(Math.round(latestDraft.mood.chill * 100));
+      }
+      if (latestDraft.instrumentation)
+        setInstrumentation(latestDraft.instrumentation);
+      if (latestDraft.length_ms)
+        setLengthMins(Math.round(latestDraft.length_ms / 60000));
+      if (latestDraft.instrumental !== undefined)
+        setInstrumental(latestDraft.instrumental);
+    }
+  }
+
   const isLoading = status === "streaming" || status === "submitted";
 
   // Combine persisted messages with streaming messages
@@ -196,6 +234,16 @@ export function PromptBuilder({
       input.trim() ||
       "Refine the track prompt using the current controls and draft.";
 
+    // Get latest draft from messages to provide context
+    const latestDraftMessage = [...messages]
+      .filter((m) => m.draft_spec)
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
+
+    const latestDraft = latestDraftMessage?.draft_spec ?? null;
+
     try {
       const response = await fetch(`/api/chats/${chatId}/refine`, {
         method: "POST",
@@ -203,7 +251,7 @@ export function PromptBuilder({
         body: JSON.stringify({
           message: refineMessage,
           controls: promptSpec,
-          latest_draft: null,
+          latest_draft: latestDraft,
         }),
       });
 

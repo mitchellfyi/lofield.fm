@@ -2,49 +2,35 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, PATCH } from "@/app/api/settings/route";
 import { POST as POSTSecrets } from "@/app/api/settings/secrets/route";
 import { NextRequest } from "next/server";
+import { mockSupabase, mockSupabaseAdmin } from "@/lib/supabase/__mocks__/server"; // Re-export admin from server mock? No, separate file.
+import { mockSupabaseAdmin as adminClient } from "@/lib/supabase/__mocks__/admin";
+import * as secrets from "@/lib/secrets";
 
 // Mock Supabase
-const mockSupabase = {
-  auth: {
-    getUser: vi.fn(),
-    getSession: vi.fn(),
-  },
-};
-
-const mockSupabaseAdmin = {
-  from: vi.fn(),
-};
-
-vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabaseClient: () => Promise.resolve(mockSupabase),
-}));
-
-vi.mock("@/lib/supabase/admin", () => ({
-  getServiceRoleClient: () => mockSupabaseAdmin,
-}));
+vi.mock("@/lib/supabase/server");
+vi.mock("@/lib/supabase/admin");
 
 // Mock lib/secrets
-vi.mock("@/lib/secrets", () => ({
-  getUserSecretStatus: vi.fn().mockResolvedValue({
-    hasOpenAIKey: true,
-    hasElevenLabsKey: false,
-  }),
-  storeSecretsForUser: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock("@/lib/secrets");
 
 describe("/api/settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSupabase.from.mockReturnThis();
+    adminClient.from.mockReturnThis();
+    
+    // Reset secrets default
+    vi.mocked(secrets.getUserSecretStatus).mockResolvedValue({
+      hasOpenAIKey: true,
+      hasElevenLabsKey: false,
+    });
   });
 
   describe("GET", () => {
     it("returns 401 if unauthorized", async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: null },
-      });
-      // Also mock getSession just in case
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: null },
+        error: null,
       });
       const res = await GET();
       expect(res.status).toBe(401);
@@ -53,18 +39,12 @@ describe("/api/settings", () => {
     it("returns settings", async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: "u1" } },
-      });
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: { user: { id: "u1" } } },
+        error: null,
       });
 
-      mockSupabaseAdmin.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn()
-          .mockResolvedValueOnce({ data: { artist_name: "Artist" } }) // profile
-          .mockResolvedValueOnce({ data: { openai_model: "gpt-4" } }), // settings
-      });
+      adminClient.maybeSingle
+        .mockResolvedValueOnce({ data: { artist_name: "Artist" }, error: null }) // profile
+        .mockResolvedValueOnce({ data: { openai_model: "gpt-4" }, error: null }); // settings
 
       const res = await GET();
       const json = await res.json();
@@ -78,18 +58,17 @@ describe("/api/settings", () => {
     it("updates settings", async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: "u1" } },
-      });
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: { user: { id: "u1" } } },
+        error: null,
       });
 
-      mockSupabaseAdmin.from.mockReturnValue({
-        upsert: vi.fn().mockResolvedValue({ error: null }),
-      });
+      adminClient.upsert.mockResolvedValue({ error: null });
 
       const req = new NextRequest("http://localhost", {
         method: "PATCH",
-        body: JSON.stringify({ artist_name: "New Name", openai_model: "gpt-5" }),
+        body: JSON.stringify({
+          artist_name: "New Name",
+          openai_model: "gpt-5",
+        }),
       });
       const res = await PATCH(req);
       expect(res.status).toBe(200);
@@ -98,14 +77,10 @@ describe("/api/settings", () => {
     it("handles db error", async () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: "u1" } },
-      });
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: { user: { id: "u1" } } },
+        error: null,
       });
 
-      mockSupabaseAdmin.from.mockReturnValue({
-        upsert: vi.fn().mockResolvedValue({ error: { message: "err" } }),
-      });
+      adminClient.upsert.mockResolvedValue({ error: { message: "err" } });
 
       const req = new NextRequest("http://localhost", {
         method: "PATCH",
@@ -118,12 +93,15 @@ describe("/api/settings", () => {
 });
 
 describe("/api/settings/secrets", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSupabase.from.mockReturnThis();
+  });
+
   it("stores secrets", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: "u1" } },
-    });
-    mockSupabase.auth.getSession.mockResolvedValue({
-      data: { session: { user: { id: "u1" } } },
+      error: null,
     });
 
     const req = new NextRequest("http://localhost", {
@@ -132,14 +110,13 @@ describe("/api/settings/secrets", () => {
     });
     const res = await POSTSecrets(req);
     expect(res.status).toBe(200);
+    expect(secrets.storeSecretsForUser).toHaveBeenCalled();
   });
 
   it("requires at least one key", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: "u1" } },
-    });
-    mockSupabase.auth.getSession.mockResolvedValue({
-      data: { session: { user: { id: "u1" } } },
+      error: null,
     });
 
     const req = new NextRequest("http://localhost", {
@@ -150,4 +127,3 @@ describe("/api/settings/secrets", () => {
     expect(res.status).toBe(400);
   });
 });
-

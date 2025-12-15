@@ -5,24 +5,36 @@ import { POST as LegacyGeneratePOST } from "@/app/api/chats/[id]/generate/route"
 import { GET as PlayGET } from "@/app/api/tracks/[id]/play/route";
 import { NextRequest } from "next/server";
 
-// Mock Deps
-const mockSupabase = {
-  auth: {
-    getUser: vi.fn(),
-    getSession: vi.fn(),
-  },
-  from: vi.fn(),
-  storage: {
-    from: vi.fn(),
-  },
-};
-
-const mockSupabaseAdmin = {
-  from: vi.fn(),
-  storage: {
-    from: vi.fn(),
-  },
-};
+// Hoist mocks to ensure they are available in factories
+const { mockSupabase, mockSupabaseAdmin, mockElevenLabs } = vi.hoisted(() => {
+  return {
+    mockSupabase: {
+      auth: {
+        getUser: vi.fn(),
+        getSession: vi.fn(),
+      },
+      from: vi.fn(),
+      storage: {
+        from: vi.fn(),
+      },
+    },
+    mockSupabaseAdmin: {
+      from: vi.fn(),
+      storage: {
+        from: vi.fn(),
+      },
+    },
+    mockElevenLabs: {
+      generateMusic: vi.fn().mockResolvedValue({
+        audioBuffer: new Uint8Array([1, 2, 3]),
+        audioBytes: 3,
+        audioSeconds: 10,
+        requestId: "rid",
+        latencyMs: 100,
+      }),
+    },
+  };
+});
 
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: () => Promise.resolve(mockSupabase),
@@ -46,26 +58,57 @@ vi.mock("@/lib/rate-limiting", () => ({
 
 // Mock validation
 vi.mock("@/lib/validation", async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import("@/lib/validation")>();
   return {
     ...actual,
-    validateGenerationParams: vi.fn().mockReturnValue({ valid: true, errors: [] }),
+    validateGenerationParams: vi
+      .fn()
+      .mockReturnValue({ valid: true, errors: [] }),
   };
 });
 
-vi.mock("@/lib/elevenlabs", () => ({
-  generateMusic: vi.fn().mockResolvedValue({
-    audioBuffer: new Uint8Array([1, 2, 3]),
-    audioBytes: 3,
-    audioSeconds: 10,
-    requestId: "rid",
-    latencyMs: 100,
-  }),
+vi.mock("@/lib/usage-tracking", () => ({
+  logUsageEvent: vi.fn(),
+  calculateOpenAICost: vi.fn(),
 }));
 
+vi.mock("@/lib/elevenlabs", () => mockElevenLabs);
+
+// Mock AI SDK
 vi.mock("ai", () => ({
-  streamText: vi.fn().mockResolvedValue({
-    toTextStreamResponse: () => new Response("stream"),
+  streamText: vi.fn().mockImplementation(async ({ onFinish }) => {
+    if (onFinish) {
+      // Simulate finish
+      await onFinish({
+        text: "assistant reply",
+        usage: { inputTokens: 10, outputTokens: 20 },
+        response: { id: "resp-1" },
+      });
+    }
+    return {
+      toTextStreamResponse: () => new Response("stream"),
+    };
+  }),
+  generateObject: vi.fn().mockImplementation(async () => {
+    // Generate dummy object based on schema if needed or return fixed
+    return {
+      object: {
+        reply: "Refined prompt",
+        draft: {
+          title: "New Title",
+          prompt_final: "New Prompt",
+          genre: "lofi",
+          bpm: 80,
+          mood: { energy: 50, focus: 50, chill: 50 },
+          instrumentation: ["piano"],
+          length_ms: 120000,
+          instrumental: true,
+          tags: ["chill"],
+        },
+      },
+      usage: { inputTokens: 10, outputTokens: 20 },
+      response: { id: "resp-obj" },
+    };
   }),
 }));
 
@@ -89,11 +132,13 @@ describe("Track APIs", () => {
   });
 
   describe("refine", () => {
-    it("refines prompt", async () => {
+    it("refines prompt and saves draft", async () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
         insert: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({ data: null }),
         update: vi.fn().mockReturnThis(),
@@ -103,7 +148,9 @@ describe("Track APIs", () => {
         method: "POST",
         body: JSON.stringify({ message: "more bass" }),
       });
-      const res = await RefinePOST(req, { params: Promise.resolve({ id: "c1" }) });
+      const res = await RefinePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
       expect(res.status).toBe(200);
     });
 
@@ -111,7 +158,9 @@ describe("Track APIs", () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
         maybeSingle: vi.fn().mockResolvedValue({ data: null }),
       });
 
@@ -119,20 +168,24 @@ describe("Track APIs", () => {
         method: "POST",
         body: JSON.stringify({ message: "" }), // empty
       });
-      const res = await RefinePOST(req, { params: Promise.resolve({ id: "c1" }) });
+      const res = await RefinePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
       expect(res.status).toBe(400);
     });
   });
 
   describe("tracks/generate", () => {
-    it("starts generation", async () => {
+    it("starts generation and uploads file", async () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         not: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         limit: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
         insert: vi.fn().mockReturnThis(),
       });
 
@@ -203,27 +256,193 @@ describe("Track APIs", () => {
         };
       });
 
-      mockSupabase.storage.from.mockReturnValue({
-        upload: vi.fn().mockResolvedValue({ data: { path: "p" }, error: null }),
-        createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: "url" } }),
+      const uploadMock = vi
+        .fn()
+        .mockResolvedValue({ data: { path: "p" }, error: null });
+      mockSupabaseAdmin.storage.from.mockReturnValue({
+        upload: uploadMock,
       });
 
-      mockSupabaseAdmin.storage.from.mockReturnValue({
-        upload: vi.fn().mockResolvedValue({ data: { path: "p" }, error: null }),
+      mockSupabaseAdmin.from.mockReturnValue({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
       });
 
       const req = new NextRequest("http://localhost", {
         method: "POST",
         body: JSON.stringify({}),
       });
-      const res = await GeneratePOST(req, { params: Promise.resolve({ id: "c1" }) });
+      const res = await GeneratePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
       expect(res.status).toBe(200);
+
+      // Wait for background process
+      await vi.waitUntil(() => uploadMock.mock.calls.length > 0, {
+        timeout: 1000,
+        interval: 5,
+      });
+    });
+
+    it("handles background generation failure", async () => {
+      mockElevenLabs.generateMusic.mockRejectedValueOnce(
+        new Error("Generation failed")
+      );
+
+      const updateMock = vi.fn().mockReturnThis();
+      mockSupabaseAdmin.from.mockReturnValue({
+        update: updateMock,
+        eq: vi.fn().mockReturnThis(),
+      });
+
+      // Reuse successful setup for the endpoint itself
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === "tracks") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({ data: [] }),
+            insert: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: "t1" } }),
+          };
+        }
+        if (table === "chat_messages") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            not: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({
+              data: [
+                {
+                  draft_spec: {
+                    title: "T",
+                    description: "D",
+                    prompt_final: "P",
+                    genre: "lofi",
+                    bpm: 80,
+                    instrumentation: [],
+                    mood: { energy: 50, focus: 50, chill: 50 },
+                    length_ms: 10000,
+                    instrumental: true,
+                    tags: [],
+                  },
+                },
+              ],
+            }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+          update: vi.fn().mockReturnThis(),
+        };
+      });
+
+      const req = new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      const res = await GeneratePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
+      expect(res.status).toBe(200);
+
+      await vi.waitUntil(() => updateMock.mock.calls.length > 0, {
+        timeout: 1000,
+        interval: 5,
+      });
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "failed" })
+      );
+    });
+
+    it("handles upload failure", async () => {
+      const uploadMock = vi
+        .fn()
+        .mockResolvedValue({ data: null, error: { message: "Upload failed" } });
+      mockSupabaseAdmin.storage.from.mockReturnValue({
+        upload: uploadMock,
+      });
+
+      const updateMock = vi.fn().mockReturnThis();
+      mockSupabaseAdmin.from.mockReturnValue({
+        update: updateMock,
+        eq: vi.fn().mockReturnThis(),
+      });
+
+      // Valid spec needed
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === "chat_messages") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            not: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({
+              data: [
+                {
+                  draft_spec: {
+                    title: "T",
+                    description: "D",
+                    prompt_final: "P",
+                    genre: "lofi",
+                    bpm: 80,
+                    instrumentation: [],
+                    mood: { energy: 50, focus: 50, chill: 50 },
+                    length_ms: 10000,
+                    instrumental: true,
+                    tags: [],
+                  },
+                },
+              ],
+            }),
+          };
+        }
+        if (table === "tracks") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({ data: [] }),
+            insert: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: "t1" } }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+          update: vi.fn().mockReturnThis(),
+        };
+      });
+
+      const req = new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      const res = await GeneratePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
+      expect(res.status).toBe(200);
+
+      await vi.waitUntil(() => uploadMock.mock.calls.length > 0, {
+        timeout: 1000,
+        interval: 5,
+      });
+      expect(uploadMock).toHaveBeenCalled();
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "failed" })
+      );
     });
   });
 
   describe("legacy generate", () => {
     it("works like tracks/generate", async () => {
-      // Re-use logic from above, just simple check
       mockSupabase.from.mockImplementation((table) => {
         if (table === "chat_messages") {
           return {
@@ -255,7 +474,9 @@ describe("Track APIs", () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
             update: vi.fn().mockReturnThis(),
           };
         }
@@ -271,16 +492,28 @@ describe("Track APIs", () => {
         return {};
       });
 
-      mockSupabase.storage.from.mockReturnValue({
-        upload: vi.fn().mockResolvedValue({ data: { path: "p" }, error: null }),
-      });
+      const uploadMock = vi
+        .fn()
+        .mockResolvedValue({ data: { path: "p" }, error: null });
       mockSupabaseAdmin.storage.from.mockReturnValue({
-        upload: vi.fn().mockResolvedValue({ data: { path: "p" }, error: null }),
+        upload: uploadMock,
+      });
+      mockSupabaseAdmin.from.mockReturnValue({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
       });
 
       const req = new NextRequest("http://localhost", { method: "POST" });
-      const res = await LegacyGeneratePOST(req, { params: Promise.resolve({ id: "c1" }) });
+      const res = await LegacyGeneratePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
       expect(res.status).toBe(200);
+
+      await vi.waitUntil(() => uploadMock.mock.calls.length > 0, {
+        timeout: 1000,
+        interval: 5,
+      });
+      expect(uploadMock).toHaveBeenCalled();
     });
   });
 
@@ -313,4 +546,3 @@ describe("Track APIs", () => {
     });
   });
 });
-

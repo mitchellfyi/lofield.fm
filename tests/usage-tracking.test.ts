@@ -38,7 +38,9 @@ describe("usage-tracking", () => {
     });
 
     it("logs error to console if insert fails", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockSupabaseAdmin.from.mockReturnValue({
         insert: vi.fn().mockResolvedValue({ error: { code: "fail" } }),
       });
@@ -108,4 +110,3 @@ describe("usage-tracking", () => {
     });
   });
 });
-

@@ -152,7 +152,7 @@ export function StudioShell({
     handleRefresh();
     // Then select it after a tiny delay to ensure list is populated
     setTimeout(() => {
-        setSelectedTrackId(trackId);
+      setSelectedTrackId(trackId);
     }, 100);
   }
 

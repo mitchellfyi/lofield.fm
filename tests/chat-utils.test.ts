@@ -28,10 +28,7 @@ describe("chat utils", () => {
       // Let's match current implementation for coverage, or update if we consider it a bug.
       // The implementation: try { return JSON.stringify(part); }
       expect(
-        normalizeContent([
-          { type: "image" },
-          { type: "text", text: "hi" },
-        ])
+        normalizeContent([{ type: "image" }, { type: "text", text: "hi" }])
       ).toBe('{"type":"image"}hi');
     });
 
@@ -83,4 +80,3 @@ describe("chat utils", () => {
     });
   });
 });
-
