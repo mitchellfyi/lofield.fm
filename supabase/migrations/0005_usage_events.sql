@@ -51,9 +51,7 @@ alter table public.usage_events enable row level security;
 create policy "Users can view their usage events" on public.usage_events
   for select using (auth.uid() = user_id);
 
-create policy "Users can insert their usage events" on public.usage_events
-  for insert with check (auth.uid() = user_id);
-
+-- Removed insert policy: only service role can insert into usage_events
 -- Server-side insert will use service role which bypasses RLS
 -- But RLS policies ensure client-side access is still protected
 
