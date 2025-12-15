@@ -15,11 +15,11 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -60,11 +60,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -108,11 +108,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

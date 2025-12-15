@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChatListSidebar } from "./chat-list-sidebar";
 import { PromptBuilder } from "./prompt-builder";
 import { TrackPlayer } from "./track-player";
@@ -52,7 +52,7 @@ type Props = {
 };
 
 export function StudioShell({ userEmail }: Props) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
@@ -116,23 +116,29 @@ export function StudioShell({ userEmail }: Props) {
     };
   }, [selectedChatId, refreshKey, supabase]);
 
-  async function handleCreateChat() {
-    const { data, error } = await supabase
-      .from("chats")
-      .insert({ title: "New chat" })
-      .select()
-      .single();
+  const handleCreateChat = useCallback(async () => {
+    const response = await fetch("/api/chats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New track" }),
+    });
 
-    if (!error && data) {
-      setSelectedChatId(data.id);
-      setRefreshKey((k) => k + 1);
+    if (!response.ok) {
+      console.error("Failed to create chat");
+      return;
     }
-  }
 
-  function handleSelectChat(chatId: string) {
+    const { chat } = (await response.json()) as { chat?: { id: string } };
+    if (!chat?.id) return;
+
+    setSelectedChatId(chat.id);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const handleSelectChat = useCallback((chatId: string) => {
     setSelectedChatId(chatId);
     setSelectedTrackId(null);
-  }
+  }, []);
 
   function handleRefresh() {
     setRefreshKey((k) => k + 1);
@@ -150,30 +156,6 @@ export function StudioShell({ userEmail }: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-emerald-700">
-            Lofield Studio
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-600">{userEmail}</span>
-          <a
-            href="/settings"
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Settings
-          </a>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
-
       {/* Three-panel layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Panel A: Chat list sidebar */}
@@ -182,6 +164,7 @@ export function StudioShell({ userEmail }: Props) {
             selectedChatId={selectedChatId}
             onSelectChat={handleSelectChat}
             onCreateChat={handleCreateChat}
+            refreshKey={refreshKey}
           />
         </div>
 
@@ -189,7 +172,7 @@ export function StudioShell({ userEmail }: Props) {
         <div className="flex-1 overflow-hidden">
           <PromptBuilder
             chatId={selectedChatId}
-            chatTitle={selectedChat?.title ?? "New Chat"}
+            chatTitle={selectedChat?.title ?? "New Track"}
             messages={messages}
             onRefresh={handleRefresh}
             hasDraftSpec={hasDraftSpec}

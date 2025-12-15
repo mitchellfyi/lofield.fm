@@ -3,19 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.18.x",
+    "node": ">=20.18.0",
     "pnpm": "10.26.x"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "pnpm db:ensure && next dev --port 3003",
     "build": "next build",
     "start": "next start",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No unit tests configured yet\" && exit 0",
+    "test": "node --test",
     "test:e2e": "echo \"No e2e tests configured yet\" && exit 0",
+    "db:ensure": "node scripts/ensure-db.js",
+    "db:migrate": "supabase db push --db-url \"$SUPABASE_DB_URL\"",
     "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {

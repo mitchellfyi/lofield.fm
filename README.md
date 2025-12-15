@@ -26,7 +26,7 @@ Built from the Vercel Next.js AI Chatbot patterns and adapted to use Supabase (n
 
 ### Prereqs
 
-- Node 20.18.x
+- Node 20.18+ (24.x OK)
 - pnpm 10.26.x (`npm install -g pnpm@10.26.0`)
 - Supabase project (hosted or local via Supabase CLI)
 
@@ -62,7 +62,7 @@ ELEVENLABS_API_KEY=<optional fallback for development>
 ```bash
 pnpm install
 pnpm dev
-# open http://localhost:3000
+# open http://localhost:3003
 ```
 
 ### Verify before committing

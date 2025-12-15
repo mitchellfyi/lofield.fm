@@ -37,15 +37,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id: chatId } = await params;
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   // Check rate limit for refine operations
   const rateLimit = await checkRateLimit(userId, "refine");
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { data: profile } = await supabase
     .from("profiles")
     .select("artist_name")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
   const artistName = profile?.artist_name ?? null;

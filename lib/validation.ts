@@ -97,7 +97,6 @@ export function checkPromptSafety(prompt: string): {
   const artistMatches = prompt.matchAll(artistMentionPattern);
 
   for (const match of artistMatches) {
-    const artistName = match[1].trim();
     warnings.push(
       `Detected artist reference: "${match[0]}". Consider describing the musical elements you want instead of referencing specific artists.`
     );

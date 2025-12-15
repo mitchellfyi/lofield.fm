@@ -40,12 +40,12 @@ export async function middleware(request: NextRequest) {
   });
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Protect /app/* routes - redirect unauthenticated users to login
   const isAppRoute = request.nextUrl.pathname.startsWith("/app");
-  if (isAppRoute && !session) {
+  if (isAppRoute && !user) {
     const redirectUrl = new URL("/", request.url);
     redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);

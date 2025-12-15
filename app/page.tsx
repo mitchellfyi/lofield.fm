@@ -1,12 +1,17 @@
 import { AuthPanel } from "@/components/auth-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/app");
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50 text-slate-900">
@@ -25,8 +30,8 @@ export default async function Home() {
           </p>
         </div>
 
-        {session ? (
-          <ChatPanel userEmail={session.user.email ?? session.user.id} />
+        {user ? (
+          <ChatPanel userEmail={user.email ?? user.id} />
         ) : (
           <AuthPanel />
         )}

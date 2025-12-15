@@ -23,15 +23,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id: chatId } = await params;
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   // Check rate limit for generate operations
   const rateLimit = await checkRateLimit(userId, "generate");

@@ -38,15 +38,15 @@ const PatchSettingsSchema = z.object({
 export async function GET() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
   const supabaseAdmin = getServiceRoleClient();
 
   // Get profile data
@@ -83,11 +83,11 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -108,7 +108,7 @@ export async function PATCH(request: Request) {
 
   const { artist_name, openai_model, eleven_music_defaults, prompt_defaults } =
     parseResult.data;
-  const userId = session.user.id;
+  const userId = user.id;
   const supabaseAdmin = getServiceRoleClient();
 
   // Update profile if artist_name provided

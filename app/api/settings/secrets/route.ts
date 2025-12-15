@@ -11,11 +11,11 @@ const SecretsBodySchema = z.object({
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (error || !session) {
+  if (error || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await storeSecretsForUser(session.user.id, {
+    await storeSecretsForUser(user.id, {
       openaiApiKey,
       elevenlabsApiKey,
     });

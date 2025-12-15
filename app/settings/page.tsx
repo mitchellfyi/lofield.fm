@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/");
   }
 
@@ -34,7 +34,7 @@ export default async function SettingsPage() {
           </p>
         </div>
 
-        <SettingsPanel userEmail={session.user.email ?? session.user.id} />
+        <SettingsPanel userEmail={user.email ?? user.id} />
       </div>
     </main>
   );

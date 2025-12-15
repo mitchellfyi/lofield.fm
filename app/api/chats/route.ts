@@ -1,3 +1,4 @@
+import { getServiceRoleClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -10,11 +11,11 @@ const CreateChatSchema = z.object({
 export async function GET() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -37,13 +38,50 @@ export async function GET() {
 // POST /api/chats - create a new chat
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
+  const supabaseAdmin = getServiceRoleClient();
   const {
-    data: { session },
+    data: { user },
     error: authError,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (authError || !session) {
+  if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = user.id;
+
+  // Ensure required user rows exist (handles older accounts that skipped callback provisioning)
+  const provisionProfile = await supabaseAdmin
+    .from("profiles")
+    .upsert({ id: userId }, { onConflict: "id" });
+  if (provisionProfile.error) {
+    console.error("Failed to provision profile row", provisionProfile.error);
+    return NextResponse.json(
+      { error: "Failed to create chat" },
+      { status: 500 }
+    );
+  }
+
+  const provisionSettings = await supabaseAdmin
+    .from("user_settings")
+    .upsert({ user_id: userId }, { onConflict: "user_id" });
+  if (provisionSettings.error) {
+    console.error("Failed to provision user settings", provisionSettings.error);
+    return NextResponse.json(
+      { error: "Failed to create chat" },
+      { status: 500 }
+    );
+  }
+
+  const provisionSecrets = await supabaseAdmin
+    .from("user_secrets")
+    .upsert({ user_id: userId }, { onConflict: "user_id" });
+  if (provisionSecrets.error) {
+    console.error("Failed to provision user secrets", provisionSecrets.error);
+    return NextResponse.json(
+      { error: "Failed to create chat" },
+      { status: 500 }
+    );
   }
 
   let body: unknown;
@@ -66,8 +104,8 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("chats")
     .insert({
-      user_id: session.user.id,
-      title: title ?? "New chat",
+      user_id: userId,
+      title: title ?? "New track",
     })
     .select()
     .single();

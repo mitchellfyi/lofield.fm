@@ -5,17 +5,17 @@ import { redirect } from "next/navigation";
 export default async function AppPage() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // This should be handled by middleware, but double-check
-  if (!session) {
+  if (!user) {
     redirect("/");
   }
 
   return (
     <main className="h-screen bg-slate-50">
-      <StudioShell userEmail={session.user.email ?? session.user.id} />
+      <StudioShell userEmail={user.email ?? user.id} />
     </main>
   );
 }

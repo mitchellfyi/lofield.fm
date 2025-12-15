@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Chat = {
   id: string;
@@ -15,17 +15,19 @@ type Props = {
   selectedChatId: string | null;
   onSelectChat: (chatId: string) => void;
   onCreateChat: () => void;
+  refreshKey: number;
 };
 
 export function ChatListSidebar({
   selectedChatId,
   onSelectChat,
   onCreateChat,
+  refreshKey,
 }: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -46,6 +48,9 @@ export function ChatListSidebar({
           if (chatIds.length === 0) {
             setChats(chatsData);
             setLoading(false);
+            if (!selectedChatId) {
+              onCreateChat();
+            }
             return;
           }
 
@@ -70,6 +75,19 @@ export function ChatListSidebar({
           }));
 
           setChats(chatsWithCounts);
+
+          const hasSelection = chatsWithCounts.some(
+            (chat) => chat.id === selectedChatId
+          );
+
+          if (!hasSelection) {
+            const firstChat = chatsWithCounts[0];
+            if (firstChat) {
+              onSelectChat(firstChat.id);
+            } else {
+              onCreateChat();
+            }
+          }
         }
         setLoading(false);
       }
@@ -80,7 +98,7 @@ export function ChatListSidebar({
     return () => {
       isCancelled = true;
     };
-  }, [supabase]);
+  }, [supabase, refreshKey, selectedChatId, onCreateChat, onSelectChat]);
 
   const filteredChats = chats.filter((chat) =>
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -95,7 +113,7 @@ export function ChatListSidebar({
           onClick={onCreateChat}
           className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-emerald-700"
         >
-          New Chat
+          New Track
         </button>
       </div>
 

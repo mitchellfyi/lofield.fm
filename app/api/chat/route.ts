@@ -10,10 +10,10 @@ type IncomingMessage = { role: ChatRole; content: string };
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       content,
     })
   );
-  const apiKey = await getOpenAIKeyForUser(session.user.id);
+  const apiKey = await getOpenAIKeyForUser(user.id);
 
   if (!apiKey) {
     return new Response("Missing OpenAI API key", { status: 400 });
