@@ -97,7 +97,7 @@ export type ProviderSummary = {
   provider: "openai" | "elevenlabs";
   inputTokens?: number;
   outputTokens?: number;
-  totalTokens?: number;
+  totalTokens?: number; // For OpenAI: should equal inputTokens + outputTokens (stored in DB)
   creditsUsed?: number;
   audioSeconds?: number;
   requestCount: number;
@@ -112,7 +112,7 @@ export type ModelSummary = {
   provider: "openai" | "elevenlabs";
   inputTokens?: number;
   outputTokens?: number;
-  totalTokens?: number;
+  totalTokens?: number; // For OpenAI: should equal inputTokens + outputTokens (stored in DB)
   creditsUsed?: number;
   audioSeconds?: number;
   requestCount: number;

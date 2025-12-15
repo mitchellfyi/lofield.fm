@@ -160,20 +160,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build track summaries
-    const trackSummaries: TrackSummary[] = tracks.map((track) => {
-      const stats = trackMap.get(track.id)!;
-      return {
-        trackId: track.id,
-        title: track.title,
-        chatId: track.chat_id,
-        lengthMs: track.length_ms,
-        openaiTokensUsed: stats.openaiTokens,
-        elevenAudioSeconds: stats.elevenAudioSeconds,
-        elevenCredits: stats.elevenCredits,
-        totalCost: stats.totalCost,
-      };
-    });
+    // Build track summaries (only include tracks with events)
+    const trackSummaries: TrackSummary[] = tracks
+      .filter((track) => trackMap.has(track.id))
+      .map((track) => {
+        const stats = trackMap.get(track.id)!;
+        return {
+          trackId: track.id,
+          title: track.title,
+          chatId: track.chat_id,
+          lengthMs: track.length_ms,
+          openaiTokensUsed: stats.openaiTokens,
+          elevenAudioSeconds: stats.elevenAudioSeconds,
+          elevenCredits: stats.elevenCredits,
+          totalCost: stats.totalCost,
+        };
+      });
 
     // Sort by total cost (highest first)
     trackSummaries.sort((a, b) => b.totalCost - a.totalCost);

@@ -150,19 +150,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build chat summaries
-    const chatSummaries: ChatSummary[] = chats.map((chat) => {
-      const stats = chatMap.get(chat.id)!;
-      return {
-        chatId: chat.id,
-        title: chat.title,
-        lastActivity: stats.lastActivity,
-        openaiTokens: stats.openaiTokens,
-        openaiCost: stats.openaiCost,
-        elevenCredits: stats.elevenCredits,
-        tracksCount: stats.trackIds.size,
-      };
-    });
+    // Build chat summaries (only include chats with events)
+    const chatSummaries: ChatSummary[] = chats
+      .filter((chat) => chatMap.has(chat.id))
+      .map((chat) => {
+        const stats = chatMap.get(chat.id)!;
+        return {
+          chatId: chat.id,
+          title: chat.title,
+          lastActivity: stats.lastActivity,
+          openaiTokens: stats.openaiTokens,
+          openaiCost: stats.openaiCost,
+          elevenCredits: stats.elevenCredits,
+          tracksCount: stats.trackIds.size,
+        };
+      });
 
     // Sort by last activity (most recent first)
     chatSummaries.sort(
