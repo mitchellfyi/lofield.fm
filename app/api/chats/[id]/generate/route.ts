@@ -257,7 +257,8 @@ async function generateTrackAsync(params: {
       instrumental,
     });
 
-    const { audioBuffer } = result;
+    const { audioBuffer, audioBytes, audioSeconds, requestId, latencyMs } =
+      result;
 
     // Upload to Supabase Storage
     // Path format: {user_id}/{chat_id}/{track_id}.mp3
@@ -288,16 +289,21 @@ async function generateTrackAsync(params: {
       throw new Error(`Track update failed: ${updateError.message}`);
     }
 
-    // Log usage event
+    // Log usage event with success
     await logUsageEvent({
       userId,
       chatId,
       trackId,
-      actionType: "generate",
       actionGroupId,
+      actionType: "generate_track",
       provider: "elevenlabs",
+      providerOperation: "music.compose",
+      providerRequestId: requestId,
       model: "music_v1",
-      durationMs: Date.now() - startTime,
+      audioSeconds,
+      audioBytes,
+      status: "ok",
+      latencyMs,
     });
 
     console.log("Track generation completed", { trackId });
@@ -361,12 +367,14 @@ async function generateTrackAsync(params: {
       userId,
       chatId,
       trackId,
-      actionType: "generate",
       actionGroupId,
+      actionType: "generate_track",
       provider: "elevenlabs",
+      providerOperation: "music.compose",
       model: "music_v1",
-      durationMs: Date.now() - startTime,
-      error: errorPayload,
+      status: "error",
+      errorMessage: errorPayload.message as string,
+      latencyMs: Date.now() - startTime,
     });
   }
 }

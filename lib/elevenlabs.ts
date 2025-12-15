@@ -9,7 +9,10 @@ export type GenerateMusicParams = {
 
 export type GenerateMusicResult = {
   audioBuffer: Uint8Array;
-  durationMs: number;
+  latencyMs: number;
+  audioBytes: number;
+  audioSeconds?: number;
+  requestId?: string;
 };
 
 /**
@@ -47,16 +50,30 @@ export async function generateMusic(
 
     // Convert stream to buffer
     const audioBuffer = await streamToBuffer(audioStream);
-    const durationMs = Date.now() - startTime;
+    const latencyMs = Date.now() - startTime;
 
     return {
       audioBuffer,
-      durationMs,
+      latencyMs,
+      audioBytes: audioBuffer.length,
+      audioSeconds: lengthMs / 1000,
+      requestId: undefined, // ElevenLabs SDK doesn't expose request ID easily
     };
   } catch (error) {
     // Sanitize error - don't expose API keys or sensitive data
     if (error instanceof Error) {
-      throw new Error(`ElevenLabs API error: ${error.message}`);
+      let message = error.message;
+      // Remove any potential API keys or tokens from error message
+      message = message.replace(
+        /\b(sk|xi|pk|Bearer)[-_][a-zA-Z0-9]{20,}\b/gi,
+        "[REDACTED]"
+      );
+      // Replace authorization headers
+      message = message.replace(
+        /authorization[:\s]+.+/gi,
+        "authorization: [REDACTED]"
+      );
+      throw new Error(`ElevenLabs API error: ${message}`);
     }
     throw new Error("ElevenLabs API error: Unknown error");
   }

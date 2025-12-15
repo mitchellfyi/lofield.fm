@@ -10,7 +10,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import type { NextRequest } from "next/server";
 import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
-import { logUsageEvent } from "@/lib/usage-tracking";
+import { logUsageEvent, calculateOpenAICost } from "@/lib/usage-tracking";
 import { randomUUID } from "crypto";
 import { validateGenerationParams, checkPromptSafety } from "@/lib/validation";
 
@@ -163,17 +163,19 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
+  // Generate action group ID and start time for usage tracking
+  const actionGroupId = randomUUID(); // For correlating refine + generate sequences
+  const startTime = Date.now();
+
   try {
     const openai = createOpenAI({ apiKey });
-    const actionGroupId = randomUUID(); // For correlating refine + generate sequences
-    const startTime = Date.now();
 
     // Use streamText with structured output
     const result = await streamText({
       model: openai("gpt-4o-mini"),
       system: systemPrompt,
       prompt: userPrompt,
-      onFinish: async ({ text, usage }) => {
+      onFinish: async ({ text, usage, response }) => {
         const durationMs = Date.now() - startTime;
 
         // Parse the AI response to extract TrackDraft
@@ -203,26 +205,40 @@ export async function POST(request: NextRequest, { params }: Params) {
           await logUsageEvent({
             userId,
             chatId,
-            actionType: "refine",
             actionGroupId,
+            actionType: "refine_prompt",
             provider: "openai",
+            providerOperation: "responses.streamText",
+            providerRequestId: response?.id,
             model: "gpt-4o-mini",
             inputTokens: usage?.inputTokens,
             outputTokens: usage?.outputTokens,
             totalTokens: usage?.totalTokens,
-            durationMs,
-            error: { message: "TrackDraft validation failed" },
+            status: "error",
+            errorMessage: "TrackDraft validation failed",
+            latencyMs: durationMs,
           });
           return;
         }
 
         // Save assistant message with validated draft_spec
-        await supabase.from("chat_messages").insert({
-          chat_id: chatId,
-          role: "assistant",
-          content: text,
-          draft_spec: validationResult.data,
-        });
+        const { data: savedMessage, error: saveMsgError } = await supabase
+          .from("chat_messages")
+          .insert({
+            chat_id: chatId,
+            role: "assistant",
+            content: text,
+            draft_spec: validationResult.data,
+          })
+          .select("id")
+          .single();
+
+        if (saveMsgError) {
+          console.error("Failed to save assistant message", {
+            chatId,
+            error: saveMsgError.message,
+          });
+        }
 
         // Update chat's updated_at
         await supabase
@@ -233,25 +249,65 @@ export async function POST(request: NextRequest, { params }: Params) {
         // Increment rate limit counter
         await incrementRateLimit(userId, "refine");
 
+        // Calculate cost from pricing table
+        let costUsd: number | undefined;
+        let costNotes: string | undefined;
+
+        if (usage?.inputTokens && usage?.outputTokens) {
+          const cost = await calculateOpenAICost({
+            model: "gpt-4o-mini",
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+          });
+          if (cost) {
+            costUsd = cost.costUsd;
+            costNotes = cost.costNotes;
+          }
+        }
+
         // Log usage event
         await logUsageEvent({
           userId,
           chatId,
-          actionType: "refine",
+          chatMessageId: savedMessage?.id ?? undefined,
           actionGroupId,
+          actionType: "refine_prompt",
           provider: "openai",
+          providerOperation: "responses.streamText",
+          providerRequestId: response?.id,
           model: "gpt-4o-mini",
           inputTokens: usage?.inputTokens,
           outputTokens: usage?.outputTokens,
           totalTokens: usage?.totalTokens,
-          durationMs,
+          costUsd,
+          costNotes,
+          status: "ok",
+          latencyMs: durationMs,
         });
       },
     });
 
     return result.toTextStreamResponse();
-  } catch {
-    console.error("Failed to refine prompt");
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Failed to refine prompt", {
+      error: errorMessage,
+    });
+
+    // Log usage event for failed API call
+    await logUsageEvent({
+      userId,
+      chatId,
+      actionGroupId,
+      actionType: "refine_prompt",
+      provider: "openai",
+      providerOperation: "responses.streamText",
+      model: "gpt-4o-mini",
+      status: "error",
+      errorMessage,
+      latencyMs: Date.now() - startTime,
+    });
+
     return Response.json({ error: "Failed to refine prompt" }, { status: 500 });
   }
 }
