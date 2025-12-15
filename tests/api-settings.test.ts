@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, PATCH } from "@/app/api/settings/route";
 import { POST as POSTSecrets } from "@/app/api/settings/secrets/route";
 import { NextRequest } from "next/server";
-import { mockSupabase, mockSupabaseAdmin } from "@/lib/supabase/__mocks__/server"; // Re-export admin from server mock? No, separate file.
+import { mockSupabase } from "@/lib/supabase/__mocks__/server"; // Re-export admin from server mock? No, separate file.
 import { mockSupabaseAdmin as adminClient } from "@/lib/supabase/__mocks__/admin";
 import * as secrets from "@/lib/secrets";
 
@@ -18,7 +18,7 @@ describe("/api/settings", () => {
     vi.clearAllMocks();
     mockSupabase.from.mockReturnThis();
     adminClient.from.mockReturnThis();
-    
+
     // Reset secrets default
     vi.mocked(secrets.getUserSecretStatus).mockResolvedValue({
       hasOpenAIKey: true,
@@ -44,7 +44,10 @@ describe("/api/settings", () => {
 
       adminClient.maybeSingle
         .mockResolvedValueOnce({ data: { artist_name: "Artist" }, error: null }) // profile
-        .mockResolvedValueOnce({ data: { openai_model: "gpt-4" }, error: null }); // settings
+        .mockResolvedValueOnce({
+          data: { openai_model: "gpt-4" },
+          error: null,
+        }); // settings
 
       const res = await GET();
       const json = await res.json();

@@ -28,7 +28,7 @@ describe("/api/chats", () => {
       mockSupabase.auth.getUser.mockResolvedValue({
         data: { user: { id: "user-1" } },
       });
-      
+
       // Override for specific return
       mockSupabase.order.mockResolvedValue({
         data: [{ id: "c1", title: "Chat 1" }],
@@ -110,7 +110,9 @@ describe("/api/chats", () => {
         data: { user: { id: "user-1" } },
       });
       // Provisioning fails
-      mockSupabaseAdmin.upsert.mockResolvedValue({ error: { message: "fail" } });
+      mockSupabaseAdmin.upsert.mockResolvedValue({
+        error: { message: "fail" },
+      });
 
       const req = new NextRequest("http://localhost", { method: "POST" });
       const res = await POST(req);

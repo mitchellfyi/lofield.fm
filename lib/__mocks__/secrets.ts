@@ -10,4 +10,3 @@ export const getUserSecretStatus = vi.fn().mockResolvedValue({
   hasElevenLabsKey: true,
 });
 export const deleteSecretForUser = vi.fn().mockResolvedValue(undefined);
-

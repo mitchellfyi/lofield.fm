@@ -15,4 +15,3 @@ export const getSubscription = vi.fn().mockResolvedValue({
 export const getUsageStats = vi.fn().mockResolvedValue({
   data: [],
 });
-
