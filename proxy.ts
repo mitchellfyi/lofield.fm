@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
@@ -43,7 +43,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect /app/* routes - redirect unauthenticated users to login
   const isAppRoute = request.nextUrl.pathname.startsWith("/app");
   if (isAppRoute && !user) {
     const redirectUrl = new URL("/", request.url);
@@ -59,3 +58,4 @@ export const config = {
     "/((?!_next/static|_next/image|.*\\.png$|.*\\.svg$|favicon.ico).*)",
   ],
 };
+

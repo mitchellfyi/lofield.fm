@@ -38,6 +38,9 @@ Create `.env.local` (see `.env.example`) with:
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=<your-publishable-default-key>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key> # server only
+SUPABASE_DB_URL=<postgres-connection-url-for-your-project> # preferred: primary (non-pooler) DB URL, usually port 5432
+SUPABASE_PROJECT_REF=<project-ref> # required if using remote push
+SUPABASE_ACCESS_TOKEN=<supabase-access-token> # required if using remote push
 OPENAI_API_KEY=<optional fallback for development>
 ELEVENLABS_API_KEY=<optional fallback for development>
 ```
@@ -48,12 +51,17 @@ ELEVENLABS_API_KEY=<optional fallback for development>
 2. Run migrations:
 
    ```bash
-   supabase db push --db-url "$SUPABASE_DB_URL"
-   # or, with the Supabase CLI running locally:
-   supabase migration up
+   pnpm db:migrate
    ```
 
    Migrations live in `/supabase/migrations/0001_init.sql` and create tables for profiles, user settings, chats, messages, tracks, Storage bucket policies, and Vault helper functions.
+
+   - Make sure Vault is enabled in your Supabase project (SQL editor):
+     ```sql
+     create extension if not exists "supabase_vault";
+     ```
+   - Preferred: use the primary (non-pgbouncer) connection string for `SUPABASE_DB_URL` so extensions can be installed.
+   - If you can’t reach the primary (IPv6/egress restrictions), set `SUPABASE_PROJECT_REF` and `SUPABASE_ACCESS_TOKEN`; `pnpm db:migrate` will push migrations remotely via the Supabase CLI.
 
 3. Enable OAuth providers (Google + GitHub) in Supabase Auth settings and set redirect URLs to your dev and production domains.
 

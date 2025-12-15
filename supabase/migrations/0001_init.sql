@@ -1,7 +1,7 @@
 -- Enable required extensions
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgsodium";
-create extension if not exists "vault";
+create extension if not exists "supabase_vault";
 
 -- Profile for each authenticated user
 create table if not exists public.profiles (
@@ -109,5 +109,5 @@ language sql
 security definer
 set search_path = public
 as $$
-  select vault.decrypt_secret(secret_id);
+  select decrypted_secret from vault.decrypted_secrets where id = secret_id;
 $$;
