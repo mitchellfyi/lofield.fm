@@ -3,9 +3,16 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, type CoreMessage } from "ai";
 import type { NextRequest } from "next/server";
+import {
+  normalizeContent,
+  hasAnyContent,
+  firstEmptyMessageIndex,
+  getMessageContent,
+  type ChatRole,
+} from "./utils";
+import { logUsageEvent, calculateOpenAICost } from "@/lib/usage-tracking";
 
-type ChatRole = "user" | "assistant" | "system";
-type IncomingMessage = { role: ChatRole; content: string };
+type IncomingMessage = { role: ChatRole; content?: unknown; parts?: unknown[] };
 
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
@@ -20,6 +27,16 @@ export async function POST(req: NextRequest) {
   const payload = await req.json().catch(() => null);
   const messages = Array.isArray(payload?.messages) ? payload.messages : null;
 
+  // Log raw messages for debugging empty content issues
+  if (messages) {
+    console.log("[api/chat] Received messages:", JSON.stringify(messages, null, 2));
+  }
+
+  const chatId =
+    typeof payload?.chat_id === "string" && payload.chat_id.length > 0
+      ? payload.chat_id
+      : null;
+
   const allowedRoles = ["user", "assistant", "system"] as const;
   const validMessages =
     messages &&
@@ -30,30 +47,143 @@ export async function POST(req: NextRequest) {
         typeof (message as { role?: unknown }).role === "string" &&
         allowedRoles.includes(
           (message as { role: string }).role as (typeof allowedRoles)[number]
-        ) &&
-        typeof (message as { content?: unknown }).content === "string"
+        )
     );
 
   if (!validMessages) {
-    return new Response("Invalid message payload", { status: 400 });
+    return Response.json({ error: "Invalid message payload" }, { status: 400 });
   }
 
-  const coreMessages: CoreMessage[] = (messages as IncomingMessage[]).map(
-    ({ role, content }) => ({
-      role,
-      content,
+  const normalizedMessages: CoreMessage[] = (messages as IncomingMessage[]).map(
+    (msg) => ({
+      role: msg.role,
+      content: normalizeContent(getMessageContent(msg)) ?? "",
     })
   );
+
+  const emptyIndex = firstEmptyMessageIndex(
+    normalizedMessages as Array<{ role: ChatRole; content: unknown }>
+  );
+  if (emptyIndex !== null) {
+    console.warn("[api/chat] Empty message content", {
+      emptyIndex,
+      count: normalizedMessages.length,
+    });
+  }
+
+  const filteredMessages = normalizedMessages.filter(
+    (m) => typeof m.content === "string" && m.content.trim().length > 0
+  );
+
+  if (filteredMessages.length === 0) {
+    console.warn("[api/chat] Message content empty after normalization", {
+      count: normalizedMessages.length,
+    });
+    return Response.json({ error: "Message content is empty" }, { status: 400 });
+  }
+
+  // If chatId is provided, verify ownership
+  if (chatId) {
+    const { data: chat, error: chatError } = await supabase
+      .from("chats")
+      .select("id, user_id")
+      .eq("id", chatId)
+      .single();
+    if (chatError || !chat || chat.user_id !== user.id) {
+      return Response.json({ error: "Chat not found" }, { status: 404 });
+    }
+  }
+
+  // Find last user message to persist
+  const lastUser = [...filteredMessages]
+    .reverse()
+    .find((m) => m.role === "user" && typeof m.content === "string");
+
+  if (chatId && (!lastUser || lastUser.content.trim().length === 0)) {
+    return Response.json(
+      { error: "No user message to persist" },
+      { status: 400 }
+    );
+  }
+
+  if (chatId && lastUser) {
+    const { error: userMsgError } = await supabase.from("chat_messages").insert({
+      chat_id: chatId,
+      role: "user",
+      content: lastUser.content,
+    });
+    if (userMsgError) {
+      console.error("[api/chat] Failed to save user message", userMsgError);
+      return Response.json(
+        { error: "Failed to save user message" },
+        { status: 500 }
+      );
+    }
+  }
+
   const apiKey = await getOpenAIKeyForUser(user.id);
 
   if (!apiKey) {
-    return new Response("Missing OpenAI API key", { status: 400 });
+    return Response.json({ error: "Missing OpenAI API key" }, { status: 400 });
   }
+
+  const actionGroupId = crypto.randomUUID();
+  const startTime = Date.now();
 
   const openai = createOpenAI({ apiKey });
   const result = await streamText({
     model: openai("gpt-4o-mini"),
-    messages: coreMessages,
+    messages: filteredMessages,
+    onFinish: async ({ text, usage, response }) => {
+      const durationMs = Date.now() - startTime;
+      let costUsd: number | undefined;
+      let costNotes: string | undefined;
+
+      if (usage?.inputTokens && usage?.outputTokens) {
+        const cost = await calculateOpenAICost({
+          model: "gpt-4o-mini",
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+        });
+        if (cost) {
+          costUsd = cost.costUsd;
+          costNotes = cost.costNotes;
+        }
+      }
+
+      // Log usage event
+      await logUsageEvent({
+        userId: user.id,
+        chatId: chatId ?? undefined,
+        actionGroupId,
+        actionType: "chat_stream",
+        provider: "openai",
+        providerOperation: "responses.streamText",
+        providerRequestId: response?.id,
+        model: "gpt-4o-mini",
+        inputTokens: usage?.inputTokens,
+        outputTokens: usage?.outputTokens,
+        totalTokens: usage?.totalTokens,
+        costUsd,
+        costNotes,
+        status: "ok",
+        latencyMs: durationMs,
+      });
+
+      if (chatId) {
+        const { error: assistantError } = await supabase
+          .from("chat_messages")
+          .insert({
+            chat_id: chatId,
+            role: "assistant",
+            content: text,
+            draft_spec: null,
+          });
+        if (assistantError) {
+          console.error("[api/chat] Failed to save assistant message", assistantError);
+        }
+      }
+    },
   });
 
   return result.toTextStreamResponse();

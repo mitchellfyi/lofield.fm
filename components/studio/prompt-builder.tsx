@@ -2,7 +2,7 @@
 
 import { TextStreamChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, useEffect, useRef, type FormEvent } from "react";
 
 type Message = {
   id: string;
@@ -90,7 +90,8 @@ export function PromptBuilder({
   const transport = useMemo(
     () =>
       new TextStreamChatTransport({
-        api: chatId ? `/api/chats/${chatId}/refine` : "/api/chat",
+        api: "/api/chat",
+        body: chatId ? { chat_id: chatId } : undefined,
       }),
     [chatId]
   );
@@ -99,7 +100,15 @@ export function PromptBuilder({
     sendMessage,
     status,
     stop,
-  } = useChat({ transport });
+    setMessages,
+  } = useChat({
+    transport,
+    onError: (err) => {
+      setChatError(
+        err instanceof Error ? err.message : "Failed to send chat message."
+      );
+    },
+  });
 
   const [input, setInput] = useState("");
 
@@ -121,7 +130,20 @@ export function PromptBuilder({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [refineError, setRefineError] = useState<string | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [titleOverride, setTitleOverride] = useState("");
+
+  // Clear stream messages when DB messages update (persistence catch-up)
+  const prevMessagesLengthRef = useRef(messages.length);
+  useEffect(() => {
+    if (messages.length > prevMessagesLengthRef.current) {
+      if (streamMessages.length > 0) {
+        setMessages([]);
+      }
+    }
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages, streamMessages, setMessages]);
 
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -139,8 +161,16 @@ export function PromptBuilder({
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    sendMessage({ text: input });
+    if (!input.trim() || isLoading) {
+      setChatError("Message cannot be empty");
+      return;
+    }
+    setChatError(null);
+    sendMessage({ text: input }).catch((err) => {
+      setChatError(
+        err instanceof Error ? err.message : "Failed to send chat message."
+      );
+    });
     setInput("");
   }
 
@@ -148,6 +178,7 @@ export function PromptBuilder({
     if (!chatId) return;
 
     setRefineStatus("loading");
+    setRefineError(null);
 
     const promptSpec = {
       title: title || undefined,
@@ -158,23 +189,47 @@ export function PromptBuilder({
       length_ms: lengthMins * 60 * 1000,
       instrumental,
     };
+    const refineMessage =
+      input.trim() ||
+      "Refine the track prompt using the current controls and draft.";
 
     try {
       const response = await fetch(`/api/chats/${chatId}/refine`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spec: promptSpec }),
+        body: JSON.stringify({
+          message: refineMessage,
+          controls: promptSpec,
+          latest_draft: null,
+        }),
       });
 
       if (response.ok) {
+        // Consume the stream to ensure server-side persistence completes
+        if (response.body) {
+          const reader = response.body.getReader();
+          while (true) {
+            const { done } = await reader.read();
+            if (done) break;
+          }
+        }
+
         setRefineStatus("success");
         onRefresh();
         setTimeout(() => setRefineStatus("idle"), 2000);
       } else {
         setRefineStatus("error");
+        const data = await response.json().catch(async () => {
+          const text = await response.text().catch(() => "");
+          return text ? { error: text } : null;
+        });
+        setRefineError(data?.error ?? "Failed to refine prompt. Please try again.");
       }
-    } catch {
+    } catch (error) {
       setRefineStatus("error");
+      setRefineError(
+        error instanceof Error ? error.message : "Failed to refine prompt."
+      );
     }
   }
 
@@ -328,7 +383,7 @@ export function PromptBuilder({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Track title..."
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             />
           </div>
 
@@ -344,7 +399,7 @@ export function PromptBuilder({
               id="track-genre"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             >
               <option value="">Select genre...</option>
               {GENRE_PRESETS.map((g) => (
@@ -370,7 +425,7 @@ export function PromptBuilder({
               max={220}
               value={bpm}
               onChange={(e) => setBpm(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
           </div>
 
@@ -389,7 +444,7 @@ export function PromptBuilder({
               max={100}
               value={energy}
               onChange={(e) => setEnergy(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
           </div>
 
@@ -408,7 +463,7 @@ export function PromptBuilder({
               max={100}
               value={focus}
               onChange={(e) => setFocus(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
           </div>
 
@@ -427,7 +482,7 @@ export function PromptBuilder({
               max={100}
               value={chill}
               onChange={(e) => setChill(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
           </div>
 
@@ -446,7 +501,7 @@ export function PromptBuilder({
               max={10}
               value={lengthMins}
               onChange={(e) => setLengthMins(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
           </div>
 
@@ -515,7 +570,7 @@ export function PromptBuilder({
               value={titleOverride}
               onChange={(e) => setTitleOverride(e.target.value)}
               placeholder="Leave empty to use AI-generated title..."
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             />
           </div>
         )}
@@ -555,10 +610,18 @@ export function PromptBuilder({
         </div>
 
         {/* Error display */}
-        {generateError && (
+        {(generateError || refineError || chatError) && (
           <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
-            <p className="text-sm font-medium text-red-800">Generation Error</p>
-            <p className="mt-1 text-sm text-red-700">{generateError}</p>
+            <p className="text-sm font-medium text-red-800">Error</p>
+            {generateError && (
+              <p className="mt-1 text-sm text-red-700">{generateError}</p>
+            )}
+            {refineError && (
+              <p className="mt-1 text-sm text-red-700">{refineError}</p>
+            )}
+            {chatError && (
+              <p className="mt-1 text-sm text-red-700">{chatError}</p>
+            )}
           </div>
         )}
 
@@ -570,7 +633,7 @@ export function PromptBuilder({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Chat with AI to refine your prompt..."
-              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             />
             <button
               type="submit"
@@ -583,7 +646,7 @@ export function PromptBuilder({
               <button
                 type="button"
                 onClick={stop}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-100"
               >
                 Stop
               </button>

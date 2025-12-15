@@ -9,12 +9,13 @@ const supabase = createClient();
 
 type Props = {
   userEmail?: string;
+  chatId?: string;
 };
 
-export function ChatPanel({ userEmail }: Props) {
+export function ChatPanel({ userEmail, chatId }: Props) {
   const transport = useMemo(
-    () => new TextStreamChatTransport({ api: "/api/chat" }),
-    []
+    () => new TextStreamChatTransport({ api: "/api/chat", body: { chat_id: chatId } }),
+    [chatId]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -201,7 +202,7 @@ export function ChatPanel({ userEmail }: Props) {
           <label className="text-sm font-medium text-slate-800">Message</label>
           <textarea
             name="prompt"
-            className="min-h-[120px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+            className="min-h-[120px] rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             placeholder="Ask the assistant to refine your lo-fi brief..."
             value={input}
             onChange={(e) => setInput(e.target.value)}

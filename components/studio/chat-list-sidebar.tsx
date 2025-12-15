@@ -48,7 +48,8 @@ export function ChatListSidebar({
           if (chatIds.length === 0) {
             setChats(chatsData);
             setLoading(false);
-            if (!selectedChatId) {
+            if (!selectedChatId && chatsData.length === 0) {
+              // Only create if truly no chats exist
               onCreateChat();
             }
             return;
@@ -124,7 +125,7 @@ export function ChatListSidebar({
           placeholder="Search chats..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white"
+          className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-600 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
         />
       </div>
 

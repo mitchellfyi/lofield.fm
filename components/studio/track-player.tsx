@@ -283,7 +283,7 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
               <select
                 value={genreFilter}
                 onChange={(e) => setGenreFilter(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               >
                 <option value="">All genres</option>
                 {genres.map((genre) => (
@@ -298,7 +298,7 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
             <select
               value={moodFilter}
               onChange={(e) => setMoodFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"
+              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             >
               <option value="">All moods</option>
               <option value="energy">Energy</option>
@@ -320,7 +320,7 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
                   }
                   min={0}
                   max={220}
-                  className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                  className="w-full rounded border border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
                   placeholder="Min"
                 />
                 <input
@@ -331,7 +331,7 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
                   }
                   min={0}
                   max={220}
-                  className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                  className="w-full rounded border border-slate-300 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
                   placeholder="Max"
                 />
               </div>

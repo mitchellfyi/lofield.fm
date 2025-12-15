@@ -34,6 +34,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Chat not found" }, { status: 404 });
   }
 
+  // Ensure user owns the chat
+  if (chat.user_id !== user.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   // Get messages
   const { data: messages } = await supabase
     .from("chat_messages")
@@ -85,6 +90,21 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const { title } = parseResult.data;
 
+  // First verify ownership
+  const { data: existingChat, error: existingError } = await supabase
+    .from("chats")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (existingError || !existingChat) {
+    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+  }
+
+  if (existingChat.user_id !== user.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   const { data, error } = await supabase
     .from("chats")
     .update({ title })
@@ -114,6 +134,22 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // First verify ownership
+  const { data: existingChat, error: existingError } = await supabase
+    .from("chats")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (existingError || !existingChat) {
+    // If not found or error, we can just say success or 404, but let's be consistent
+    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+  }
+
+  if (existingChat.user_id !== user.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
   const { error } = await supabase.from("chats").delete().eq("id", id);

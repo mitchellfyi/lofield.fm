@@ -79,6 +79,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const parseResult = RefineInputSchema.safeParse(body);
   if (!parseResult.success) {
+    console.warn("[refine] Invalid body", { errors: parseResult.error.flatten() });
     return Response.json(
       {
         error: "Invalid request body",
@@ -89,6 +90,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const { message, controls, latest_draft } = parseResult.data;
+  if (!message || message.trim().length === 0) {
+    console.warn("[refine] Empty message");
+    return Response.json({ error: "Message cannot be empty" }, { status: 400 });
+  }
 
   // Validate generation parameters from controls
   if (controls) {
@@ -130,6 +135,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   // Get OpenAI key
   const apiKey = await getOpenAIKeyForUser(userId);
   if (!apiKey) {
+    console.warn("[refine] Missing OpenAI key", { userId });
     return Response.json({ error: "Missing OpenAI API key" }, { status: 400 });
   }
 
@@ -321,25 +327,34 @@ function buildSystemPrompt(artistName: string | null): string {
     : "";
 
   return `You are an AI assistant specializing in lo-fi instrumental music production and prompt engineering for music generation.
+Your role is to ACT AS A MUSIC PRODUCER configuring a generative AI tool. You are NOT a general chatbot or music recommender.
+DO NOT recommend real songs or artists.
+DO NOT provide lists of tracks.
+
+Your goal is to output a single, refined configuration for a track based on the user's request.
+The user wants to generate a NEW track. Your output will be used to generate the audio.
 
 Your goals:
-1. Help users refine their music ideas into clear, generation-ready prompts
-2. Optimize prompts specifically for lo-fi instrumental music (chill beats, study music, ambient)
-3. Produce clean, evocative descriptions without unnecessary fluff
-4. Avoid "in the style of [living artist]" phrasing for copyright safety
-5. Focus on atmosphere, texture, mood, and production techniques
+1. Interpret the user's request (e.g. "more old school rap") as instructions to modify the music generation parameters and prompt.
+2. Optimize the "Final prompt" specifically for lo-fi instrumental music (chill beats, study music, ambient), adapting it to the user's requested style (e.g. boom bap drums for "old school rap").
+3. Produce clean, evocative descriptions without unnecessary fluff.
+4. Avoid "in the style of [living artist]" phrasing for copyright safety.
+5. Focus on atmosphere, texture, mood, and production techniques.
+6. Generate a creative, short, 2-5 word title for the track based on the vibe.
 
 ${contextNote}
 
 When responding:
-- Be conversational and helpful
-- Acknowledge the user's input and explain your refinements
-- Provide a final, single-paragraph prompt suitable for music generation
-- Keep responses concise (2-4 sentences plus the final prompt)
+- Be conversational and helpful, but stay focused on the configuration.
+- Acknowledge the user's input and explain your refinements.
+- Keep responses concise (2-4 sentences plus the final prompt and title).
 
-Format your response as:
-1. Brief acknowledgment/explanation (1-2 sentences)
-2. "Final prompt: [your optimized prompt here]"`;
+CRITICAL: You MUST format your response exactly as follows:
+
+[Brief acknowledgment/explanation of the changes you made]
+
+Title: [Creative Title]
+Final prompt: [Your detailed, optimized prompt here]`;
 }
 
 /**
@@ -352,12 +367,13 @@ function buildUserPrompt(
 ): string {
   const parts: string[] = [];
 
-  parts.push(`User request: ${message}`);
+  parts.push(`User request: "${message}"`);
+  parts.push(`\nCONTEXT AND CURRENT STATE:`);
 
   if (controls) {
     const controlParts: string[] = [];
-    if (controls.genre) controlParts.push(`Genre: ${controls.genre}`);
-    if (controls.bpm) controlParts.push(`BPM: ${controls.bpm}`);
+    if (controls.genre) controlParts.push(`- Genre: ${controls.genre}`);
+    if (controls.bpm) controlParts.push(`- BPM: ${controls.bpm}`);
     if (controls.mood) {
       const moodParts: string[] = [];
       if (controls.mood.energy !== undefined)
@@ -367,42 +383,38 @@ function buildUserPrompt(
       if (controls.mood.chill !== undefined)
         moodParts.push(`Chill: ${controls.mood.chill}/100`);
       if (moodParts.length > 0)
-        controlParts.push(`Mood: ${moodParts.join(", ")}`);
+        controlParts.push(`- Mood: ${moodParts.join(", ")}`);
     }
     if (controls.instrumentation && controls.instrumentation.length > 0) {
-      controlParts.push(`Instruments: ${controls.instrumentation.join(", ")}`);
+      controlParts.push(`- Instruments: ${controls.instrumentation.join(", ")}`);
     }
     if (controls.length_ms) {
       const seconds = Math.round(controls.length_ms / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      if (minutes > 0) {
-        controlParts.push(
-          remainingSeconds > 0
-            ? `Length: ${minutes}m ${remainingSeconds}s`
-            : `Length: ${minutes}m`
-        );
-      } else {
-        controlParts.push(`Length: ${seconds}s`);
-      }
+      controlParts.push(`- Length: ${seconds}s`);
     }
     if (controls.instrumental !== undefined) {
-      controlParts.push(controls.instrumental ? "Instrumental" : "With vocals");
+      controlParts.push(`- Type: ${controls.instrumental ? "Instrumental" : "With vocals"}`);
     }
 
     if (controlParts.length > 0) {
-      parts.push(`\nCurrent controls:\n${controlParts.join("\n")}`);
+      parts.push(`Current Controls (User Settings):\n${controlParts.join("\n")}`);
     }
   }
 
   if (latestDraft) {
     parts.push(
-      `\nPrevious draft:\nTitle: ${latestDraft.title ?? "N/A"}\nPrompt: ${latestDraft.prompt_final ?? "N/A"}`
+      `Previous Draft State:\n- Title: ${latestDraft.title ?? "Untitled"}\n- Previous Prompt: "${latestDraft.prompt_final ?? "N/A"}"`
     );
+  } else {
+    parts.push(`Previous Draft State: None (New Track)`);
   }
 
   parts.push(
-    `\nPlease refine this into an optimized lo-fi music generation prompt. Provide your response and end with "Final prompt: [your prompt]".`
+    `\nINSTRUCTIONS:
+1. Update the track configuration based on the "User request".
+2. Refine the "Previous Prompt" (or create a new one) to incorporate the user's feedback (e.g. "more old school rap").
+3. Generate a CREATIVE title for this version.
+4. Output the response in the required format with "Title:" and "Final prompt:".`
   );
 
   return parts.join("\n");
@@ -421,17 +433,24 @@ function parseTrackDraftFromResponse(
   const finalPromptMatch = aiResponse.match(/Final prompt:\s*(.+?)(?:\n|$)/i);
   const promptFinal = finalPromptMatch
     ? finalPromptMatch[1].trim()
-    : aiResponse.trim();
+    : "";
 
-  // Generate title from prompt or use latest draft title
-  const title =
-    latestDraft?.title ??
-    generateTitleFromPrompt(promptFinal) ??
-    "Untitled Track";
+  // Extract Title from response
+  const titleMatch = aiResponse.match(/Title:\s*(.+?)(?:\n|$)/i);
+  // Fallback to previous title or generate if not found
+  const title = titleMatch
+    ? titleMatch[1].trim()
+    : latestDraft?.title ?? "Untitled Track";
 
-  // Generate description from AI response (everything before "Final prompt:")
-  const descriptionMatch = aiResponse.match(/^(.+?)(?:Final prompt:|$)/i);
-  const description = descriptionMatch?.[1].trim() || "A refined lo-fi track";
+  // Generate description from AI response (everything before "Final prompt:" and "Title:")
+  // We want the conversational part
+  const description = aiResponse
+    .replace(/Title:.*(\n|$)/i, "")
+    .replace(/Final prompt:.*(\n|$)/i, "")
+    .trim();
+
+  // If prompt is empty (AI failed to follow format), fall back to whole response or previous
+  const effectivePrompt = promptFinal || latestDraft?.prompt_final || aiResponse;
 
   // Merge controls with latest_draft, preferring controls
   const genre = controls?.genre ?? latestDraft?.genre ?? "lo-fi";
@@ -450,12 +469,12 @@ function parseTrackDraftFromResponse(
   };
 
   // Extract tags from prompt
-  const tags = extractTagsFromPrompt(promptFinal);
+  const tags = extractTagsFromPrompt(effectivePrompt);
 
   return {
     title,
     description,
-    prompt_final: promptFinal,
+    prompt_final: effectivePrompt,
     genre,
     bpm,
     instrumentation,

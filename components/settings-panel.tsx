@@ -211,7 +211,7 @@ export function SettingsPanel({ userEmail }: Props) {
           </label>
           <input
             type="text"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+            className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             placeholder="Your artist name"
             value={artistName}
             onChange={(e) => setArtistName(e.target.value)}
@@ -238,7 +238,7 @@ export function SettingsPanel({ userEmail }: Props) {
             <div className="flex items-center gap-2">
               <input
                 type="password"
-                className="flex-1 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+                className="flex-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-slate-900 placeholder:text-emerald-700 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
                 placeholder={
                   settings?.hasOpenAIKey ? "••••••••••••••••" : "sk-..."
                 }
@@ -260,7 +260,7 @@ export function SettingsPanel({ userEmail }: Props) {
             <div className="flex items-center gap-2">
               <input
                 type="password"
-                className="flex-1 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+                className="flex-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-slate-900 placeholder:text-emerald-700 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
                 placeholder={
                   settings?.hasElevenLabsKey ? "••••••••••••••••" : "eleven-..."
                 }
@@ -319,7 +319,7 @@ export function SettingsPanel({ userEmail }: Props) {
           {useCustomModel ? (
             <input
               type="text"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               placeholder="Custom model name (e.g., gpt-4-0125-preview)"
               value={customModel}
               onChange={(e) => setCustomModel(e.target.value)}
@@ -327,7 +327,7 @@ export function SettingsPanel({ userEmail }: Props) {
             />
           ) : (
             <select
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               value={openaiModel}
               onChange={(e) => setOpenaiModel(e.target.value)}
             >
@@ -364,7 +364,7 @@ export function SettingsPanel({ userEmail }: Props) {
               step={30000}
               value={lengthMs}
               onChange={(e) => setLengthMs(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
             <p className="text-xs text-slate-500">30s - 10 minutes</p>
           </div>
@@ -416,7 +416,7 @@ export function SettingsPanel({ userEmail }: Props) {
               Genre Preset
             </label>
             <select
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-inner outline-none focus:border-emerald-500"
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 shadow-inner outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
             >
@@ -440,7 +440,7 @@ export function SettingsPanel({ userEmail }: Props) {
               step={5}
               value={bpm}
               onChange={(e) => setBpm(Number(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
             />
             <p className="text-xs text-slate-500">40 - 220 BPM</p>
           </div>
@@ -461,7 +461,7 @@ export function SettingsPanel({ userEmail }: Props) {
                 step={0.1}
                 value={energy}
                 onChange={(e) => setEnergy(Number(e.target.value))}
-                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -475,7 +475,7 @@ export function SettingsPanel({ userEmail }: Props) {
                 step={0.1}
                 value={focus}
                 onChange={(e) => setFocus(Number(e.target.value))}
-                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200"
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-300"
               />
             </div>
             <div className="flex flex-col gap-1">

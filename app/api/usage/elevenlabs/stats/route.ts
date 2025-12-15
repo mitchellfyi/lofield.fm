@@ -50,6 +50,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Ensure endDate is not before startDate
+  if (new Date(endDate) < new Date(startDate)) {
+    return NextResponse.json(
+      { error: "End date must not be before start date" },
+      { status: 400 }
+    );
+  }
+
   // Check cache first
   const cacheKey = getUsageStatsCacheKey(userId, startDate, endDate);
   const cached = elevenLabsCache.get(cacheKey);
