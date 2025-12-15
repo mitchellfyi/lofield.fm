@@ -11,6 +11,13 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * GET /api/usage/summary?start=YYYY-MM-DD&end=YYYY-MM-DD
  * Returns aggregated usage summary grouped by provider and model
+ *
+ * Response:
+ * - byProvider: Array of provider summaries (openai, elevenlabs) with totals
+ * - topModels: Top 10 models by request count with totals
+ * - counts: chatsTouched, tracksGenerated, refineActions, generateActions
+ *
+ * Provider metrics include: tokens, credits, audio_seconds, cost, error rate
  */
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();

@@ -10,6 +10,13 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * GET /api/usage/chats?start=YYYY-MM-DD&end=YYYY-MM-DD
  * Returns per-chat usage breakdown
+ *
+ * Response:
+ * - chats: Array of chat summaries, sorted by last activity (most recent first)
+ *   - chatId, title, lastActivity
+ *   - openaiTokens, openaiCost
+ *   - elevenCredits
+ *   - tracksCount: Number of unique tracks created in this chat
  */
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();

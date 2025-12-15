@@ -11,6 +11,17 @@ import { NextResponse, type NextRequest } from "next/server";
  * GET /api/usage/tracks?start=YYYY-MM-DD&end=YYYY-MM-DD
  * Returns per-track usage breakdown
  * Includes events linked by track_id or action_group_id (for refine->generate flows)
+ *
+ * Response:
+ * - tracks: Array of track summaries, sorted by total cost (highest first)
+ *   - trackId, title, chatId, lengthMs
+ *   - openaiTokensUsed: Total tokens used (including refine steps)
+ *   - elevenAudioSeconds, elevenCredits
+ *   - totalCost: Combined OpenAI + ElevenLabs cost
+ *
+ * Attribution: Events are attributed to tracks by:
+ * 1. Direct track_id match
+ * 2. action_group_id match (covers refine actions that led to this track)
  */
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();

@@ -11,6 +11,15 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * GET /api/usage/daily?start=YYYY-MM-DD&end=YYYY-MM-DD&groupBy=provider|model|action_type
  * Returns daily breakdown of usage metrics
+ *
+ * Response:
+ * - groupBy: The dimension used for grouping (provider, model, or action_type)
+ * - daily: Array of daily metrics, each containing:
+ *   - date: YYYY-MM-DD in UTC
+ *   - provider/model/actionType: Group value (based on groupBy parameter)
+ *   - requestCount, errorCount, costUsd
+ *   - OpenAI: inputTokens, outputTokens, totalTokens
+ *   - ElevenLabs: creditsUsed, audioSeconds
  */
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();

@@ -3,6 +3,14 @@ import { z } from "zod";
 /**
  * Helper functions for Usage API endpoints
  * Handles date parsing, validation, and common aggregation logic
+ *
+ * Aggregation rules:
+ * - Date grouping: Events are stored in UTC (occurred_at), date grouping uses UTC dates (YYYY-MM-DD)
+ * - Cost: sum cost_usd where non-null, track cost_usd_unknown_count for missing pricing
+ * - Attribution:
+ *   - Chat totals: sum events where chat_id matches
+ *   - Track totals: sum events where track_id matches OR action_group_id matches track creation
+ *     (this covers "refine then generate" flows where refine costs should be attributed to track)
  */
 
 // Zod schemas for query parameter validation

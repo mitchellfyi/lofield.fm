@@ -5,6 +5,19 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * GET /api/usage/events?start=...&end=...&provider=&model=&chat_id=&track_id=&status=&page=&per_page=
  * Returns paginated raw usage events with optional filters (sanitised)
+ *
+ * Query params:
+ * - start, end: Date range (YYYY-MM-DD)
+ * - provider: openai | elevenlabs
+ * - model: Model name
+ * - chat_id, track_id: UUID filters
+ * - status: ok | error
+ * - page: Page number (default 1)
+ * - per_page: Results per page (default 50, max 100)
+ *
+ * Response:
+ * - events: Array of sanitised usage events (excludes provider_request_id and raw)
+ * - pagination: { page, perPage, totalCount, totalPages }
  */
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
