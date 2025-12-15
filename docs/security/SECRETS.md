@@ -99,32 +99,41 @@ export const supabaseAdmin = createClient(
 
 ### Vault Helper Functions
 
-Located in `/supabase/migrations/0004_vault_helpers.sql`:
+Located in `/supabase/migrations/0004_vault_helpers.sql` and `/supabase/migrations/0001_init.sql`:
 
 ```sql
--- Store a secret
+-- Store a secret for a provider (openai or elevenlabs)
 create or replace function store_user_secret(
-  user_id uuid,
-  secret_name text,
-  secret_value text
-) returns void
+  p_user_id uuid,
+  p_provider text,  -- Must be 'openai' or 'elevenlabs'
+  p_secret text
+) returns uuid
 language plpgsql security definer
 as $$
 begin
-  -- Implementation uses vault.create_secret or vault.update_secret
+  -- Validates provider, creates/updates vault entry, returns secret_id
 end;
 $$;
 
--- Retrieve a secret
-create or replace function get_user_secret(
-  user_id uuid,
-  secret_name text
-) returns text
+-- Get the secret_id for a user's provider
+create or replace function get_user_secret_id(
+  p_user_id uuid,
+  p_provider text  -- Must be 'openai' or 'elevenlabs'
+) returns uuid
 language plpgsql security definer
 as $$
 begin
-  -- Implementation uses vault.read_secret
+  -- Returns the secret_id from user_secrets table
 end;
+$$;
+
+-- Decrypt a secret given its ID
+create or replace function decrypt_secret(
+  secret_id uuid
+) returns text
+language sql security definer
+as $$
+  select decrypted_secret from vault.decrypted_secrets where id = secret_id;
 $$;
 ```
 
@@ -152,17 +161,17 @@ export async function POST(request: Request) {
   // Store in Vault using admin client
   if (openai_key) {
     await supabaseAdmin.rpc("store_user_secret", {
-      user_id: session.user.id,
-      secret_name: "openai",
-      secret_value: openai_key,
+      p_user_id: session.user.id,
+      p_provider: "openai",
+      p_secret: openai_key,
     });
   }
 
   if (elevenlabs_key) {
     await supabaseAdmin.rpc("store_user_secret", {
-      user_id: session.user.id,
-      secret_name: "elevenlabs",
-      secret_value: elevenlabs_key,
+      p_user_id: session.user.id,
+      p_provider: "elevenlabs",
+      p_secret: elevenlabs_key,
     });
   }
 
@@ -188,13 +197,25 @@ export async function POST(request: Request) {
   }
 
   // Fetch user's OpenAI key from Vault
-  const { data: openaiKey } = await supabaseAdmin.rpc("get_user_secret", {
-    user_id: session.user.id,
-    secret_name: "openai",
-  });
+  // Step 1: Get the secret_id from user_secrets table
+  const { data: userSecrets } = await supabaseAdmin
+    .from("user_secrets")
+    .select("openai_secret_id")
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+
+  let apiKey = null;
+
+  // Step 2: Decrypt the secret if it exists
+  if (userSecrets?.openai_secret_id) {
+    const { data: decrypted } = await supabaseAdmin.rpc("decrypt_secret", {
+      secret_id: userSecrets.openai_secret_id,
+    });
+    apiKey = decrypted;
+  }
 
   // Fallback to env var for development
-  const apiKey = openaiKey || process.env.OPENAI_API_KEY;
+  apiKey = apiKey || process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
