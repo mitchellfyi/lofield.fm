@@ -85,6 +85,14 @@ This is the canonical "pre-push" command and matches CI behaviour.
 
 - `POST /api/chat` — Streams OpenAI responses with the saved per-user key.
 - `POST /api/settings/secrets` — Stores OpenAI / ElevenLabs keys via Supabase Vault and caches a dev-only copy if provided.
+- `GET /api/usage/elevenlabs/subscription` — Fetch ElevenLabs subscription info (credits balance and limits), cached for 10 minutes.
+- `GET /api/usage/elevenlabs/stats` — Fetch daily usage stats for a date range, cached for 3 hours.
+
+## Pages
+
+- `/` — Main chat interface for drafting lo-fi tracks
+- `/settings` — Manage API keys and preferences
+- `/usage` — View ElevenLabs subscription details and daily credit usage
 
 ## Folder layout
 
