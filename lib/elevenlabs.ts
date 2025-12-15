@@ -10,6 +10,9 @@ export type GenerateMusicParams = {
 export type GenerateMusicResult = {
   audioBuffer: Uint8Array;
   durationMs: number;
+  audioBytes: number;
+  audioSeconds?: number;
+  requestId?: string;
 };
 
 /**
@@ -52,6 +55,9 @@ export async function generateMusic(
     return {
       audioBuffer,
       durationMs,
+      audioBytes: audioBuffer.length,
+      audioSeconds: lengthMs / 1000,
+      requestId: undefined, // ElevenLabs SDK doesn't expose request ID easily
     };
   } catch (error) {
     // Sanitize error - don't expose API keys or sensitive data
