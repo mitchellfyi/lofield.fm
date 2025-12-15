@@ -9,3 +9,4 @@ applyTo: "**/*.ts,**/*.tsx,app/**/*,components/**/*,lib/**/*"
 - Validate boundary inputs with Zod (or equivalent) for request bodies and query params.
 - Prefer explicit error handling and typed return shapes.
 - Do not introduce new state libraries unless asked.
+- If you touch app/lib/components, ensure `pnpm verify` still passes before committing.
