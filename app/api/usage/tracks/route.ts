@@ -85,6 +85,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Build a map of action_group_id -> track_id for attribution
+    // Each action_group_id represents a single user action (e.g., "refine + generate")
+    // and should map to at most one track. Events with this action_group_id
+    // (including refine steps) will be attributed to the resulting track.
     const actionGroupToTrack = new Map<string, string>();
     for (const event of events) {
       if (event.track_id && event.action_group_id) {
