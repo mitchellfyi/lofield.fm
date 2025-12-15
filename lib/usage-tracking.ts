@@ -127,15 +127,14 @@ export async function calculateOpenAICost(params: {
 
   try {
     // Query pricing table for this model and date
+    const dateStr = occurredAt.toISOString().split("T")[0];
     const { data: pricing, error } = await supabaseAdmin
       .from("provider_pricing")
       .select("*")
       .eq("provider", "openai")
       .eq("model", model)
-      .lte("effective_from", occurredAt.toISOString().split("T")[0])
-      .or(
-        `effective_to.is.null,effective_to.gte.${occurredAt.toISOString().split("T")[0]}`
-      )
+      .lte("effective_from", dateStr)
+      .or(`effective_to.is.null,effective_to.gte.${dateStr}`)
       .order("effective_from", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -144,7 +143,10 @@ export async function calculateOpenAICost(params: {
       return null;
     }
 
-    if (!pricing.price_input_per_1k || !pricing.price_output_per_1k) {
+    if (
+      pricing.price_input_per_1k == null ||
+      pricing.price_output_per_1k == null
+    ) {
       return null;
     }
 

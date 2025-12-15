@@ -10,7 +10,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import type { NextRequest } from "next/server";
 import { checkRateLimit, incrementRateLimit } from "@/lib/rate-limiting";
-import { logUsageEvent } from "@/lib/usage-tracking";
+import { logUsageEvent, calculateOpenAICost } from "@/lib/usage-tracking";
 import { randomUUID } from "crypto";
 import { validateGenerationParams, checkPromptSafety } from "@/lib/validation";
 
@@ -245,7 +245,6 @@ export async function POST(request: NextRequest, { params }: Params) {
         let costNotes: string | undefined;
 
         if (usage?.inputTokens && usage?.outputTokens) {
-          const { calculateOpenAICost } = await import("@/lib/usage-tracking");
           const cost = await calculateOpenAICost({
             model: "gpt-4o-mini",
             inputTokens: usage.inputTokens,
