@@ -14,6 +14,18 @@
 
 If these commands differ from `package.json`, update this file.
 
+## Required before commit/push
+
+**ALWAYS** run `pnpm verify` before committing or pushing changes.
+
+CI runs the same checks (format:check, lint, typecheck, tests, build). If CI fails, fix it locally and rerun `pnpm verify` before pushing again.
+
+**Do not**:
+
+- Bypass by editing CI workflows
+- Ship failing tests or typecheck errors
+- Commit without running verification first
+
 ## What this repo is
 
 Lofield Studio - a Next.js app that lets users refine lo-fi music prompts with OpenAI, then generate tracks with ElevenLabs. Auth, DB, and Storage are Supabase. Deployment is Vercel.

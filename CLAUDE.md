@@ -14,6 +14,18 @@
 
 If commands differ, read `package.json` and update this file.
 
+## Required before commit/push
+
+**ALWAYS** run `pnpm verify` before finishing a change.
+
+CI runs the same checks (format:check, lint, typecheck, tests, build). If CI fails, fix it locally and rerun `pnpm verify` before pushing.
+
+**Do not**:
+
+- Ship failing tests or typecheck errors
+- Bypass verification by editing CI
+- Hand-wave CI failures
+
 ## What this repo is
 
 Lofield Studio - Next.js + TypeScript app with Supabase Auth/DB/Storage, OpenAI prompt refinement, ElevenLabs track generation, and a Usage page that breaks down spend by day/chat/track.

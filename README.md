@@ -75,6 +75,29 @@ pnpm verify
 
 This is the canonical "pre-push" command and matches CI behaviour.
 
+## Contributing
+
+### Required before commit/push
+
+**Always run** `pnpm verify` before opening a PR or pushing changes.
+
+CI runs the same checks (format:check, lint, typecheck, tests, build). If CI fails, fix it locally and rerun `pnpm verify` before pushing.
+
+This command ensures:
+
+- Code is formatted correctly (`pnpm format:check`)
+- No linting errors (`pnpm lint`)
+- TypeScript compiles without errors (`pnpm typecheck`)
+- All tests pass (`pnpm test`)
+
+### Local development workflow
+
+1. Make your changes
+2. Run `pnpm verify` to check everything passes
+3. Fix any issues and repeat step 2
+4. Commit and push once verification passes
+5. CI will run the same checks on your PR
+
 ## Supabase helpers
 
 - `lib/supabase/client.ts` — browser client (anon key)
@@ -103,6 +126,35 @@ This is the canonical "pre-push" command and matches CI behaviour.
 
 ## Deployment (Vercel)
 
-1. Add the same Supabase env vars in Vercel Project Settings.
-2. Set Supabase Auth redirect URLs to your Vercel domains.
-3. Ensure the `tracks` bucket exists in Supabase Storage (private).
+### Option A: Vercel Git Integration (Recommended)
+
+1. Connect the GitHub repo to Vercel
+2. Set production branch to `main`
+3. Add environment variables in Vercel Project Settings:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `OPENAI_API_KEY` (optional)
+   - `ELEVENLABS_API_KEY` (optional)
+4. Set Supabase Auth redirect URLs to your Vercel domains
+5. Ensure the `tracks` bucket exists in Supabase Storage (private)
+6. In GitHub branch protection for `main`, require:
+   - `CI / verify` status check
+   - Vercel deployment checks (if enabled)
+
+**Result**: Preview deployments are created automatically for PRs, and production deployments happen automatically when merging to `main`.
+
+### Option B: GitHub Actions via Vercel CLI (Optional)
+
+For full pipeline control or if you prefer not to give Vercel access to source code, use the GitHub Actions workflows:
+
+- `.github/workflows/vercel-preview.yml` — Preview deployments for PRs
+- `.github/workflows/vercel-production.yml` — Production deployments on `main`
+
+**Required GitHub secrets**:
+
+- `VERCEL_TOKEN` — Vercel API token
+- `VERCEL_ORG_ID` — Vercel organization ID
+- `VERCEL_PROJECT_ID` — Vercel project ID
+
+Both workflows run `pnpm verify` before deploying to ensure code quality.
