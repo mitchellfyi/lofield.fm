@@ -26,8 +26,8 @@ Built from the Vercel Next.js AI Chatbot patterns and adapted to use Supabase (n
 
 ### Prereqs
 
-- Node 20+
-- pnpm (`npm install -g pnpm`)
+- Node 20.18.x
+- pnpm 10.26.x (`npm install -g pnpm@10.26.0`)
 - Supabase project (hosted or local via Supabase CLI)
 
 ### Environment
