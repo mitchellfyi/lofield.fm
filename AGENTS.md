@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Documentation
+
+📚 **[Complete Documentation](./docs/INDEX.md)** - Full documentation index  
+🤖 **[Agent Playbook](./docs/agents/AGENT_PLAYBOOK.md)** - Detailed guide for AI agents working in this codebase
+
 ## Setup commands (keep this accurate)
 
 - Install deps: `pnpm install`

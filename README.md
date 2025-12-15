@@ -4,6 +4,12 @@ A Next.js app for drafting lo-fi music prompts with the Vercel AI SDK, backed by
 
 Built from the Vercel Next.js AI Chatbot patterns and adapted to use Supabase (no Auth.js, Neon, or Vercel Blob).
 
+## Documentation
+
+📚 **[Complete Documentation](./docs/INDEX.md)** - Full documentation index
+
+🚀 **[Quick Start Guide](./docs/setup/QUICKSTART.md)** - Get up and running in 15 minutes
+
 ## What it does
 
 1. Sign in with Supabase Auth (Google or GitHub).

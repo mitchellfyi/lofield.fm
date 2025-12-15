@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+## Documentation
+
+📚 **[Complete Documentation](./docs/INDEX.md)** - Full documentation index  
+🔧 **[Troubleshooting Guide](./docs/runbook/TROUBLESHOOTING.md)** - Common issues and solutions
+
 ## Commands
 
 - Install: `pnpm install`
