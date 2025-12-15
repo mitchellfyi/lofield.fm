@@ -170,12 +170,14 @@ export async function getSubscription(
     // ElevenLabs still uses "character_*" naming in the API even though credits were previously characters
     const creditsUsed = Number(data.character_count ?? 0);
     const creditsLimit = Number(data.character_limit ?? 0);
+    // next_character_count_reset_unix is in seconds, convert to milliseconds
+    const nextResetUnix = Number(data.next_character_count_reset_unix ?? 0);
 
     return {
       creditsUsedCurrentPeriod: creditsUsed,
       creditsLimitCurrentPeriod: creditsLimit,
       creditsRemaining: Math.max(0, creditsLimit - creditsUsed),
-      nextResetUnix: Number(data.next_character_count_reset_unix ?? 0),
+      nextResetUnix: nextResetUnix * 1000, // Convert seconds to milliseconds
       tier: data.tier,
       currency: data.currency,
       status: data.status,

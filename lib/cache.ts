@@ -52,9 +52,18 @@ class SimpleCache {
 // Singleton cache instance
 const elevenLabsCache = new SimpleCache();
 
+/**
+ * Cache TTLs (in milliseconds)
+ */
+export const CACHE_TTL = {
+  SUBSCRIPTION: 10 * 60 * 1000, // 10 minutes
+  USAGE_STATS: 3 * 60 * 60 * 1000, // 3 hours
+  CLEANUP_INTERVAL: 5 * 60 * 1000, // 5 minutes
+} as const;
+
 // Run cleanup every 5 minutes
 if (typeof setInterval !== "undefined") {
-  setInterval(() => elevenLabsCache.cleanup(), 5 * 60 * 1000);
+  setInterval(() => elevenLabsCache.cleanup(), CACHE_TTL.CLEANUP_INTERVAL);
 }
 
 /**
@@ -71,13 +80,5 @@ export function getUsageStatsCacheKey(
 ): string {
   return `elevenlabs:usage:${userId}:${startDate}:${endDate}`;
 }
-
-/**
- * Cache TTLs (in milliseconds)
- */
-export const CACHE_TTL = {
-  SUBSCRIPTION: 10 * 60 * 1000, // 10 minutes
-  USAGE_STATS: 3 * 60 * 60 * 1000, // 3 hours
-} as const;
 
 export { elevenLabsCache };

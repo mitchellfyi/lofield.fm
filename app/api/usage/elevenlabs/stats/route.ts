@@ -74,8 +74,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Convert dates to unix timestamps (milliseconds)
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
   const startUnix = new Date(startDate).getTime();
-  const endUnix = new Date(endDate).getTime() + 24 * 60 * 60 * 1000 - 1; // End of day
+  const endUnix = new Date(endDate).getTime() + MS_PER_DAY - 1; // End of day
 
   const startTime = Date.now();
 

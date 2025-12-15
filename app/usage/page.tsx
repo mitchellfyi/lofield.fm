@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+// Maximum number of days with usage to display in the daily usage list
+const MAX_DISPLAYED_DAYS = 10;
+
 type SubscriptionData = {
   creditsUsedCurrentPeriod: number;
   creditsLimitCurrentPeriod: number;
@@ -211,7 +214,7 @@ export default function UsagePage() {
               {stats.dailyUsage
                 .filter((day) => day.creditsUsed > 0)
                 .reverse()
-                .slice(0, 10)
+                .slice(0, MAX_DISPLAYED_DAYS)
                 .map((day) => (
                   <div
                     key={day.date}
