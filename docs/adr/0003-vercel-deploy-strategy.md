@@ -65,6 +65,7 @@ Supabase
 **Pros**: Full control, predictable costs
 
 **Cons**:
+
 - ❌ Requires server management
 - ❌ Manual scaling
 - ❌ No automatic deploys
@@ -77,6 +78,7 @@ Supabase
 **Pros**: Highly scalable, pay-per-use
 
 **Cons**:
+
 - ❌ Complex setup (IAM, CloudFormation, etc.)
 - ❌ No built-in preview environments
 - ❌ Separate static hosting needed
@@ -89,6 +91,7 @@ Supabase
 **Pros**: Similar to Vercel, good DX
 
 **Cons**:
+
 - ❌ Less Next.js optimization (Vercel owns Next.js)
 - ❌ Weaker Server Components support
 - ❌ Smaller edge network
@@ -98,6 +101,7 @@ Supabase
 ### Option 4: Vercel (Selected)
 
 **Pros**:
+
 - ✅ Built for Next.js (same team)
 - ✅ Automatic preview deployments
 - ✅ Global edge network
@@ -106,6 +110,7 @@ Supabase
 - ✅ Environment variable management
 
 **Cons**:
+
 - Vendor lock-in (mitigated by Next.js portability)
 - Cold start latency (acceptable for our use case)
 
@@ -153,6 +158,7 @@ Supabase
 ### Phase 2: Deployment Workflow
 
 **Developer workflow**:
+
 1. Create feature branch
 2. Push to GitHub
 3. Vercel creates preview deployment
@@ -164,6 +170,7 @@ Supabase
 9. Verify deployment
 
 **Migration workflow**:
+
 ```bash
 # Before merging code
 SUPABASE_DB_URL="..." pnpm db:migrate
@@ -204,11 +211,13 @@ git push origin main
 Key principle: **Never deploy code that depends on schema changes before running migrations**.
 
 **Example** (correct):
+
 1. Create migration: `0009_add_new_column.sql`
 2. Run migration in production: `pnpm db:migrate`
 3. Merge code that uses `new_column`
 
 **Example** (wrong):
+
 1. Merge code that uses `new_column`
 2. Vercel deploys
 3. App crashes (column doesn't exist yet)

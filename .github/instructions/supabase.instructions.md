@@ -9,3 +9,4 @@ applyTo: "supabase/migrations/**/*.sql"
 - Never relax policies for convenience. Fix the access pattern instead.
 - Keep migrations idempotent where possible and avoid destructive changes unless explicitly requested.
 - If you touch Storage policies, verify prefix-based isolation (tracks/{auth.uid()}/...).
+- **If you touch files under this scope, run `pnpm verify` before stopping.**

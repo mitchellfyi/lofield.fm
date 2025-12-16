@@ -9,6 +9,7 @@
 Lofield Studio follows a **continuous deployment** model using Vercel. Every commit to `main` triggers an automatic production deployment.
 
 **Key principles**:
+
 - **Preview deployments** for every PR
 - **Automatic production deployment** on merge to `main`
 - **Manual database migrations** before code deployment
@@ -33,17 +34,20 @@ Supabase Database
 **Developer workflow**:
 
 1. **Create feature branch**:
+
    ```bash
    git checkout -b feature/new-feature
    ```
 
 2. **Develop and test locally**:
+
    ```bash
    pnpm dev  # Run app at localhost:3003
    pnpm verify  # Format, lint, typecheck, test
    ```
 
 3. **Push to GitHub**:
+
    ```bash
    git push origin feature/new-feature
    ```
@@ -87,12 +91,14 @@ Supabase Database
 #### Migration Workflow
 
 1. **Create migration file**:
+
    ```bash
    # Naming: NNNN_description.sql (sequential number)
    touch supabase/migrations/0009_add_new_table.sql
    ```
 
 2. **Write migration**:
+
    ```sql
    -- Add new table
    CREATE TABLE new_table (
@@ -100,10 +106,10 @@ Supabase Database
      user_id UUID REFERENCES auth.users NOT NULL,
      created_at TIMESTAMP DEFAULT NOW()
    );
-   
+
    -- Enable RLS
    ALTER TABLE new_table ENABLE ROW LEVEL SECURITY;
-   
+
    -- Add policies
    CREATE POLICY "users_view_own"
      ON new_table FOR SELECT
@@ -111,16 +117,18 @@ Supabase Database
    ```
 
 3. **Test locally**:
+
    ```bash
    pnpm db:migrate
    # Verify schema in local Supabase
    ```
 
 4. **Run migration in production** (before merging code):
+
    ```bash
    # Option 1: Direct database URL
    SUPABASE_DB_URL="postgresql://..." pnpm db:migrate
-   
+
    # Option 2: Supabase CLI push
    SUPABASE_PROJECT_REF="..." SUPABASE_ACCESS_TOKEN="..." pnpm db:migrate
    ```
@@ -134,6 +142,7 @@ Supabase Database
 #### Migration Best Practices
 
 **✅ Do**:
+
 - Run migrations before deploying code that depends on schema changes
 - Make migrations idempotent where possible (`CREATE TABLE IF NOT EXISTS`)
 - Test migrations locally first
@@ -141,6 +150,7 @@ Supabase Database
 - Use descriptive migration file names
 
 **❌ Don't**:
+
 - Deploy code before running migrations (will break app)
 - Rollback migrations (write a new migration to undo instead)
 - Skip testing migrations locally
@@ -166,12 +176,14 @@ Located in `vercel.json` (if exists) or Vercel Dashboard → Settings → Build 
 Set in Vercel Dashboard → Settings → Environment Variables:
 
 **Production**:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - Optional: `OPENAI_API_KEY`, `ELEVENLABS_API_KEY` (fallback keys)
 
 **Preview**:
+
 - Same as production (shared Supabase instance)
 - Consider using separate Supabase project for staging (future)
 
@@ -180,6 +192,7 @@ Set in Vercel Dashboard → Settings → Environment Variables:
 ### Deployment Protection
 
 **Future enhancement**: Add deployment protection rules:
+
 - Require passing CI checks
 - Require manual approval before production deploy
 - Slack notifications on deployment
@@ -220,18 +233,21 @@ Set in Vercel Dashboard → Settings → Environment Variables:
 **Steps**:
 
 1. **Write undo migration**:
+
    ```sql
    -- Example: Undo table creation
    DROP TABLE IF EXISTS new_table;
    ```
 
 2. **Test locally**:
+
    ```bash
    pnpm db:migrate
    # Verify schema is correct
    ```
 
 3. **Run in production**:
+
    ```bash
    SUPABASE_DB_URL="..." pnpm db:migrate
    ```
@@ -245,10 +261,12 @@ Set in Vercel Dashboard → Settings → Environment Variables:
 ### Current: GitHub Actions (Basic)
 
 **On Pull Request**:
+
 - Run `pnpm verify` (format:check, lint, typecheck, test)
 - Report status to GitHub PR
 
 **On Merge to Main**:
+
 - Vercel automatic deployment
 
 **Location**: `.github/workflows/ci.yml` (if exists)
@@ -268,6 +286,7 @@ Set in Vercel Dashboard → Settings → Environment Variables:
 **Practice**: Use descriptive commit messages that explain changes.
 
 **Example**:
+
 ```
 Add usage tracking for ElevenLabs API calls
 
@@ -281,6 +300,7 @@ Add usage tracking for ElevenLabs API calls
 **Tool**: Use `conventional-commits` and `standard-version` to auto-generate changelog.
 
 **Example**:
+
 ```bash
 pnpm standard-version
 # Generates CHANGELOG.md with changes since last release
@@ -310,6 +330,7 @@ pnpm standard-version
 ### Ongoing Monitoring
 
 **Tools** (future):
+
 - **Sentry**: Error tracking and alerting
 - **LogRocket**: Session replay for debugging
 - **Uptime monitoring**: Pingdom or UptimeRobot
@@ -321,6 +342,7 @@ pnpm standard-version
 **Steps**:
 
 1. **Create hotfix branch** from `main`:
+
    ```bash
    git checkout main
    git pull
@@ -328,12 +350,14 @@ pnpm standard-version
    ```
 
 2. **Fix the issue**:
+
    ```bash
    # Make minimal changes
    # Test locally with pnpm verify
    ```
 
 3. **Push and create PR**:
+
    ```bash
    git push origin hotfix/critical-bug-fix
    # Open PR, mark as urgent
@@ -375,6 +399,7 @@ pnpm standard-version
 **Symptoms**: Vercel build fails, no deployment created.
 
 **Solutions**:
+
 1. Check build logs for specific error
 2. Run `pnpm build` locally to reproduce
 3. Fix TypeScript errors, missing dependencies, etc.
@@ -385,6 +410,7 @@ pnpm standard-version
 **Symptoms**: Deployment shows success, but app returns errors.
 
 **Solutions**:
+
 1. Check Vercel Function Logs for runtime errors
 2. Verify environment variables are set
 3. Check if database migration is needed
@@ -396,6 +422,7 @@ pnpm standard-version
 **Symptoms**: Migration command errors, database in inconsistent state.
 
 **Solutions**:
+
 1. Check migration syntax
 2. Verify using primary (non-pooler) connection
 3. Write corrective migration

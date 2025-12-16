@@ -17,6 +17,7 @@ Lofield Studio uses a bring-your-own-API-key model where users pay OpenAI and El
 ### Problem Statement
 
 Without usage tracking:
+
 - Users have no visibility into their costs within the app
 - Can't attribute costs to specific chats or tracks
 - Can't debug why a track generation failed
@@ -48,12 +49,12 @@ We will implement an **event-based usage tracking system** that logs every provi
 
 ```typescript
 // After provider API call
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   user_id: session.user.id,
   chat_id: chatId,
-  provider: 'openai',
-  model: 'gpt-4o',
-  action_type: 'refine',
+  provider: "openai",
+  model: "gpt-4o",
+  action_type: "refine",
   action_group_id: actionGroupId,
   tokens: usage.total_tokens,
   estimated_cost_usd: calculateCost(usage),
@@ -67,6 +68,7 @@ await supabase.from('usage_events').insert({
 **Pros**: Simple, no overhead
 
 **Cons**:
+
 - ❌ Zero visibility for users
 - ❌ Can't debug provider issues
 - ❌ Can't optimize costs
@@ -78,6 +80,7 @@ await supabase.from('usage_events').insert({
 **Pros**: No database writes
 
 **Cons**:
+
 - ❌ Can be skipped or manipulated
 - ❌ Lost on browser close
 - ❌ No server-side record
@@ -89,6 +92,7 @@ await supabase.from('usage_events').insert({
 **Pros**: Professional features, no maintenance
 
 **Cons**:
+
 - ❌ Additional cost
 - ❌ Data leaves our control
 - ❌ Integration complexity
@@ -98,12 +102,14 @@ await supabase.from('usage_events').insert({
 ### Option 4: Event-Based in Database (Selected)
 
 **Pros**:
+
 - ✅ Reliable (server-side)
 - ✅ Queryable (SQL)
 - ✅ Auditable (RLS-enforced)
 - ✅ Cost-effective (included in Supabase)
 
 **Cons**:
+
 - Additional DB writes
 - Manual cost calculation
 

@@ -3,6 +3,7 @@
 ## Documentation
 
 📚 **[Complete Documentation](./docs/INDEX.md)** - Full documentation index  
+🤖 **[Agent Playbook](./docs/agents/AGENT_PLAYBOOK.md)** - Detailed guide for AI agents working in this codebase  
 🔧 **[Troubleshooting Guide](./docs/runbook/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## Commands
@@ -21,15 +22,18 @@ If commands differ, read `package.json` and update this file.
 
 ## Required before commit/push
 
-**ALWAYS** run `pnpm verify` before finishing a change.
+**ALWAYS** run `pnpm verify` before finishing a change. This is non-negotiable.
 
 CI runs the same checks (format:check, lint, typecheck, tests, build). If CI fails, fix it locally and rerun `pnpm verify` before pushing.
+
+**You cannot finish a task without passing `pnpm verify`.**
 
 **Do not**:
 
 - Ship failing tests or typecheck errors
 - Bypass verification by editing CI
 - Hand-wave CI failures
+- Mark tasks complete without running `pnpm verify`
 
 ## What this repo is
 

@@ -13,26 +13,28 @@ These rules are **non-negotiable**. Violating them creates security vulnerabilit
 #### Never Import Admin Client in Client Components
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Client component importing admin client
-'use client';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+"use client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export default function MyComponent() {
-  const data = await supabaseAdmin.from('chats').select();
+  const data = await supabaseAdmin.from("chats").select();
   // This exposes service role key to browser!
 }
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Client component uses client library
-'use client';
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+"use client";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export default function MyComponent() {
   const supabase = createBrowserSupabaseClient();
-  const data = await supabase.from('chats').select();
+  const data = await supabase.from("chats").select();
   // RLS enforced, safe
 }
 ```
@@ -42,6 +44,7 @@ export default function MyComponent() {
 #### Never Log API Keys or Headers
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Logging full error (may contain keys in headers)
 try {
@@ -53,6 +56,7 @@ try {
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Log sanitized error
 try {
@@ -71,12 +75,14 @@ try {
 #### Never Disable RLS to "Make It Work"
 
 **Wrong**:
+
 ```sql
 -- ❌ WRONG: Disabling RLS to bypass policy issues
 ALTER TABLE chats DISABLE ROW LEVEL SECURITY;
 ```
 
 **Right**:
+
 ```sql
 -- ✅ RIGHT: Fix the policy instead
 DROP POLICY IF EXISTS "bad_policy" ON chats;
@@ -91,6 +97,7 @@ CREATE POLICY "users_view_own_chats"
 #### Never Make Storage Buckets Public
 
 **Wrong**:
+
 ```sql
 -- ❌ WRONG: Making bucket public
 UPDATE storage.buckets
@@ -99,10 +106,11 @@ WHERE id = 'tracks';
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Use signed URLs
 const { data } = await supabase.storage
-  .from('tracks')
+  .from("tracks")
   .createSignedUrl(`${userId}/${trackId}.mp3`, 3600);
 ```
 
@@ -113,22 +121,24 @@ const { data } = await supabase.storage
 #### Don't Import Server-Only Code in Client Components
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Importing server-only function in client component
-'use client';
-import { getSecretFromVault } from '@/lib/secrets'; // Server-only!
+"use client";
+import { getSecretFromVault } from "@/lib/secrets"; // Server-only!
 
 export default function Settings() {
-  const apiKey = await getSecretFromVault('openai');
+  const apiKey = await getSecretFromVault("openai");
   // This won't work and may break build
 }
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Use Server Action or API Route
-'use client';
-import { saveApiKey } from './actions'; // Server Action
+"use client";
+import { saveApiKey } from "./actions"; // Server Action
 
 export default function Settings() {
   async function handleSubmit(formData: FormData) {
@@ -143,6 +153,7 @@ export default function Settings() {
 #### Don't Create Tables Without RLS
 
 **Wrong**:
+
 ```sql
 -- ❌ WRONG: Table without RLS
 CREATE TABLE new_table (
@@ -154,6 +165,7 @@ CREATE TABLE new_table (
 ```
 
 **Right**:
+
 ```sql
 -- ✅ RIGHT: Table with RLS and policies
 CREATE TABLE new_table (
@@ -178,6 +190,7 @@ CREATE POLICY "users_insert_own"
 #### Don't Forget Usage Event Logging for Provider Calls
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Provider call without usage logging
 const response = await openai.chat.completions.create({ ... });
@@ -186,6 +199,7 @@ return response;
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Provider call with usage logging
 const response = await openai.chat.completions.create({ ... });
@@ -211,6 +225,7 @@ return response;
 #### Don't Skip `pnpm verify`
 
 **Wrong**:
+
 ```bash
 # ❌ WRONG: Committing without verification
 git add .
@@ -219,6 +234,7 @@ git push
 ```
 
 **Right**:
+
 ```bash
 # ✅ RIGHT: Always verify before committing
 pnpm verify  # Runs format:check, lint, typecheck, test
@@ -233,6 +249,7 @@ git push
 #### Don't Delete Working Tests
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Deleting failing test
 // test('should validate user input', () => {
@@ -241,9 +258,10 @@ git push
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Fix the test or fix the code
-test('should validate user input', () => {
+test("should validate user input", () => {
   // Fix test to match actual behavior
   // Or fix code to match expected behavior
 });
@@ -264,6 +282,7 @@ test('should validate user input', () => {
 ### Mistake: Forgetting `updated_at` Trigger
 
 **Wrong**:
+
 ```sql
 -- ❌ WRONG: Table without updated_at trigger
 CREATE TABLE profiles (
@@ -274,6 +293,7 @@ CREATE TABLE profiles (
 ```
 
 **Right**:
+
 ```sql
 -- ✅ RIGHT: Table with updated_at trigger
 CREATE TABLE profiles (
@@ -293,15 +313,17 @@ CREATE TRIGGER set_updated_at
 ### Mistake: Hardcoding Localhost URLs
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Hardcoded localhost
-const API_URL = 'http://localhost:3003/api/chat';
+const API_URL = "http://localhost:3003/api/chat";
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Relative URLs or environment-aware
-const API_URL = '/api/chat'; // Relative URL, works everywhere
+const API_URL = "/api/chat"; // Relative URL, works everywhere
 // Or use Next.js environment variables if needed
 ```
 
@@ -310,12 +332,14 @@ const API_URL = '/api/chat'; // Relative URL, works everywhere
 ### Mistake: Not Handling Provider Errors
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: No error handling
 const audio = await client.textToSpeech.convert({ ... });
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Handle rate limits, invalid keys, etc.
 try {
@@ -336,25 +360,27 @@ try {
 ### Mistake: Mixing Up `tokens` and `characters`
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Using characters for OpenAI
-await supabase.from('usage_events').insert({
-  provider: 'openai',
-  characters: prompt.length,  // Wrong unit!
+await supabase.from("usage_events").insert({
+  provider: "openai",
+  characters: prompt.length, // Wrong unit!
 });
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Use tokens for OpenAI, characters for ElevenLabs
-await supabase.from('usage_events').insert({
-  provider: 'openai',
-  tokens: response.usage.total_tokens,  // Correct
+await supabase.from("usage_events").insert({
+  provider: "openai",
+  tokens: response.usage.total_tokens, // Correct
 });
 
-await supabase.from('usage_events').insert({
-  provider: 'elevenlabs',
-  characters: prompt.length,  // Correct
+await supabase.from("usage_events").insert({
+  provider: "elevenlabs",
+  characters: prompt.length, // Correct
 });
 ```
 
@@ -363,22 +389,21 @@ await supabase.from('usage_events').insert({
 ### Mistake: Forgetting to Include `user_id` in Queries
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: No user_id filter (RLS will block anyway, but inefficient)
-const { data } = await supabase
-  .from('chats')
-  .select()
-  .eq('id', chatId);
+const { data } = await supabase.from("chats").select().eq("id", chatId);
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Include user_id for clarity and index usage
 const { data } = await supabase
-  .from('chats')
+  .from("chats")
   .select()
-  .eq('user_id', userId)
-  .eq('id', chatId)
+  .eq("user_id", userId)
+  .eq("id", chatId)
   .maybeSingle();
 ```
 
@@ -387,22 +412,24 @@ const { data } = await supabase
 ### Mistake: Using `createClient` Instead of Helper Functions
 
 **Wrong**:
+
 ```typescript
 // ❌ WRONG: Direct createClient usage
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(url, anonKey);
 ```
 
 **Right**:
+
 ```typescript
 // ✅ RIGHT: Use helper functions
 // Server-side
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 const supabase = await createServerSupabaseClient();
 
 // Client-side
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 const supabase = createBrowserSupabaseClient();
 ```
 
@@ -414,12 +441,14 @@ const supabase = createBrowserSupabaseClient();
 
 ```typescript
 // In a component or API route
-console.log('Supabase client:', supabase.constructor.name);
+console.log("Supabase client:", supabase.constructor.name);
 // Should be 'SupabaseClient' (not admin)
 
 // Check if session exists
-const { data: { session } } = await supabase.auth.getSession();
-console.log('User ID:', session?.user?.id);
+const {
+  data: { session },
+} = await supabase.auth.getSession();
+console.log("User ID:", session?.user?.id);
 ```
 
 ### Test RLS Locally
@@ -449,25 +478,25 @@ console.log({
 
 ### File Locations
 
-| Task | Location |
-| ---- | -------- |
-| Admin client (service role) | `/lib/supabase/admin.ts` |
-| Server-side client (session) | `/lib/supabase/server.ts` |
-| Browser client (anon) | `/lib/supabase/client.ts` |
-| Migrations | `/supabase/migrations/*.sql` |
-| API routes | `/app/api/*/route.ts` |
-| Server actions | `/app/**/actions.ts` |
-| Vault helpers | `/supabase/migrations/0004_vault_helpers.sql` |
+| Task                         | Location                                      |
+| ---------------------------- | --------------------------------------------- |
+| Admin client (service role)  | `/lib/supabase/admin.ts`                      |
+| Server-side client (session) | `/lib/supabase/server.ts`                     |
+| Browser client (anon)        | `/lib/supabase/client.ts`                     |
+| Migrations                   | `/supabase/migrations/*.sql`                  |
+| API routes                   | `/app/api/*/route.ts`                         |
+| Server actions               | `/app/**/actions.ts`                          |
+| Vault helpers                | `/supabase/migrations/0004_vault_helpers.sql` |
 
 ### Common Patterns
 
-| Pattern | Example |
-| ------- | ------- |
-| Validate session | `const { data: { session } } = await supabase.auth.getSession()` |
-| Fetch from Vault | `const { data } = await supabaseAdmin.rpc('decrypt_secret', { secret_id })` |
-| Log usage event | `await supabase.from('usage_events').insert({ ... })` |
-| Create signed URL | `await supabase.storage.from('tracks').createSignedUrl(path, 3600)` |
-| RLS policy | `CREATE POLICY "name" ON table USING (auth.uid() = user_id)` |
+| Pattern           | Example                                                                     |
+| ----------------- | --------------------------------------------------------------------------- |
+| Validate session  | `const { data: { session } } = await supabase.auth.getSession()`            |
+| Fetch from Vault  | `const { data } = await supabaseAdmin.rpc('decrypt_secret', { secret_id })` |
+| Log usage event   | `await supabase.from('usage_events').insert({ ... })`                       |
+| Create signed URL | `await supabase.storage.from('tracks').createSignedUrl(path, 3600)`         |
+| RLS policy        | `CREATE POLICY "name" ON table USING (auth.uid() = user_id)`                |
 
 ## Related Documentation
 

@@ -42,10 +42,12 @@ List at least 2-3 alternatives considered, even if they were quickly rejected.
 ### Option 1: [Name]
 
 **Pros**:
+
 - Advantage 1
 - Advantage 2
 
 **Cons**:
+
 - Disadvantage 1
 - Disadvantage 2
 
@@ -54,10 +56,12 @@ List at least 2-3 alternatives considered, even if they were quickly rejected.
 ### Option 2: [Name]
 
 **Pros**:
+
 - Advantage 1
 - Advantage 2
 
 **Cons**:
+
 - Disadvantage 1
 - Disadvantage 2
 
@@ -107,6 +111,7 @@ How will this decision be implemented?
 ## Notes
 
 Optional section for:
+
 - Open questions
 - Future considerations
 - Dependencies on other decisions

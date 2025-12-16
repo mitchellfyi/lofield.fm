@@ -70,23 +70,24 @@ After OpenAI call completes:
 ```typescript
 // Calculate cost
 const { data: pricing } = await supabase
-  .from('provider_pricing')
-  .select('*')
-  .eq('provider', 'openai')
-  .eq('model', 'gpt-4o')
+  .from("provider_pricing")
+  .select("*")
+  .eq("provider", "openai")
+  .eq("model", "gpt-4o")
   .single();
 
 const inputCost = (usage.promptTokens / 1_000_000) * pricing.input_cost_per_1m;
-const outputCost = (usage.completionTokens / 1_000_000) * pricing.output_cost_per_1m;
+const outputCost =
+  (usage.completionTokens / 1_000_000) * pricing.output_cost_per_1m;
 const totalCost = inputCost + outputCost;
 
 // Log usage event
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   user_id: session.user.id,
   chat_id: chatId,
-  provider: 'openai',
-  model: 'gpt-4o',
-  action_type: 'refine',
+  provider: "openai",
+  model: "gpt-4o",
+  action_type: "refine",
   action_group_id: actionGroupId, // Generated at start of request
   tokens: usage.promptTokens + usage.completionTokens,
   estimated_cost_usd: totalCost,
@@ -96,6 +97,7 @@ await supabase.from('usage_events').insert({
 ### Example Request/Response
 
 **Request**:
+
 ```http
 POST /api/chat HTTP/1.1
 Content-Type: application/json
@@ -110,6 +112,7 @@ Cookie: sb-access-token=...
 ```
 
 **Response** (streaming):
+
 ```
 data: {"text":"Sure"}
 data: {"text":"! I"}
@@ -185,22 +188,22 @@ After ElevenLabs call completes:
 ```typescript
 // Calculate cost
 const { data: pricing } = await supabase
-  .from('provider_pricing')
-  .select('*')
-  .eq('provider', 'elevenlabs')
-  .eq('model', 'eleven_multilingual_v2')
+  .from("provider_pricing")
+  .select("*")
+  .eq("provider", "elevenlabs")
+  .eq("model", "eleven_multilingual_v2")
   .single();
 
 const cost = prompt.length * pricing.cost_per_character;
 
 // Log usage event
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   user_id: session.user.id,
   chat_id: chatId,
   track_id: trackId,
-  provider: 'elevenlabs',
-  model: 'eleven_multilingual_v2',
-  action_type: 'generate',
+  provider: "elevenlabs",
+  model: "eleven_multilingual_v2",
+  action_type: "generate",
   action_group_id: actionGroupId, // Same as refine if part of same flow
   characters: prompt.length,
   estimated_cost_usd: cost,
@@ -210,15 +213,18 @@ await supabase.from('usage_events').insert({
 ### Example Request/Response
 
 **Request** (Server Action):
+
 ```typescript
 generateTrack({
-  prompt: "A chill lo-fi beat with gentle rain sounds, 80 BPM, warm piano chords",
+  prompt:
+    "A chill lo-fi beat with gentle rain sounds, 80 BPM, warm piano chords",
   chatId: "chat-uuid",
   voiceId: "voice-uuid",
 });
 ```
 
 **Response**:
+
 ```typescript
 {
   trackId: "track-uuid",
@@ -238,18 +244,18 @@ When a user refines a prompt and then generates a track, both actions are correl
 const actionGroupId = crypto.randomUUID();
 
 // Refine usage event
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   action_group_id: actionGroupId,
-  action_type: 'refine',
-  provider: 'openai',
+  action_type: "refine",
+  provider: "openai",
   // ...
 });
 
 // Later, when user generates track (pass actionGroupId from refine)
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   action_group_id: actionGroupId, // Same ID
-  action_type: 'generate',
-  provider: 'elevenlabs',
+  action_type: "generate",
+  provider: "elevenlabs",
   // ...
 });
 ```
@@ -275,6 +281,7 @@ ORDER BY MAX(created_at) DESC;
 ### OpenAI Errors
 
 **Rate Limit (429)**:
+
 ```typescript
 try {
   const result = await streamText({ ... });
@@ -290,18 +297,20 @@ try {
 ```
 
 **Invalid API Key (401)**:
+
 ```typescript
 if (error.status === 401) {
   return NextResponse.json(
-    { error: 'Invalid OpenAI API key. Please update your key in Settings.' },
+    { error: "Invalid OpenAI API key. Please update your key in Settings." },
     { status: 400 }
   );
 }
 ```
 
 **Sanitized Logging**:
+
 ```typescript
-console.error('OpenAI call failed:', {
+console.error("OpenAI call failed:", {
   message: error.message,
   status: error.status,
   userId: session.user.id,
@@ -313,6 +322,7 @@ console.error('OpenAI call failed:', {
 ### ElevenLabs Errors
 
 **Character Quota Exceeded (429)**:
+
 ```typescript
 try {
   const audio = await client.textToSpeech.convert({ ... });
@@ -325,15 +335,19 @@ try {
 ```
 
 **Invalid API Key (401)**:
+
 ```typescript
 if (error.status === 401) {
-  throw new Error('Invalid ElevenLabs API key. Please update your key in Settings.');
+  throw new Error(
+    "Invalid ElevenLabs API key. Please update your key in Settings."
+  );
 }
 ```
 
 **Sanitized Logging**:
+
 ```typescript
-console.error('ElevenLabs call failed:', {
+console.error("ElevenLabs call failed:", {
   message: error.message,
   status: error.status,
   userId: session.user.id,
@@ -354,6 +368,7 @@ console.error('ElevenLabs call failed:', {
 ### Cost Calculation Accuracy
 
 **Estimates vs Actuals**:
+
 - Our `estimated_cost_usd` is calculated from `provider_pricing` table
 - Actual costs depend on:
   - Provider's current pricing (may change)
@@ -372,19 +387,19 @@ console.error('ElevenLabs call failed:', {
 ```typescript
 // 1. User starts chat
 const chatId = crypto.randomUUID();
-await supabase.from('chats').insert({ id: chatId, user_id: userId });
+await supabase.from("chats").insert({ id: chatId, user_id: userId });
 
 // 2. User sends first message (refine)
 const actionGroupId = crypto.randomUUID();
 
 // ... OpenAI call ...
 // Log refine usage
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   user_id: userId,
   chat_id: chatId,
-  provider: 'openai',
-  model: 'gpt-4o',
-  action_type: 'refine',
+  provider: "openai",
+  model: "gpt-4o",
+  action_type: "refine",
   action_group_id: actionGroupId,
   tokens: 250,
   estimated_cost_usd: 0.00125,
@@ -395,13 +410,13 @@ const trackId = crypto.randomUUID();
 
 // ... ElevenLabs call ...
 // Log generate usage
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   user_id: userId,
   chat_id: chatId,
   track_id: trackId,
-  provider: 'elevenlabs',
-  model: 'eleven_multilingual_v2',
-  action_type: 'generate',
+  provider: "elevenlabs",
+  model: "eleven_multilingual_v2",
+  action_type: "generate",
   action_group_id: actionGroupId, // Same as refine
   characters: 80,
   estimated_cost_usd: 0.0176,

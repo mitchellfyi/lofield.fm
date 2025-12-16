@@ -2,6 +2,10 @@
 
 You are working on Lofield Studio (Next.js + TypeScript + Supabase + Vercel).
 
+## Documentation Entry Point
+
+📚 **Start here**: [/docs/INDEX.md](/docs/INDEX.md) - Complete documentation index
+
 Follow these rules:
 
 - **Write tests** for every new feature or bug fix you implement.
@@ -11,6 +15,11 @@ Follow these rules:
 - **Before proposing a PR-ready solution, ensure it passes `pnpm verify`** (runs format:check, lint, typecheck, test).
 - If you change behaviour, update relevant docs/specs.
 - If you modify scripts, keep CI aligned with the same checks.
+
+## CI and Migrations
+
+- **Never bypass CI** by editing workflows to skip checks. Fix the root cause instead.
+- **If you add/modify migrations**: Run `pnpm docs:check`, update `/docs/architecture/DATA_MODEL.md`, and review RLS policies.
 
 When unsure:
 
