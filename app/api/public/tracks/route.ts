@@ -2,56 +2,97 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * GET /api/public/tracks - List public tracks
+ * GET /api/public/tracks - List public tracks with search and filtering
  *
  * This endpoint allows anyone (including anonymous users) to browse public tracks.
  *
  * Query parameters:
- * - search: Full-text search query (optional)
+ * - q: Full-text search query (optional)
  * - artist: Filter by artist name (optional)
  * - genre: Filter by genre (optional)
- * - bpmMin: Minimum BPM (optional)
- * - bpmMax: Maximum BPM (optional)
- * - limit: Results per page (default: 20, max: 100)
- * - offset: Pagination offset (default: 0)
+ * - bpm_min: Minimum BPM (optional)
+ * - bpm_max: Maximum BPM (optional)
+ * - energy_min: Minimum energy 0-100 (optional)
+ * - energy_max: Maximum energy 0-100 (optional)
+ * - focus_min: Minimum focus 0-100 (optional)
+ * - focus_max: Maximum focus 0-100 (optional)
+ * - chill_min: Minimum chill 0-100 (optional)
+ * - chill_max: Maximum chill 0-100 (optional)
+ * - tags: Comma-separated tags (optional)
+ * - instrumentation: Comma-separated instruments (optional)
+ * - sort: Sort order - newest, bpm_asc, bpm_desc (default: newest)
+ * - cursor: Pagination cursor (optional)
+ * - limit: Results per page (default: 30, max: 100)
  *
  * Returns:
- * - tracks: Array of public track objects
- * - total: Total count of matching tracks
- * - limit: Results per page
- * - offset: Current offset
+ * - items: Array of public track objects
+ * - nextCursor: Cursor for next page (null if no more results)
  */
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { searchParams } = new URL(request.url);
 
   // Parse query parameters
-  const search = searchParams.get("search") || undefined;
+  const q = searchParams.get("q") || undefined;
   const artist = searchParams.get("artist") || undefined;
   const genre = searchParams.get("genre") || undefined;
-  const bpmMin = searchParams.get("bpmMin")
-    ? parseInt(searchParams.get("bpmMin")!, 10)
+  const bpmMin = searchParams.get("bpm_min")
+    ? parseInt(searchParams.get("bpm_min")!, 10)
     : undefined;
-  const bpmMax = searchParams.get("bpmMax")
-    ? parseInt(searchParams.get("bpmMax")!, 10)
+  const bpmMax = searchParams.get("bpm_max")
+    ? parseInt(searchParams.get("bpm_max")!, 10)
     : undefined;
 
-  // Pagination
-  const limitParam = searchParams.get("limit");
-  const offsetParam = searchParams.get("offset");
-  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 20;
-  const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+  // Mood filters
+  const energyMin = searchParams.get("energy_min")
+    ? parseInt(searchParams.get("energy_min")!, 10)
+    : undefined;
+  const energyMax = searchParams.get("energy_max")
+    ? parseInt(searchParams.get("energy_max")!, 10)
+    : undefined;
+  const focusMin = searchParams.get("focus_min")
+    ? parseInt(searchParams.get("focus_min")!, 10)
+    : undefined;
+  const focusMax = searchParams.get("focus_max")
+    ? parseInt(searchParams.get("focus_max")!, 10)
+    : undefined;
+  const chillMin = searchParams.get("chill_min")
+    ? parseInt(searchParams.get("chill_min")!, 10)
+    : undefined;
+  const chillMax = searchParams.get("chill_max")
+    ? parseInt(searchParams.get("chill_max")!, 10)
+    : undefined;
 
-  // Validate pagination parameters
-  if (isNaN(limit) || limit < 1) {
+  // Array filters (comma-separated)
+  const tagsParam = searchParams.get("tags");
+  const tags = tagsParam
+    ? tagsParam.split(",").map((t) => t.trim())
+    : undefined;
+  const instrumentationParam = searchParams.get("instrumentation");
+  const instrumentation = instrumentationParam
+    ? instrumentationParam.split(",").map((i) => i.trim())
+    : undefined;
+
+  // Sorting
+  const sort = searchParams.get("sort") || "newest";
+  if (!["newest", "bpm_asc", "bpm_desc"].includes(sort)) {
     return NextResponse.json(
-      { error: "Invalid limit parameter" },
+      {
+        error: "Invalid sort parameter. Must be: newest, bpm_asc, or bpm_desc",
+      },
       { status: 400 }
     );
   }
-  if (isNaN(offset) || offset < 0) {
+
+  // Pagination (cursor-based)
+  const cursor = searchParams.get("cursor") || undefined;
+  const limitParam = searchParams.get("limit");
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 30;
+
+  // Validate limit parameter
+  if (isNaN(limit) || limit < 1) {
     return NextResponse.json(
-      { error: "Invalid offset parameter" },
+      { error: "Invalid limit parameter" },
       { status: 400 }
     );
   }
@@ -73,25 +114,25 @@ export async function GET(request: NextRequest) {
         mood_chill,
         length_ms,
         instrumental,
+        metadata,
         created_at,
         published_at
-      `,
-        { count: "exact" }
+      `
       )
       .eq("visibility", "public")
       .eq("status", "ready");
 
-    // Apply filters
-    if (search) {
-      // Full-text search using search_tsv
-      query = query.textSearch("search_tsv", search, {
+    // Apply full-text search
+    if (q) {
+      query = query.textSearch("search_tsv", q, {
         type: "websearch",
         config: "english",
       });
     }
 
+    // Apply filters
     if (artist) {
-      query = query.eq("artist_name", artist);
+      query = query.ilike("artist_name", `%${artist}%`);
     }
 
     if (genre) {
@@ -106,17 +147,86 @@ export async function GET(request: NextRequest) {
       query = query.lte("bpm", bpmMax);
     }
 
-    // Order by published_at (most recent first)
-    // Only public/unlisted tracks should have published_at set
-    query = query.order("published_at", {
-      ascending: false,
-      nullsFirst: false, // null values last
-    });
+    // Mood filters
+    if (energyMin !== undefined) {
+      query = query.gte("mood_energy", energyMin);
+    }
+    if (energyMax !== undefined) {
+      query = query.lte("mood_energy", energyMax);
+    }
+    if (focusMin !== undefined) {
+      query = query.gte("mood_focus", focusMin);
+    }
+    if (focusMax !== undefined) {
+      query = query.lte("mood_focus", focusMax);
+    }
+    if (chillMin !== undefined) {
+      query = query.gte("mood_chill", chillMin);
+    }
+    if (chillMax !== undefined) {
+      query = query.lte("mood_chill", chillMax);
+    }
 
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
+    // Tags filter (check if any tag is in the metadata->tags array)
+    if (tags && tags.length > 0) {
+      // Use JSONB contains to check if tags array contains any of the requested tags
+      query = query.contains("metadata", { tags });
+    }
 
-    const { data: tracks, error, count } = await query;
+    // Instrumentation filter (check if any instrument is in the metadata->instrumentation array)
+    if (instrumentation && instrumentation.length > 0) {
+      query = query.contains("metadata", { instrumentation });
+    }
+
+    // Apply sorting
+    switch (sort) {
+      case "bpm_asc":
+        query = query.order("bpm", { ascending: true, nullsFirst: false });
+        break;
+      case "bpm_desc":
+        query = query.order("bpm", { ascending: false, nullsFirst: false });
+        break;
+      case "newest":
+      default:
+        query = query.order("published_at", {
+          ascending: false,
+          nullsFirst: false,
+        });
+        break;
+    }
+
+    // Apply cursor-based pagination
+    if (cursor) {
+      // Cursor is a base64-encoded combination of sort field value and id
+      try {
+        const decodedCursor = JSON.parse(
+          Buffer.from(cursor, "base64").toString("utf-8")
+        );
+        const { value, id } = decodedCursor;
+
+        // Apply cursor filter based on sort direction
+        if (sort === "bpm_asc") {
+          query = query.or(`bpm.gt.${value},and(bpm.eq.${value},id.gt.${id})`);
+        } else if (sort === "bpm_desc") {
+          query = query.or(`bpm.lt.${value},and(bpm.eq.${value},id.gt.${id})`);
+        } else {
+          // newest (published_at desc)
+          query = query.or(
+            `published_at.lt.${value},and(published_at.eq.${value},id.gt.${id})`
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid cursor parameter" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Fetch one extra to determine if there are more results
+    query = query.limit(limit + 1);
+
+    const { data: tracks, error } = await query;
 
     if (error) {
       console.error("Error fetching public tracks:", error);
@@ -126,11 +236,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if there are more results
+    const hasMore = tracks && tracks.length > limit;
+    const items = hasMore ? tracks.slice(0, limit) : tracks || [];
+
+    // Generate next cursor if there are more results
+    let nextCursor = null;
+    if (hasMore && items.length > 0) {
+      const lastItem = items[items.length - 1];
+      let cursorValue;
+      if (sort === "bpm_asc" || sort === "bpm_desc") {
+        cursorValue = lastItem.bpm;
+      } else {
+        cursorValue = lastItem.published_at;
+      }
+      const cursorData = { value: cursorValue, id: lastItem.id };
+      nextCursor = Buffer.from(JSON.stringify(cursorData)).toString("base64");
+    }
+
     return NextResponse.json({
-      tracks: tracks || [],
-      total: count || 0,
-      limit,
-      offset,
+      items,
+      nextCursor,
     });
   } catch (err) {
     console.error("Unexpected error in public tracks API:", err);
