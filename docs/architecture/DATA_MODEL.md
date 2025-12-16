@@ -329,9 +329,9 @@ CREATE INDEX idx_tracks_user_created
 CREATE INDEX idx_tracks_search_tsv
   ON tracks USING gin(search_tsv);
 
--- tracks: public library queries (visibility + created_at)
-CREATE INDEX idx_tracks_visibility_created
-  ON tracks(visibility, created_at DESC);
+-- tracks: public library queries (visibility + published_at)
+CREATE INDEX idx_tracks_visibility_published
+  ON tracks(visibility, published_at DESC NULLS LAST);
 
 -- tracks: filter by artist
 CREATE INDEX idx_tracks_artist_name

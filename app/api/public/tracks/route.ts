@@ -107,9 +107,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Order by published_at (most recent first)
+    // Only public/unlisted tracks should have published_at set
     query = query.order("published_at", {
       ascending: false,
-      nullsFirst: false,
+      nullsFirst: false, // null values last
     });
 
     // Apply pagination

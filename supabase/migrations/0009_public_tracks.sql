@@ -46,9 +46,9 @@ alter table public.tracks
 create index if not exists idx_tracks_search_tsv
   on public.tracks using gin(search_tsv);
 
--- Index for public library queries (visibility + created_at)
-create index if not exists idx_tracks_visibility_created
-  on public.tracks(visibility, created_at desc);
+-- Index for public library queries (visibility + published_at)
+create index if not exists idx_tracks_visibility_published
+  on public.tracks(visibility, published_at desc nulls last);
 
 -- Index for artist browsing
 create index if not exists idx_tracks_artist_name
