@@ -332,6 +332,13 @@ describe("Track APIs", () => {
             }),
           };
         }
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+          };
+        }
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -411,6 +418,13 @@ describe("Track APIs", () => {
             single: vi.fn().mockResolvedValue({ data: { id: "t1" } }),
           };
         }
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+          };
+        }
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -487,6 +501,13 @@ describe("Track APIs", () => {
             limit: vi.fn().mockResolvedValue({ data: [] }),
             insert: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({ data: { id: "t1" } }),
+          };
+        }
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
           };
         }
         return {};
