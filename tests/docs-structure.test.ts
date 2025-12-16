@@ -58,7 +58,7 @@ describe("Documentation structure", () => {
 
   it("INDEX.md contains links to key documentation", () => {
     const indexContent = fs.readFileSync(INDEX_PATH, "utf-8");
-    
+
     const keyDocs = [
       "QUICKSTART.md",
       "AGENT_PLAYBOOK.md",
@@ -81,10 +81,13 @@ describe("Documentation structure", () => {
     for (const doc of sampleDocs) {
       const fullPath = path.join(DOCS_DIR, doc);
       if (!fs.existsSync(fullPath)) continue;
-      
+
       const content = fs.readFileSync(fullPath, "utf-8");
-      const hasRelatedSection = /^##\s+(Related Documentation|Related docs|Related Docs)/im.test(content);
-      
+      const hasRelatedSection =
+        /^##\s+(Related Documentation|Related docs|Related Docs)/im.test(
+          content
+        );
+
       expect(hasRelatedSection).toBe(true);
     }
   });
@@ -99,27 +102,25 @@ describe("Documentation structure", () => {
     for (const doc of sampleDocs) {
       const fullPath = path.join(DOCS_DIR, doc);
       if (!fs.existsSync(fullPath)) continue;
-      
+
       const content = fs.readFileSync(fullPath, "utf-8");
       const hasIndexLink = content.toLowerCase().includes("index.md");
-      
+
       expect(hasIndexLink).toBe(true);
     }
   });
 
   it("key docs mention pnpm verify", () => {
-    const keyDocs = [
-      "agents/AGENT_PLAYBOOK.md",
-      "setup/QUICKSTART.md",
-    ];
+    const keyDocs = ["agents/AGENT_PLAYBOOK.md", "setup/QUICKSTART.md"];
 
     for (const doc of keyDocs) {
       const fullPath = path.join(DOCS_DIR, doc);
       if (!fs.existsSync(fullPath)) continue;
-      
+
       const content = fs.readFileSync(fullPath, "utf-8");
-      const mentionsVerify = content.includes("pnpm verify") || content.includes("`verify`");
-      
+      const mentionsVerify =
+        content.includes("pnpm verify") || content.includes("`verify`");
+
       expect(mentionsVerify).toBe(true);
     }
   });

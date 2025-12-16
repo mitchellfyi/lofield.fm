@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Documentation structure and cross-linking validator
- * 
+ *
  * Validates:
  * 1. Required documentation files exist
  * 2. INDEX.md contains links to all required docs
@@ -14,7 +14,6 @@ import * as fs from "fs";
 import * as path from "path";
 
 const DOCS_DIR = path.resolve(__dirname, "../docs");
-const INDEX_PATH = path.join(DOCS_DIR, "INDEX.md");
 
 // Required documentation files based on INDEX.md structure
 const REQUIRED_DOCS = [
@@ -88,7 +87,9 @@ function readFile(relativePath: string): string {
   return fs.readFileSync(fullPath, "utf-8");
 }
 
-function extractMarkdownLinks(content: string): Array<{ text: string; href: string }> {
+function extractMarkdownLinks(
+  content: string
+): Array<{ text: string; href: string }> {
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
   const links: Array<{ text: string; href: string }> = [];
   let match;
@@ -106,25 +107,31 @@ function extractMarkdownLinks(content: string): Array<{ text: string; href: stri
 function isRelativeDocLink(href: string): boolean {
   // Relative doc links start with ./ or ../ or are just a path
   // Exclude external links (http://, https://, mailto:, #anchors)
-  return !href.startsWith("http://") &&
+  return (
+    !href.startsWith("http://") &&
     !href.startsWith("https://") &&
     !href.startsWith("mailto:") &&
-    !href.startsWith("#");
+    !href.startsWith("#")
+  );
 }
 
 function checkRequiredFilesExist(): void {
   console.log("✓ Checking required documentation files exist...");
-  
+
   for (const docPath of REQUIRED_DOCS) {
     if (!checkFileExists(docPath)) {
-      addError(docPath, "missing-file", `Required documentation file does not exist`);
+      addError(
+        docPath,
+        "missing-file",
+        `Required documentation file does not exist`
+      );
     }
   }
 }
 
 function checkIndexContainsAllDocs(): void {
   console.log("✓ Checking INDEX.md contains links to all required docs...");
-  
+
   if (!checkFileExists("INDEX.md")) {
     addError("INDEX.md", "missing-file", "INDEX.md does not exist");
     return;
@@ -136,28 +143,29 @@ function checkIndexContainsAllDocs(): void {
   for (const docPath of REQUIRED_DOCS) {
     // Check if the doc is linked in INDEX.md
     // Links can be relative (./path) or absolute from docs root
-    const possibleLinks = [
-      `./${docPath}`,
-      `../${docPath}`,
-      docPath,
-    ];
+    const possibleLinks = [`./${docPath}`, `../${docPath}`, docPath];
 
-    const isLinked = links.some(link => 
-      possibleLinks.some(possible => link.href.includes(possible))
+    const isLinked = links.some((link) =>
+      possibleLinks.some((possible) => link.href.includes(possible))
     );
 
     if (!isLinked) {
-      addError("INDEX.md", "missing-link", `INDEX.md does not contain a link to ${docPath}`);
+      addError(
+        "INDEX.md",
+        "missing-link",
+        `INDEX.md does not contain a link to ${docPath}`
+      );
     }
   }
 }
 
 function checkDocHasRelatedSection(docPath: string): void {
   const content = readFile(docPath);
-  
+
   // Check for "Related Documentation" or "Related docs" heading
-  const hasRelatedHeading = /^##\s+(Related Documentation|Related docs|Related Docs)/im.test(content);
-  
+  const hasRelatedHeading =
+    /^##\s+(Related Documentation|Related docs|Related Docs)/im.test(content);
+
   if (!hasRelatedHeading) {
     addError(
       docPath,
@@ -172,12 +180,14 @@ function checkDocLinksBackToIndex(docPath: string): void {
   const links = extractMarkdownLinks(content);
 
   // Check if any link points back to INDEX.md
-  const hasIndexLink = links.some(link => {
+  const hasIndexLink = links.some((link) => {
     const href = link.href.toLowerCase();
-    return href.includes("index.md") || 
-           href === "../INDEX.md" ||
-           href === "./INDEX.md" ||
-           href === "INDEX.md";
+    return (
+      href.includes("index.md") ||
+      href === "../INDEX.md" ||
+      href === "./INDEX.md" ||
+      href === "INDEX.md"
+    );
   });
 
   if (!hasIndexLink) {
@@ -205,7 +215,7 @@ function checkLocalLinksExist(docPath: string): void {
 
     // Resolve the link relative to the document's directory
     const linkedPath = path.resolve(docDir, cleanHref);
-    
+
     // Check if it exists
     if (!fs.existsSync(linkedPath)) {
       addError(
@@ -219,7 +229,7 @@ function checkLocalLinksExist(docPath: string): void {
 
 function checkIndividualDocs(): void {
   console.log("✓ Checking individual documentation files...");
-  
+
   for (const docPath of REQUIRED_DOCS) {
     if (!checkFileExists(docPath)) {
       continue; // Already reported as missing
@@ -227,7 +237,7 @@ function checkIndividualDocs(): void {
 
     checkDocHasRelatedSection(docPath);
     checkDocLinksBackToIndex(docPath);
-    
+
     // Skip broken link check for templates (they have placeholder links)
     if (!docPath.includes("template")) {
       checkLocalLinksExist(docPath);
@@ -242,16 +252,13 @@ function checkIndividualDocs(): void {
 
 function checkVerifyCommandMentioned(): void {
   console.log("✓ Checking docs mention the verify command...");
-  
+
   // Check key docs that should mention pnpm verify
-  const keyDocs = [
-    "agents/AGENT_PLAYBOOK.md",
-    "setup/QUICKSTART.md",
-  ];
+  const keyDocs = ["agents/AGENT_PLAYBOOK.md", "setup/QUICKSTART.md"];
 
   for (const docPath of keyDocs) {
     if (!checkFileExists(docPath)) continue;
-    
+
     const content = readFile(docPath);
     if (!content.includes("pnpm verify") && !content.includes("`verify`")) {
       addError(
