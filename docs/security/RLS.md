@@ -190,12 +190,14 @@ create policy "policy_name"
 
 ### tracks
 
-| Operation | Policy                 |
-| --------- | ---------------------- |
-| SELECT    | `auth.uid() = user_id` |
-| INSERT    | `auth.uid() = user_id` |
-| UPDATE    | `auth.uid() = user_id` |
-| DELETE    | `auth.uid() = user_id` |
+| Operation | Policy                                                                |
+| --------- | --------------------------------------------------------------------- |
+| SELECT    | Anyone can view public/unlisted tracks OR `auth.uid() = user_id`      |
+| INSERT    | `auth.uid() = user_id` AND chat belongs to user                       |
+| UPDATE    | `auth.uid() = user_id` (cannot change user_id, chat_id, storage_path) |
+| DELETE    | `auth.uid() = user_id` AND chat belongs to user                       |
+
+**Note**: As of migration 0009, tracks support public visibility. Anonymous users can read tracks with `visibility in ('public', 'unlisted')`. Owners can always read all their tracks regardless of visibility.
 
 ### usage_events
 

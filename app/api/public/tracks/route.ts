@@ -39,9 +39,7 @@ export async function GET(request: NextRequest) {
   // Pagination
   const limitParam = searchParams.get("limit");
   const offsetParam = searchParams.get("offset");
-  const limit = limitParam
-    ? Math.min(parseInt(limitParam, 10), 100)
-    : 20;
+  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 20;
   const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
 
   // Validate pagination parameters
@@ -109,7 +107,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Order by published_at (most recent first)
-    query = query.order("published_at", { ascending: false, nullsFirst: false });
+    query = query.order("published_at", {
+      ascending: false,
+      nullsFirst: false,
+    });
 
     // Apply pagination
     query = query.range(offset, offset + limit - 1);

@@ -127,14 +127,10 @@ describe("Public Tracks API", () => {
       const res = await GET(req);
 
       expect(res.status).toBe(200);
-      expect(textSearchMock).toHaveBeenCalledWith(
-        "search_tsv",
-        "lofi beats",
-        {
-          type: "websearch",
-          config: "english",
-        }
-      );
+      expect(textSearchMock).toHaveBeenCalledWith("search_tsv", "lofi beats", {
+        type: "websearch",
+        config: "english",
+      });
     });
 
     it("supports filtering by artist", async () => {

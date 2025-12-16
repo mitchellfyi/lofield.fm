@@ -147,23 +147,45 @@ provider_pricing (reference data, no user_id)
 
 ### tracks
 
-**Purpose**: Generated audio tracks with metadata.
+**Purpose**: Generated audio tracks with metadata and visibility controls.
 
-| Column        | Type      | Description                        |
-| ------------- | --------- | ---------------------------------- |
-| `id`          | UUID      | Primary key                        |
-| `user_id`     | UUID      | FK to auth.users                   |
-| `chat_id`     | UUID      | FK to chats (optional)             |
-| `prompt`      | TEXT      | Text used to generate track        |
-| `model`       | TEXT      | ElevenLabs model name              |
-| `voice_id`    | TEXT      | ElevenLabs voice ID                |
-| `file_path`   | TEXT      | Storage path: `{user_id}/{id}.mp3` |
-| `duration_ms` | INTEGER   | Track duration in milliseconds     |
-| `created_at`  | TIMESTAMP | Track creation time                |
+| Column         | Type      | Description                                             |
+| -------------- | --------- | ------------------------------------------------------- |
+| `id`           | UUID      | Primary key                                             |
+| `user_id`      | UUID      | FK to auth.users                                        |
+| `chat_id`      | UUID      | FK to chats                                             |
+| `title`        | TEXT      | Track title                                             |
+| `description`  | TEXT      | Track description                                       |
+| `final_prompt` | TEXT      | Text used to generate track                             |
+| `metadata`     | JSONB     | Full metadata (genre, bpm, mood, etc.)                  |
+| `length_ms`    | INTEGER   | Track duration in milliseconds                          |
+| `instrumental` | BOOLEAN   | Whether track is instrumental (default true)            |
+| `status`       | TEXT      | Generation status: draft, generating, ready, failed     |
+| `error`        | JSONB     | Error details if status is failed (optional)            |
+| `storage_path` | TEXT      | Storage path: `{user_id}/{chat_id}/{id}.mp3`            |
+| `visibility`   | TEXT      | Visibility: public, unlisted, private (default: public) |
+| `published_at` | TIMESTAMP | When track was published (null for private)             |
+| `artist_name`  | TEXT      | Artist name snapshot from profiles (optional)           |
+| `bpm`          | INTEGER   | BPM for fast filtering (denormalized from metadata)     |
+| `genre`        | TEXT      | Genre for fast filtering (denormalized from metadata)   |
+| `mood_energy`  | INTEGER   | Mood energy 0-100 (denormalized from metadata)          |
+| `mood_focus`   | INTEGER   | Mood focus 0-100 (denormalized from metadata)           |
+| `mood_chill`   | INTEGER   | Mood chill 0-100 (denormalized from metadata)           |
+| `search_tsv`   | TSVECTOR  | Full-text search index (generated column)               |
+| `created_at`   | TIMESTAMP | Track creation time                                     |
+| `updated_at`   | TIMESTAMP | Last update time                                        |
 
-**Location**: `/supabase/migrations/0001_init.sql`  
-**RLS**: Enabled, users can only access their own tracks  
-**Why it exists**: Metadata for generated audio files; links to Storage
+**Location**: `/supabase/migrations/0001_init.sql`, `/supabase/migrations/0009_public_tracks.sql`  
+**RLS**: Enabled, public/unlisted tracks are readable by anyone, all tracks readable by owner  
+**Why it exists**: Metadata for generated audio files; links to Storage; enables public track library
+
+**Visibility levels**:
+
+- `public`: Appears in public library, accessible to anyone
+- `unlisted`: Accessible via direct URL, not shown in library
+- `private`: Only accessible by owner
+
+**Search**: The `search_tsv` column is a generated tsvector that combines title, description, artist_name, and genre for full-text search.
 
 ## Usage Tracking
 
@@ -302,6 +324,30 @@ CREATE INDEX idx_messages_chat_created
 -- tracks: query by user
 CREATE INDEX idx_tracks_user_created
   ON tracks(user_id, created_at DESC);
+
+-- tracks: full-text search
+CREATE INDEX idx_tracks_search_tsv
+  ON tracks USING gin(search_tsv);
+
+-- tracks: public library queries (visibility + created_at)
+CREATE INDEX idx_tracks_visibility_created
+  ON tracks(visibility, created_at DESC);
+
+-- tracks: filter by artist
+CREATE INDEX idx_tracks_artist_name
+  ON tracks(artist_name);
+
+-- tracks: filter by BPM
+CREATE INDEX idx_tracks_bpm
+  ON tracks(bpm);
+
+-- tracks: filter by genre
+CREATE INDEX idx_tracks_genre
+  ON tracks(genre);
+
+-- tracks: JSONB metadata filtering
+CREATE INDEX idx_tracks_metadata
+  ON tracks USING gin(metadata jsonb_path_ops);
 ```
 
 **Location**: Defined in migration files alongside table definitions
