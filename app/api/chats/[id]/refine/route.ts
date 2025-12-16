@@ -271,9 +271,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     });
 
     // Stream the text reply back to the client
+    // Include draft JSON in a custom header for reliable parsing
     const stream = new ReadableStream({
       start(controller) {
-        controller.enqueue(textReply);
+        const encoder = new TextEncoder();
+        controller.enqueue(encoder.encode(textReply));
         controller.close();
       },
     });
@@ -282,6 +284,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "X-Vercel-AI-Data-Stream": "v1",
+        "X-Draft-Spec": JSON.stringify(trackDraft),
       },
     });
   } catch (err) {

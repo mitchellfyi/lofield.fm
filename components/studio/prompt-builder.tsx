@@ -2,7 +2,14 @@
 
 import { TextStreamChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { useMemo, useState, useEffect, useRef, type FormEvent } from "react";
+import {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  startTransition,
+  type FormEvent,
+} from "react";
 
 type Message = {
   id: string;
@@ -24,6 +31,8 @@ type DraftSpec = {
   instrumentation?: string[];
   length_ms?: number;
   instrumental?: boolean;
+  prompt_final?: string;
+  description?: string;
 };
 
 type Props = {
@@ -151,6 +160,7 @@ export function PromptBuilder({
   const [lastProcessedDraftId, setLastProcessedDraftId] = useState<
     string | null
   >(null);
+  const [promptFinal, setPromptFinal] = useState("");
 
   // Sync UI controls with latest draft from messages
   const latestDraftMessage = useMemo(() => {
@@ -162,29 +172,40 @@ export function PromptBuilder({
       )[0];
   }, [messages]);
 
-  if (latestDraftMessage && latestDraftMessage.id !== lastProcessedDraftId) {
-    const latestDraft = latestDraftMessage.draft_spec;
-    if (latestDraft) {
-      setLastProcessedDraftId(latestDraftMessage.id);
-      if (latestDraft.title) setTitle(latestDraft.title);
-      if (latestDraft.genre) setGenre(latestDraft.genre);
-      if (latestDraft.bpm) setBpm(latestDraft.bpm);
-      if (latestDraft.mood) {
-        if (latestDraft.mood.energy !== undefined)
-          setEnergy(Math.round(latestDraft.mood.energy * 100));
-        if (latestDraft.mood.focus !== undefined)
-          setFocus(Math.round(latestDraft.mood.focus * 100));
-        if (latestDraft.mood.chill !== undefined)
-          setChill(Math.round(latestDraft.mood.chill * 100));
+  // Update UI controls when a new draft arrives from the database
+  useEffect(() => {
+    if (latestDraftMessage && latestDraftMessage.id !== lastProcessedDraftId) {
+      const latestDraft = latestDraftMessage.draft_spec;
+      if (latestDraft) {
+        // Batch all state updates in a transition to avoid cascading renders
+        startTransition(() => {
+          setLastProcessedDraftId(latestDraftMessage.id);
+          if (latestDraft.title) setTitle(latestDraft.title);
+          if (latestDraft.genre) setGenre(latestDraft.genre);
+          if (latestDraft.bpm) setBpm(latestDraft.bpm);
+          if (latestDraft.mood) {
+            // Draft mood values are 0-100, UI expects 0-100
+            if (latestDraft.mood.energy !== undefined)
+              setEnergy(Math.round(latestDraft.mood.energy));
+            if (latestDraft.mood.focus !== undefined)
+              setFocus(Math.round(latestDraft.mood.focus));
+            if (latestDraft.mood.chill !== undefined)
+              setChill(Math.round(latestDraft.mood.chill));
+          }
+          if (latestDraft.instrumentation)
+            setInstrumentation(latestDraft.instrumentation);
+          if (latestDraft.length_ms)
+            setLengthMins(Math.round(latestDraft.length_ms / 60000));
+          if (latestDraft.instrumental !== undefined)
+            setInstrumental(latestDraft.instrumental);
+          // Update prompt_final display
+          if (latestDraft.prompt_final) {
+            setPromptFinal(latestDraft.prompt_final);
+          }
+        });
       }
-      if (latestDraft.instrumentation)
-        setInstrumentation(latestDraft.instrumentation);
-      if (latestDraft.length_ms)
-        setLengthMins(Math.round(latestDraft.length_ms / 60000));
-      if (latestDraft.instrumental !== undefined)
-        setInstrumental(latestDraft.instrumental);
     }
-  }
+  }, [latestDraftMessage, lastProcessedDraftId]);
 
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -225,7 +246,7 @@ export function PromptBuilder({
       title: title || undefined,
       genre: genre || undefined,
       bpm,
-      mood: { energy: energy / 100, focus: focus / 100, chill: chill / 100 },
+      mood: { energy, focus, chill }, // Schema expects 0-100, UI already uses 0-100
       instrumentation: instrumentation.length > 0 ? instrumentation : undefined,
       length_ms: lengthMins * 60 * 1000,
       instrumental,
@@ -262,6 +283,38 @@ export function PromptBuilder({
           while (true) {
             const { done } = await reader.read();
             if (done) break;
+          }
+        }
+
+        // Parse draft from custom header
+        const draftHeader = response.headers.get("X-Draft-Spec");
+        if (draftHeader) {
+          try {
+            const draft = JSON.parse(draftHeader) as DraftSpec;
+            // Apply draft to UI controls immediately
+            if (draft.title) setTitle(draft.title);
+            if (draft.genre) setGenre(draft.genre);
+            if (draft.bpm) setBpm(draft.bpm);
+            if (draft.mood) {
+              if (draft.mood.energy !== undefined)
+                setEnergy(Math.round(draft.mood.energy));
+              if (draft.mood.focus !== undefined)
+                setFocus(Math.round(draft.mood.focus));
+              if (draft.mood.chill !== undefined)
+                setChill(Math.round(draft.mood.chill));
+            }
+            if (draft.instrumentation)
+              setInstrumentation(draft.instrumentation);
+            if (draft.length_ms)
+              setLengthMins(Math.round(draft.length_ms / 60000));
+            if (draft.instrumental !== undefined)
+              setInstrumental(draft.instrumental);
+            // Update prompt_final display
+            if (draft.prompt_final) {
+              setPromptFinal(draft.prompt_final);
+            }
+          } catch (parseError) {
+            console.warn("Failed to parse draft JSON from header", parseError);
           }
         }
 
@@ -619,6 +672,22 @@ export function PromptBuilder({
             ))}
           </div>
         </div>
+
+        {/* Final prompt display */}
+        {promptFinal && (
+          <div className="mt-4">
+            <label className="text-xs font-medium text-slate-700">
+              Final Prompt (for ElevenLabs)
+            </label>
+            <div className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+              <p className="text-sm text-emerald-900">{promptFinal}</p>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              This prompt is AI-generated based on your settings and will be
+              used when generating the track. Refine again to update it.
+            </p>
+          </div>
+        )}
 
         {/* Title override for generation */}
         {hasDraftSpec && (
