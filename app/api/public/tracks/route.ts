@@ -169,13 +169,15 @@ export async function GET(request: NextRequest) {
 
     // Tags filter (check if any tag is in the metadata->tags array)
     if (tags && tags.length > 0) {
-      // Use JSONB contains to check if tags array contains any of the requested tags
-      query = query.contains("metadata", { tags });
+      // Use JSONB overlaps operator to check if any requested tag exists in the array
+      // This checks if the arrays share any elements
+      query = query.overlaps("metadata->tags", tags);
     }
 
     // Instrumentation filter (check if any instrument is in the metadata->instrumentation array)
     if (instrumentation && instrumentation.length > 0) {
-      query = query.contains("metadata", { instrumentation });
+      // Use JSONB overlaps operator to check if any requested instrument exists in the array
+      query = query.overlaps("metadata->instrumentation", instrumentation);
     }
 
     // Apply sorting
@@ -204,13 +206,27 @@ export async function GET(request: NextRequest) {
         );
         const { value, id } = decodedCursor;
 
+        // Validate cursor values to prevent injection
+        if (!id || typeof id !== "string") {
+          throw new Error("Invalid cursor ID");
+        }
+
         // Apply cursor filter based on sort direction
         if (sort === "bpm_asc") {
+          if (typeof value !== "number" && value !== null) {
+            throw new Error("Invalid cursor value for BPM sort");
+          }
           query = query.or(`bpm.gt.${value},and(bpm.eq.${value},id.gt.${id})`);
         } else if (sort === "bpm_desc") {
+          if (typeof value !== "number" && value !== null) {
+            throw new Error("Invalid cursor value for BPM sort");
+          }
           query = query.or(`bpm.lt.${value},and(bpm.eq.${value},id.gt.${id})`);
         } else {
           // newest (published_at desc)
+          if (typeof value !== "string" && value !== null) {
+            throw new Error("Invalid cursor value for date sort");
+          }
           query = query.or(
             `published_at.lt.${value},and(published_at.eq.${value},id.gt.${id})`
           );

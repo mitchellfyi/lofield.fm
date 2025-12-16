@@ -253,7 +253,7 @@ describe("Public Tracks API", () => {
     it("supports tags filtering", async () => {
       const selectMock = vi.fn().mockReturnThis();
       const eqMock = vi.fn().mockReturnThis();
-      const containsMock = vi.fn().mockReturnThis();
+      const overlapsMock = vi.fn().mockReturnThis();
       const orderMock = vi.fn().mockReturnThis();
       const limitMock = vi.fn().mockResolvedValue({
         data: [],
@@ -263,7 +263,7 @@ describe("Public Tracks API", () => {
       mockSupabase.from.mockReturnValue({
         select: selectMock,
         eq: eqMock,
-        contains: containsMock,
+        overlaps: overlapsMock,
         order: orderMock,
         limit: limitMock,
       });
@@ -274,15 +274,16 @@ describe("Public Tracks API", () => {
       const res = await GET(req);
 
       expect(res.status).toBe(200);
-      expect(containsMock).toHaveBeenCalledWith("metadata", {
-        tags: ["chill", "lofi"],
-      });
+      expect(overlapsMock).toHaveBeenCalledWith("metadata->tags", [
+        "chill",
+        "lofi",
+      ]);
     });
 
     it("supports instrumentation filtering", async () => {
       const selectMock = vi.fn().mockReturnThis();
       const eqMock = vi.fn().mockReturnThis();
-      const containsMock = vi.fn().mockReturnThis();
+      const overlapsMock = vi.fn().mockReturnThis();
       const orderMock = vi.fn().mockReturnThis();
       const limitMock = vi.fn().mockResolvedValue({
         data: [],
@@ -292,7 +293,7 @@ describe("Public Tracks API", () => {
       mockSupabase.from.mockReturnValue({
         select: selectMock,
         eq: eqMock,
-        contains: containsMock,
+        overlaps: overlapsMock,
         order: orderMock,
         limit: limitMock,
       });
@@ -303,9 +304,10 @@ describe("Public Tracks API", () => {
       const res = await GET(req);
 
       expect(res.status).toBe(200);
-      expect(containsMock).toHaveBeenCalledWith("metadata", {
-        instrumentation: ["piano", "guitar"],
-      });
+      expect(overlapsMock).toHaveBeenCalledWith("metadata->instrumentation", [
+        "piano",
+        "guitar",
+      ]);
     });
 
     it("supports sorting by bpm ascending", async () => {
