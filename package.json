@@ -19,7 +19,8 @@
     "test:e2e": "echo \"No e2e tests configured yet\" && exit 0",
     "db:ensure": "node scripts/ensure-db.js",
     "db:migrate": "supabase db push --db-url \"$SUPABASE_DB_URL\"",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+    "docs:check": "tsx scripts/docs-check.ts",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm docs:check"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.86",
@@ -48,6 +49,7 @@
     "jsdom": "^27.3.0",
     "prettier": "^3.7.4",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.0.15"
   },
