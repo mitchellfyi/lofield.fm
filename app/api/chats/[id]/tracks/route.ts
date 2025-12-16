@@ -166,6 +166,13 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
+  // Fetch artist name from profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("artist_name")
+    .eq("id", userId)
+    .maybeSingle();
+
   // Create track record with status='generating'
   const { data: track, error: trackError } = await supabase
     .from("tracks")
@@ -188,6 +195,16 @@ export async function POST(request: NextRequest, { params }: Params) {
       length_ms: lengthMs,
       instrumental,
       status: "generating",
+      // New fields for public track library
+      visibility: "public", // Default to public
+      published_at: new Date().toISOString(),
+      artist_name: profile?.artist_name || null,
+      // Metadata normalization for fast queries
+      bpm: validatedDraft.bpm || null,
+      genre: validatedDraft.genre || null,
+      mood_energy: validatedDraft.mood?.energy || null,
+      mood_focus: validatedDraft.mood?.focus || null,
+      mood_chill: validatedDraft.mood?.chill || null,
     })
     .select()
     .single();

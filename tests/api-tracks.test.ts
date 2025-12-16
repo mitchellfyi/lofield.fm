@@ -131,6 +131,13 @@ describe("Track APIs", () => {
     });
   });
 
+  // Helper to create profiles mock
+  const createProfilesMock = () => ({
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+  });
+
   describe("refine", () => {
     it("refines prompt and saves draft", async () => {
       mockSupabase.from.mockReturnValue({
@@ -332,6 +339,9 @@ describe("Track APIs", () => {
             }),
           };
         }
+        if (table === "profiles") {
+          return createProfilesMock();
+        }
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -411,6 +421,9 @@ describe("Track APIs", () => {
             single: vi.fn().mockResolvedValue({ data: { id: "t1" } }),
           };
         }
+        if (table === "profiles") {
+          return createProfilesMock();
+        }
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
@@ -488,6 +501,9 @@ describe("Track APIs", () => {
             insert: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({ data: { id: "t1" } }),
           };
+        }
+        if (table === "profiles") {
+          return createProfilesMock();
         }
         return {};
       });

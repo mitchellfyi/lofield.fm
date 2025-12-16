@@ -15,12 +15,13 @@ Lofield Studio stores generated audio files in Supabase Storage. The `tracks` bu
 ```
 tracks (bucket)
   └── {user_id}/
-      ├── {track_id_1}.mp3
-      ├── {track_id_2}.mp3
-      └── ...
+      └── {chat_id}/
+          ├── {track_id_1}.mp3
+          ├── {track_id_2}.mp3
+          └── ...
 ```
 
-**Path format**: `tracks/{user_id}/{track_id}.mp3`
+**Path format**: `tracks/{user_id}/{chat_id}/{track_id}.mp3`
 
 ### Bucket Configuration
 
@@ -29,17 +30,19 @@ tracks (bucket)
 - **File size limit**: None (respects Supabase project limits)
 - **Allowed MIME types**: Any (primarily `audio/mpeg`, `audio/mp3`)
 
+**Note**: While the bucket is private, RLS policies allow public read access to files linked to public/unlisted tracks (see Storage Policies below).
+
 ## Storage Policies
 
 Storage policies work similarly to RLS but control file access instead of row access.
 
 ### Policy Definitions
 
-Defined in `/supabase/migrations/0003_storage.sql`:
+Defined in `/supabase/migrations/0003_storage.sql` and `/supabase/migrations/0009_public_tracks.sql`:
 
 ```sql
 -- Allow users to upload to their own folder
-create policy "Users can upload to their own folder"
+create policy "Users can upload their own tracks"
   on storage.objects for insert
   with check (
     bucket_id = 'tracks'
@@ -47,15 +50,35 @@ create policy "Users can upload to their own folder"
   );
 
 -- Allow users to read from their own folder
-create policy "Users can read their own files"
+create policy "Users can read their own tracks"
   on storage.objects for select
   using (
     bucket_id = 'tracks'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+-- Allow anyone (including anon) to read public/unlisted track files
+create policy "Anyone can read public track files"
+  on storage.objects for select
+  using (
+    bucket_id = 'tracks'
+    and exists (
+      select 1 from public.tracks
+      where tracks.storage_path = storage.objects.name
+      and tracks.visibility in ('public', 'unlisted')
+    )
+  );
+
+-- Allow users to update their own files
+create policy "Users can update their own tracks"
+  on storage.objects for update
+  using (
+    bucket_id = 'tracks'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
 -- Allow users to delete their own files
-create policy "Users can delete their own files"
+create policy "Users can delete their own tracks"
   on storage.objects for delete
   using (
     bucket_id = 'tracks'
@@ -69,10 +92,12 @@ create policy "Users can delete their own files"
 
 Example:
 
-- Path: `tracks/a1b2c3/track-123.mp3`
-- `storage.foldername(name)` returns `{a1b2c3}`
+- Path: `a1b2c3/c4d5e6/track-123.mp3`
+- `storage.foldername(name)` returns `{a1b2c3, c4d5e6}`
 - `(storage.foldername(name))[1]` returns `a1b2c3`
 - Policy checks: `a1b2c3 = auth.uid()::text`
+
+**Public access**: The "Anyone can read public track files" policy checks if a track record exists with matching `storage_path` and `visibility in ('public', 'unlisted')`. This enables anonymous playback of public tracks while keeping private tracks secure.
 
 ## Uploading Files
 
@@ -148,13 +173,12 @@ Generate time-limited signed URLs for playback:
 ```typescript
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-export async function getTrackUrl(userId: string, trackId: string) {
+export async function getTrackUrl(storagePath: string) {
   const supabase = createBrowserSupabaseClient();
-  const filePath = `${userId}/${trackId}.mp3`;
 
   const { data, error } = await supabase.storage
     .from("tracks")
-    .createSignedUrl(filePath, 3600); // 1 hour expiry
+    .createSignedUrl(storagePath, 3600); // 1 hour expiry
 
   if (error) {
     throw new Error(`Failed to get signed URL: ${error.message}`);
@@ -169,6 +193,9 @@ export async function getTrackUrl(userId: string, trackId: string) {
 - Works with private buckets
 - Expires automatically (security)
 - Doesn't require ongoing authentication
+- Works for both authenticated users and public tracks
+
+**Public tracks**: Anonymous users can generate signed URLs for public/unlisted tracks because the storage policy checks the `tracks.visibility` column. The bucket remains private, but the policy grants read access based on track metadata.
 
 ### Public URLs (Not Used)
 
