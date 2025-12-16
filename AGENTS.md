@@ -25,6 +25,11 @@ If these commands differ from `package.json`, update this file.
 
 CI runs the same checks (format:check, lint, typecheck, tests, build). If CI fails, fix it locally and rerun `pnpm verify` before pushing again.
 
+**If you changed schema** (migrations, tables, RLS):
+
+- Run `pnpm docs:check` to verify docs are current
+- Update `/docs/architecture/DATA_MODEL.md` if schema changed
+
 **Do not**:
 
 - Bypass by editing CI workflows

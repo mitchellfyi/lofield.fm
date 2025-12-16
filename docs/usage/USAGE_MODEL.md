@@ -7,6 +7,7 @@
 ## Overview
 
 The usage model tracks every provider API call to provide:
+
 - **Transparency**: Users see their API usage and costs
 - **Attribution**: Link costs to specific chats and tracks
 - **Debugging**: Trace provider calls for troubleshooting
@@ -41,6 +42,7 @@ Primary table for tracking all provider API calls:
 #### `provider`
 
 Valid values:
+
 - `'openai'` - OpenAI API calls (chat completions)
 - `'elevenlabs'` - ElevenLabs API calls (text-to-speech)
 
@@ -49,11 +51,13 @@ Valid values:
 Provider-specific model identifiers:
 
 **OpenAI**:
+
 - `'gpt-4o'` - GPT-4 Optimized (current default)
 - `'gpt-4-turbo'` - GPT-4 Turbo (if used)
 - `'gpt-3.5-turbo'` - GPT-3.5 Turbo (if used)
 
 **ElevenLabs**:
+
 - `'eleven_multilingual_v2'` - Multilingual v2 (current default)
 - `'eleven_turbo_v2'` - Turbo v2 (fastest)
 - `'eleven_monolingual_v1'` - English-only
@@ -77,23 +81,24 @@ Describes what the API call did:
 const actionGroupId = crypto.randomUUID();
 
 // Refine event
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   action_group_id: actionGroupId,
-  action_type: 'refine',
-  provider: 'openai',
+  action_type: "refine",
+  provider: "openai",
   // ...
 });
 
 // Generate event (same action_group_id)
-await supabase.from('usage_events').insert({
+await supabase.from("usage_events").insert({
   action_group_id: actionGroupId,
-  action_type: 'generate',
-  provider: 'elevenlabs',
+  action_type: "generate",
+  provider: "elevenlabs",
   // ...
 });
 ```
 
 **Query by action group**:
+
 ```sql
 SELECT
   action_group_id,
@@ -118,48 +123,54 @@ Only one is populated per event (based on provider).
 
 Reference table for provider pricing:
 
-| Column               | Type    | Description                              |
-| -------------------- | ------- | ---------------------------------------- |
-| `provider`           | TEXT    | `'openai'` or `'elevenlabs'`             |
-| `model`              | TEXT    | Model name                               |
-| `input_cost_per_1m`  | NUMERIC | OpenAI: cost per 1M input tokens         |
-| `output_cost_per_1m` | NUMERIC | OpenAI: cost per 1M output tokens        |
-| `cost_per_character` | NUMERIC | ElevenLabs: cost per character           |
-| `effective_date`     | DATE    | When pricing took effect                 |
+| Column               | Type    | Description                       |
+| -------------------- | ------- | --------------------------------- |
+| `provider`           | TEXT    | `'openai'` or `'elevenlabs'`      |
+| `model`              | TEXT    | Model name                        |
+| `input_cost_per_1m`  | NUMERIC | OpenAI: cost per 1M input tokens  |
+| `output_cost_per_1m` | NUMERIC | OpenAI: cost per 1M output tokens |
+| `cost_per_character` | NUMERIC | ElevenLabs: cost per character    |
+| `effective_date`     | DATE    | When pricing took effect          |
 
 **Location**: `/supabase/migrations/0007_provider_pricing.sql`
 
 ### Cost Calculation (OpenAI)
 
 ```typescript
-async function calculateOpenAICost(usage: {
-  promptTokens: number;
-  completionTokens: number;
-}, model: string) {
+async function calculateOpenAICost(
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+  },
+  model: string
+) {
   // Fetch pricing
   const { data: pricing } = await supabase
-    .from('provider_pricing')
-    .select('*')
-    .eq('provider', 'openai')
-    .eq('model', model)
-    .order('effective_date', { ascending: false })
+    .from("provider_pricing")
+    .select("*")
+    .eq("provider", "openai")
+    .eq("model", model)
+    .order("effective_date", { ascending: false })
     .limit(1)
     .single();
-  
+
   if (!pricing) {
     console.warn(`No pricing found for openai:${model}`);
     return 0;
   }
-  
+
   // Calculate cost
-  const inputCost = (usage.promptTokens / 1_000_000) * pricing.input_cost_per_1m;
-  const outputCost = (usage.completionTokens / 1_000_000) * pricing.output_cost_per_1m;
-  
+  const inputCost =
+    (usage.promptTokens / 1_000_000) * pricing.input_cost_per_1m;
+  const outputCost =
+    (usage.completionTokens / 1_000_000) * pricing.output_cost_per_1m;
+
   return inputCost + outputCost;
 }
 ```
 
 **Example**:
+
 - Model: `gpt-4o`
 - Input tokens: 150
 - Output tokens: 50
@@ -169,31 +180,29 @@ async function calculateOpenAICost(usage: {
 ### Cost Calculation (ElevenLabs)
 
 ```typescript
-async function calculateElevenLabsCost(
-  characters: number,
-  model: string
-) {
+async function calculateElevenLabsCost(characters: number, model: string) {
   // Fetch pricing
   const { data: pricing } = await supabase
-    .from('provider_pricing')
-    .select('*')
-    .eq('provider', 'elevenlabs')
-    .eq('model', model)
-    .order('effective_date', { ascending: false })
+    .from("provider_pricing")
+    .select("*")
+    .eq("provider", "elevenlabs")
+    .eq("model", model)
+    .order("effective_date", { ascending: false })
     .limit(1)
     .single();
-  
+
   if (!pricing) {
     console.warn(`No pricing found for elevenlabs:${model}`);
     return 0;
   }
-  
+
   // Calculate cost
   return characters * pricing.cost_per_character;
 }
 ```
 
 **Example**:
+
 - Model: `eleven_multilingual_v2`
 - Characters: 500
 - Pricing: $0.00022 per character
@@ -204,6 +213,7 @@ async function calculateElevenLabsCost(
 ### When to Log
 
 **Log usage events**:
+
 - ✅ After successful provider API call
 - ✅ After extracting usage metadata (tokens, characters)
 - ❌ NOT on failed calls (avoid double-counting retries)
@@ -212,41 +222,38 @@ async function calculateElevenLabsCost(
 
 ```typescript
 // /app/api/chat/route.ts
-import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 export async function POST(request: Request) {
   // ... validate session, fetch API key ...
-  
+
   const actionGroupId = crypto.randomUUID();
-  
+
   // Call OpenAI
   const result = await streamText({
-    model: openai('gpt-4o'),
+    model: openai("gpt-4o"),
     messages,
   });
-  
+
   // After stream completes
   result.then(async (completion) => {
     // Calculate cost
-    const cost = await calculateOpenAICost(
-      completion.usage,
-      'gpt-4o'
-    );
-    
+    const cost = await calculateOpenAICost(completion.usage, "gpt-4o");
+
     // Log usage event
-    await supabase.from('usage_events').insert({
+    await supabase.from("usage_events").insert({
       user_id: session.user.id,
       chat_id: chatId,
-      provider: 'openai',
-      model: 'gpt-4o',
-      action_type: 'refine',
+      provider: "openai",
+      model: "gpt-4o",
+      action_type: "refine",
       action_group_id: actionGroupId,
       tokens: completion.usage.totalTokens,
       estimated_cost_usd: cost,
     });
   });
-  
+
   return result.toDataStreamResponse();
 }
 ```
@@ -255,44 +262,44 @@ export async function POST(request: Request) {
 
 ```typescript
 // Server action or API route
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 export async function generateTrack(prompt: string, chatId: string) {
   // ... validate session, fetch API key ...
-  
+
   const client = new ElevenLabsClient({ apiKey });
   const trackId = crypto.randomUUID();
   const actionGroupId = crypto.randomUUID(); // or pass from refine
-  
+
   // Call ElevenLabs
   const audio = await client.textToSpeech.convert({
-    voiceId: 'default-voice',
+    voiceId: "default-voice",
     text: prompt,
-    modelId: 'eleven_multilingual_v2',
+    modelId: "eleven_multilingual_v2",
   });
-  
+
   // Upload audio to storage
   // ... (see FLOWS.md) ...
-  
+
   // Calculate cost
   const cost = await calculateElevenLabsCost(
     prompt.length,
-    'eleven_multilingual_v2'
+    "eleven_multilingual_v2"
   );
-  
+
   // Log usage event
-  await supabase.from('usage_events').insert({
+  await supabase.from("usage_events").insert({
     user_id: session.user.id,
     chat_id: chatId,
     track_id: trackId,
-    provider: 'elevenlabs',
-    model: 'eleven_multilingual_v2',
-    action_type: 'generate',
+    provider: "elevenlabs",
+    model: "eleven_multilingual_v2",
+    action_type: "generate",
     action_group_id: actionGroupId,
     characters: prompt.length,
     estimated_cost_usd: cost,
   });
-  
+
   return { trackId };
 }
 ```
@@ -302,6 +309,7 @@ export async function generateTrack(prompt: string, chatId: string) {
 ### Current Model: No Credits
 
 Lofield Studio currently uses a **bring-your-own-API-key** model:
+
 - Users pay providers directly
 - No in-app credits or billing
 - Costs are estimates for transparency
@@ -311,6 +319,7 @@ Lofield Studio currently uses a **bring-your-own-API-key** model:
 If implementing an app-managed credits system:
 
 **Design considerations**:
+
 1. **Credit purchase**: Users buy credits upfront
 2. **Deduction**: Each API call deducts credits based on cost
 3. **Balance tracking**: `user_balances` table with `credits_remaining`
@@ -318,6 +327,7 @@ If implementing an app-managed credits system:
 5. **Refund policy**: Handle refunds for unused credits
 
 **Schema (hypothetical)**:
+
 ```sql
 CREATE TABLE user_balances (
   user_id UUID PRIMARY KEY REFERENCES auth.users,
@@ -337,26 +347,31 @@ WHERE user_id = :user_id;
 ### Pricing Accuracy
 
 **Known**:
+
 - Provider returns exact token/character counts
 - We have pricing table with rates
 
 **Unknown**:
+
 - Volume discounts (user-specific with provider)
 - Subscription overages (ElevenLabs)
 - Currency fluctuations (all costs in USD)
 - Promotional credits (not tracked in our system)
 
 **Mitigation**:
+
 - Document estimates as estimates
 - Link to provider dashboards for exact costs
 
 ### Daily Rollups
 
 **Known**:
+
 - Schema exists (`usage_daily_rollups`)
 - Aggregation logic is straightforward
 
 **Unknown**:
+
 - Best time to run (midnight UTC? user timezone?)
 - Backfill for missed days
 - Performance impact on large datasets
@@ -366,9 +381,11 @@ WHERE user_id = :user_id;
 ### Usage Alerts
 
 **Known**:
+
 - Users need alerts for high usage
 
 **Unknown**:
+
 - Threshold levels (per-user configurable?)
 - Delivery method (email? in-app notification?)
 - Frequency (daily summary? real-time?)

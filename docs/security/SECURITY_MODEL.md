@@ -19,12 +19,14 @@ Lofield Studio follows a **defense-in-depth** approach with multiple security la
 **Rule**: Provider API keys, service role keys, and sensitive data **never** leave the server.
 
 ### What's Exposed to Browser
+
 - ✅ `NEXT_PUBLIC_SUPABASE_URL` (public Supabase project URL)
 - ✅ `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (anon key, safe by design)
 - ✅ Session cookies (HTTP-only, secure)
 - ✅ Signed URLs (time-limited, user-scoped)
 
 ### What's Server-Only
+
 - 🔒 `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS)
 - 🔒 User API keys (OpenAI, ElevenLabs) stored in Vault
 - 🔒 Vault decryption operations
@@ -35,10 +37,12 @@ Lofield Studio follows a **defense-in-depth** approach with multiple security la
 ### OAuth Providers
 
 Supported:
+
 - **Google OAuth**: Sign in with Google account
 - **GitHub OAuth**: Sign in with GitHub account
 
 Configuration:
+
 - Redirect URLs must be whitelisted in Supabase Dashboard → Authentication → URL Configuration
 - Development: `http://localhost:3003/auth/callback`
 - Production: `https://your-domain.com/auth/callback`
@@ -46,22 +50,27 @@ Configuration:
 ### Session Management
 
 **Cookie-based sessions**:
+
 - Supabase Auth sets HTTP-only cookies
 - Cookies are validated on every request via `createServerSupabaseClient()`
 - No localStorage or sessionStorage (more secure)
 
 **Session validation**:
+
 ```typescript
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function protectedRoute() {
   const supabase = await createServerSupabaseClient();
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
   if (error || !session) {
-    redirect('/auth/login');
+    redirect("/auth/login");
   }
-  
+
   // session.user.id is safe to use
 }
 ```
@@ -95,18 +104,20 @@ See [RLS Documentation](./RLS.md) for full policy details.
 ### RLS Gotchas
 
 ❌ **Don't use admin client for regular queries**:
+
 ```typescript
 // WRONG: Bypasses RLS
-import { supabaseAdmin } from '@/lib/supabase/admin';
-const { data } = await supabaseAdmin.from('chats').select();
+import { supabaseAdmin } from "@/lib/supabase/admin";
+const { data } = await supabaseAdmin.from("chats").select();
 ```
 
 ✅ **Do use user-scoped client**:
+
 ```typescript
 // RIGHT: RLS enforced
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 const supabase = await createServerSupabaseClient();
-const { data } = await supabase.from('chats').select();
+const { data } = await supabase.from("chats").select();
 ```
 
 ## Secrets Management (Vault)
@@ -126,29 +137,31 @@ User API Keys (OpenAI, ElevenLabs)
 ### Vault Operations (Server-Only)
 
 **Store a secret**:
+
 ```typescript
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Only callable server-side
-await supabaseAdmin.rpc('store_user_secret', {
+await supabaseAdmin.rpc("store_user_secret", {
   p_user_id: userId,
-  p_provider: 'openai', // or 'elevenlabs'
+  p_provider: "openai", // or 'elevenlabs'
   p_secret: apiKey,
 });
 ```
 
 **Retrieve a secret**:
+
 ```typescript
 // Step 1: Get secret_id
 const { data: userSecrets } = await supabaseAdmin
-  .from('user_secrets')
-  .select('openai_secret_id')
-  .eq('user_id', userId)
+  .from("user_secrets")
+  .select("openai_secret_id")
+  .eq("user_id", userId)
   .maybeSingle();
 
 // Step 2: Decrypt
 if (userSecrets?.openai_secret_id) {
-  const { data: decrypted } = await supabaseAdmin.rpc('decrypt_secret', {
+  const { data: decrypted } = await supabaseAdmin.rpc("decrypt_secret", {
     secret_id: userSecrets.openai_secret_id,
   });
   // decrypted contains the API key
@@ -156,6 +169,7 @@ if (userSecrets?.openai_secret_id) {
 ```
 
 **Never**:
+
 - ❌ Send decrypted keys to browser
 - ❌ Log full API keys (even in dev)
 - ❌ Include keys in error messages
@@ -167,11 +181,13 @@ See [Secrets Management](./SECRETS.md) for full details.
 ### Private Buckets
 
 All storage buckets are **private by default**:
+
 - `tracks` bucket: User audio files
 
 ### Path-Based Isolation
 
 Files are stored with user ID prefix:
+
 ```
 tracks/{user_id}/{track_id}.mp3
 ```
@@ -193,6 +209,7 @@ See [Storage Policies](./STORAGE.md) for full details.
 ### Signed URLs
 
 **Time-limited access**:
+
 - Browser requests signed URL from server
 - Server validates user owns the file
 - Server returns signed URL (valid for 1 hour)
@@ -201,13 +218,14 @@ See [Storage Policies](./STORAGE.md) for full details.
 ```typescript
 // Server-side
 const { data } = await supabase.storage
-  .from('tracks')
+  .from("tracks")
   .createSignedUrl(`${userId}/${trackId}.mp3`, 3600); // 1 hour
 
 return { signedUrl: data.signedUrl };
 ```
 
 **Why signed URLs**:
+
 - ✅ No permanent public access
 - ✅ User-scoped (can't generate URLs for others' files)
 - ✅ Automatically expire
@@ -216,23 +234,23 @@ return { signedUrl: data.signedUrl };
 
 ### Threats We Mitigate
 
-| Threat                     | Mitigation                                                         |
-| -------------------------- | ------------------------------------------------------------------ |
-| **Cross-user data access** | RLS policies + user_id checks                                      |
-| **API key leakage**        | Vault storage, server-side only access                             |
-| **Unauthorized file access**| Storage policies + signed URLs                                     |
-| **Session hijacking**      | HTTP-only cookies, secure flag, same-site strict                   |
-| **SQL injection**          | Parameterized queries (Supabase client auto-escapes)               |
-| **XSS attacks**            | React auto-escapes, CSP headers (TODO)                             |
+| Threat                       | Mitigation                                           |
+| ---------------------------- | ---------------------------------------------------- |
+| **Cross-user data access**   | RLS policies + user_id checks                        |
+| **API key leakage**          | Vault storage, server-side only access               |
+| **Unauthorized file access** | Storage policies + signed URLs                       |
+| **Session hijacking**        | HTTP-only cookies, secure flag, same-site strict     |
+| **SQL injection**            | Parameterized queries (Supabase client auto-escapes) |
+| **XSS attacks**              | React auto-escapes, CSP headers (TODO)               |
 
 ### Threats We Don't (Yet) Mitigate
 
-| Threat                     | Risk Level | Future Mitigation                                    |
-| -------------------------- | ---------- | ---------------------------------------------------- |
-| **DDoS attacks**           | Medium     | Rate limiting (TODO), Vercel DDoS protection         |
-| **Cost bombs**             | Medium     | Usage quotas per user (TODO)                         |
-| **Compromised provider**   | Low        | Provider key rotation, monitor provider status       |
-| **Insider threats**        | Low        | Audit logs (TODO), least privilege for team members  |
+| Threat                   | Risk Level | Future Mitigation                                   |
+| ------------------------ | ---------- | --------------------------------------------------- |
+| **DDoS attacks**         | Medium     | Rate limiting (TODO), Vercel DDoS protection        |
+| **Cost bombs**           | Medium     | Usage quotas per user (TODO)                        |
+| **Compromised provider** | Low        | Provider key rotation, monitor provider status      |
+| **Insider threats**      | Low        | Audit logs (TODO), least privilege for team members |
 
 ## Security Checklist for New Features
 

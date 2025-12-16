@@ -24,6 +24,7 @@ Lofield Studio needed a secure way to:
 ### Problem Statement
 
 Without proper data isolation and secrets management:
+
 - Application bugs could leak user data across accounts
 - API keys could be exposed in client-side code or logs
 - Debugging requires manual verification of data access patterns
@@ -38,12 +39,14 @@ We will use **Supabase Row Level Security (RLS)** for data isolation and **Supab
 **What**: PostgreSQL's built-in row-level security policies enforced at the database layer.
 
 **How**:
+
 1. Enable RLS on all user-data tables
 2. Create policies that check `auth.uid() = user_id`
 3. Use user-scoped Supabase client (with session) for regular queries
 4. Reserve admin client (service role) for Vault operations only
 
 **Example**:
+
 ```sql
 ALTER TABLE chats ENABLE ROW LEVEL SECURITY;
 
@@ -57,17 +60,19 @@ CREATE POLICY "users_view_own_chats"
 **What**: PostgreSQL extension (`supabase_vault`) for encrypted secret storage.
 
 **How**:
+
 1. Store user API keys in `vault.secrets` table (encrypted at rest)
 2. Create `user_secrets` table to map users to their secret IDs
 3. Access Vault only via admin client (service role key) server-side
 4. Never send decrypted secrets to browser
 
 **Example**:
+
 ```typescript
 // Server-side only
-await supabaseAdmin.rpc('store_user_secret', {
+await supabaseAdmin.rpc("store_user_secret", {
   p_user_id: userId,
-  p_provider: 'openai',
+  p_provider: "openai",
   p_secret: apiKey,
 });
 ```
@@ -77,10 +82,12 @@ await supabaseAdmin.rpc('store_user_secret', {
 ### Option 1: Application-Level Access Control (Rejected)
 
 **Pros**:
+
 - Simpler initial implementation
 - More flexible (can implement complex logic)
 
 **Cons**:
+
 - ❌ Application bugs bypass security
 - ❌ No defense in depth
 - ❌ Hard to audit
@@ -91,10 +98,12 @@ await supabaseAdmin.rpc('store_user_secret', {
 ### Option 2: AWS Secrets Manager + Auth0 (Rejected)
 
 **Pros**:
+
 - Industry-standard tools
 - Highly scalable
 
 **Cons**:
+
 - ❌ Additional services to manage ($$$)
 - ❌ More complex integration
 - ❌ Not co-located with database
@@ -105,9 +114,11 @@ await supabaseAdmin.rpc('store_user_secret', {
 ### Option 3: Environment Variables per User (Rejected)
 
 **Pros**:
+
 - Simple concept
 
 **Cons**:
+
 - ❌ Doesn't scale (need N env vars for N users)
 - ❌ Requires redeploy to add users
 - ❌ No encryption at rest
@@ -118,6 +129,7 @@ await supabaseAdmin.rpc('store_user_secret', {
 ### Option 4: Supabase RLS + Vault (Selected)
 
 **Pros**:
+
 - ✅ Defense in depth (database enforces isolation)
 - ✅ Built-in to Supabase (no extra service)
 - ✅ Encrypted at rest (pgsodium)
@@ -125,6 +137,7 @@ await supabaseAdmin.rpc('store_user_secret', {
 - ✅ Hard to make mistakes (RLS blocks unauthorized access)
 
 **Cons**:
+
 - Slightly more complex policy design
 - Admin client usage must be carefully controlled
 
@@ -156,6 +169,7 @@ await supabaseAdmin.rpc('store_user_secret', {
 ### Phase 1: Enable RLS on All Tables
 
 1. **Create migration** (`/supabase/migrations/0002_rls.sql`):
+
    ```sql
    ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
    ALTER TABLE chats ENABLE ROW LEVEL SECURITY;
@@ -181,6 +195,7 @@ await supabaseAdmin.rpc('store_user_secret', {
 ### Phase 2: Implement Vault for API Keys
 
 1. **Enable Vault extension**:
+
    ```sql
    CREATE EXTENSION IF NOT EXISTS "supabase_vault";
    ```
@@ -191,6 +206,7 @@ await supabaseAdmin.rpc('store_user_secret', {
    - `decrypt_secret(secret_id)` - Decrypt secret
 
 3. **Create `user_secrets` table**:
+
    ```sql
    CREATE TABLE user_secrets (
      user_id UUID PRIMARY KEY REFERENCES auth.users,
