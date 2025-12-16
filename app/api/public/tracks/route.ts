@@ -206,26 +206,40 @@ export async function GET(request: NextRequest) {
         );
         const { value, id } = decodedCursor;
 
-        // Validate cursor values to prevent injection
-        if (!id || typeof id !== "string") {
-          throw new Error("Invalid cursor ID");
+        // Validate cursor ID is a valid UUID format (prevents injection)
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!id || typeof id !== "string" || !uuidRegex.test(id)) {
+          throw new Error("Invalid cursor ID format");
         }
 
         // Apply cursor filter based on sort direction
         if (sort === "bpm_asc") {
-          if (typeof value !== "number" && value !== null) {
+          // Validate BPM value is a safe number
+          if (
+            (typeof value !== "number" && value !== null) ||
+            (typeof value === "number" && !Number.isFinite(value))
+          ) {
             throw new Error("Invalid cursor value for BPM sort");
           }
           query = query.or(`bpm.gt.${value},and(bpm.eq.${value},id.gt.${id})`);
         } else if (sort === "bpm_desc") {
-          if (typeof value !== "number" && value !== null) {
+          // Validate BPM value is a safe number
+          if (
+            (typeof value !== "number" && value !== null) ||
+            (typeof value === "number" && !Number.isFinite(value))
+          ) {
             throw new Error("Invalid cursor value for BPM sort");
           }
           query = query.or(`bpm.lt.${value},and(bpm.eq.${value},id.gt.${id})`);
         } else {
           // newest (published_at desc)
+          // Validate date value is a valid ISO timestamp
           if (typeof value !== "string" && value !== null) {
             throw new Error("Invalid cursor value for date sort");
+          }
+          if (typeof value === "string" && isNaN(Date.parse(value))) {
+            throw new Error("Invalid cursor date format");
           }
           query = query.or(
             `published_at.lt.${value},and(published_at.eq.${value},id.gt.${id})`
