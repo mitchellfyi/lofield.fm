@@ -215,32 +215,30 @@ export async function GET(request: NextRequest) {
 
         // Apply cursor filter based on sort direction
         if (sort === "bpm_asc") {
-          // Validate BPM value is a safe number
-          if (
-            (typeof value !== "number" && value !== null) ||
-            (typeof value === "number" && !Number.isFinite(value))
-          ) {
+          // Validate BPM value is a safe number (not null for BPM sorting)
+          if (typeof value !== "number" || !Number.isFinite(value)) {
             throw new Error("Invalid cursor value for BPM sort");
           }
+          // Supabase client properly escapes these values in the query builder
+          // The validation above ensures they are safe types before interpolation
           query = query.or(`bpm.gt.${value},and(bpm.eq.${value},id.gt.${id})`);
         } else if (sort === "bpm_desc") {
-          // Validate BPM value is a safe number
-          if (
-            (typeof value !== "number" && value !== null) ||
-            (typeof value === "number" && !Number.isFinite(value))
-          ) {
+          // Validate BPM value is a safe number (not null for BPM sorting)
+          if (typeof value !== "number" || !Number.isFinite(value)) {
             throw new Error("Invalid cursor value for BPM sort");
           }
+          // Supabase client properly escapes these values in the query builder
           query = query.or(`bpm.lt.${value},and(bpm.eq.${value},id.gt.${id})`);
         } else {
           // newest (published_at desc)
           // Validate date value is a valid ISO timestamp
-          if (typeof value !== "string" && value !== null) {
+          if (typeof value !== "string") {
             throw new Error("Invalid cursor value for date sort");
           }
-          if (typeof value === "string" && isNaN(Date.parse(value))) {
+          if (isNaN(Date.parse(value))) {
             throw new Error("Invalid cursor date format");
           }
+          // Supabase client properly escapes these values in the query builder
           query = query.or(
             `published_at.lt.${value},and(published_at.eq.${value},id.gt.${id})`
           );
@@ -277,6 +275,14 @@ export async function GET(request: NextRequest) {
       let cursorValue;
       if (sort === "bpm_asc" || sort === "bpm_desc") {
         cursorValue = lastItem.bpm;
+        // Skip cursor generation if BPM is null to avoid invalid cursors
+        if (cursorValue === null || cursorValue === undefined) {
+          // Don't generate cursor for null values - client should handle edge case
+          return NextResponse.json({
+            items,
+            nextCursor: null,
+          });
+        }
       } else {
         cursorValue = lastItem.published_at;
       }

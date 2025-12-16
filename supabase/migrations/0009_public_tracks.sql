@@ -39,7 +39,25 @@ alter table public.tracks
       setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
       setweight(to_tsvector('english', coalesce(artist_name, '')), 'C') ||
       setweight(to_tsvector('english', coalesce(genre, '')), 'D') ||
-      setweight(to_tsvector('english', coalesce(metadata->>'tags', '')), 'D')
+      setweight(
+        to_tsvector(
+          'english',
+          coalesce(
+            (
+              select string_agg(value, ' ')
+              from jsonb_array_elements_text(
+                case
+                  when jsonb_typeof(metadata->'tags') = 'array'
+                  then metadata->'tags'
+                  else '[]'::jsonb
+                end
+              ) as value
+            ),
+            ''
+          )
+        ),
+        'D'
+      )
     ) stored;
 
 -- Create indexes for efficient querying
