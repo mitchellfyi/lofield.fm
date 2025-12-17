@@ -38,13 +38,13 @@ export function EditTrackPanel({ track, onSave, onCancel }: Props) {
   const [title, setTitle] = useState(track.title);
   const [description, setDescription] = useState(track.description);
   const [visibility, setVisibility] = useState(track.visibility);
-  const [genre, setGenre] = useState(track.genre || track.metadata?.genre || "");
+  const [genre, setGenre] = useState(
+    track.genre || track.metadata?.genre || ""
+  );
   const [bpm, setBpm] = useState(
     track.bpm?.toString() || track.metadata?.bpm?.toString() || ""
   );
-  const [tags, setTags] = useState(
-    track.metadata?.tags?.join(", ") || ""
-  );
+  const [tags, setTags] = useState(track.metadata?.tags?.join(", ") || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +65,10 @@ export function EditTrackPanel({ track, onSave, onCancel }: Props) {
 
       // Update BPM if changed
       const bpmNum = bpm ? parseInt(bpm, 10) : undefined;
-      if (bpmNum !== undefined && bpmNum !== (track.bpm || track.metadata?.bpm)) {
+      if (
+        bpmNum !== undefined &&
+        bpmNum !== (track.bpm || track.metadata?.bpm)
+      ) {
         updates.bpm = bpmNum;
       }
 
@@ -159,8 +162,7 @@ export function EditTrackPanel({ track, onSave, onCancel }: Props) {
               "Anyone can find and play this track in the library"}
             {visibility === "unlisted" &&
               "Only people with the link can play this track"}
-            {visibility === "private" &&
-              "Only you can see and play this track"}
+            {visibility === "private" && "Only you can see and play this track"}
           </p>
         </div>
 

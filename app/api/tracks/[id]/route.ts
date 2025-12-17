@@ -120,10 +120,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     updateData.visibility = updates.visibility;
 
     // Set published_at when changing to public or unlisted
-    if (
-      updates.visibility === "public" ||
-      updates.visibility === "unlisted"
-    ) {
+    if (updates.visibility === "public" || updates.visibility === "unlisted") {
       // Only set if not already published or if changing from private
       if (track.visibility === "private") {
         updateData.published_at = new Date().toISOString();
