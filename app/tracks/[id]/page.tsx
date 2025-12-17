@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { usePlayer, type PublicTrack } from "@/lib/contexts/player-context";
+import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import { PlayerBar } from "@/components/library/player-bar";
 import { EditTrackPanel } from "@/components/studio/edit-track-panel";
+import { ShareButton } from "@/components/library/share-button";
 import Link from "next/link";
 import { formatDuration } from "@/lib/utils/format";
 
@@ -22,6 +24,9 @@ export default function TrackPage() {
   const params = useParams();
   const trackId = params?.id as string;
   const { playTrack, currentTrack, isPlaying, setQueue } = usePlayer();
+
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts();
 
   const [track, setTrack] = useState<PublicTrack | null>(null);
   const [loading, setLoading] = useState(true);
@@ -186,13 +191,19 @@ export default function TrackPage() {
         ) : (
           <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
             {isOwner && (
-              <div className="mb-4 flex justify-end">
+              <div className="mb-4 flex justify-end gap-2">
+                <ShareButton trackId={track.id} trackTitle={track.title} />
                 <button
                   onClick={() => setIsEditing(true)}
                   className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 >
                   Edit Track
                 </button>
+              </div>
+            )}
+            {!isOwner && (
+              <div className="mb-4 flex justify-end">
+                <ShareButton trackId={track.id} trackTitle={track.title} />
               </div>
             )}
             <div className="flex items-start gap-6">

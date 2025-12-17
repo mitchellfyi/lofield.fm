@@ -85,6 +85,7 @@ const PlayerContext = createContext<PlayerContextType | null>(null);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const autoplayRef = useRef(true);
+  const lastPositionSaveTime = useRef<number>(0);
 
   // Initialize state with localStorage values
   const [state, setState] = useState<PlayerState>(() => {
@@ -179,6 +180,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           error: null, // Clear any previous errors
         };
       });
+
+      // Persist last track ID
+      if (typeof window !== "undefined") {
+        localStorage.setItem("player-last-track-id", track.id);
+      }
     },
     [fetchTrackUrl]
   );
@@ -337,10 +343,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
 
     const handleTimeUpdate = () => {
+      const newTime = audio.currentTime;
       setState((prev) => ({
         ...prev,
-        currentTime: audio.currentTime,
+        currentTime: newTime,
       }));
+
+      // Save position to localStorage every 5 seconds
+      const now = Date.now();
+      if (
+        state.currentTrack &&
+        now - lastPositionSaveTime.current > 5000 &&
+        typeof window !== "undefined"
+      ) {
+        lastPositionSaveTime.current = now;
+        localStorage.setItem(
+          `player-position-${state.currentTrack.id}`,
+          newTime.toString()
+        );
+      }
     };
 
     const handleDurationChange = () => {
@@ -351,6 +372,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     };
 
     const handleEnded = () => {
+      // Clear saved position when track ends
+      if (state.currentTrack && typeof window !== "undefined") {
+        localStorage.removeItem(`player-position-${state.currentTrack.id}`);
+      }
+
       // Use ref to get current autoplay value without re-registering listeners
       if (autoplayRef.current) {
         playNext();
@@ -380,7 +406,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
     };
-  }, [playNext]); // Only depend on playNext, use ref for autoplay
+  }, [playNext, state.currentTrack]); // Add state.currentTrack dependency
 
   // Load audio when currentTrackUrl changes - Fixed: Remove isPlaying from dependencies
   useEffect(() => {
@@ -388,6 +414,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!audio || !state.currentTrackUrl) return;
 
     audio.src = state.currentTrackUrl;
+
+    // Restore saved position if available
+    if (state.currentTrack && typeof window !== "undefined") {
+      const savedPosition = localStorage.getItem(
+        `player-position-${state.currentTrack.id}`
+      );
+      if (savedPosition) {
+        const position = parseFloat(savedPosition);
+        // Only restore if position is valid and not too close to the end
+        // Set directly on audio element, will trigger timeupdate event
+        if (position > 0) {
+          audio.currentTime = position;
+        }
+      }
+    }
 
     // Check current playing state directly from state
     const shouldPlay = state.isPlaying;
@@ -401,7 +442,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }));
       });
     }
-  }, [state.currentTrackUrl, state.isPlaying]);
+  }, [state.currentTrackUrl, state.isPlaying, state.currentTrack]);
 
   const value: PlayerContextType = {
     ...state,

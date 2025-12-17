@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { usePlayer, type PublicTrack } from "@/lib/contexts/player-context";
+import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import {
   FiltersPanel,
   type FilterState,
@@ -28,6 +29,9 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function LibraryPage() {
   const { setQueue, playTrack } = usePlayer();
+
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts();
 
   const [filters, setFilters] = useState<FilterState>({
     search: "",
