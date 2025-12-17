@@ -356,8 +356,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         typeof window !== "undefined"
       ) {
         lastPositionSaveTime.current = now;
-        // Access current track via audio element's data attribute or state snapshot
-        // We'll use a closure-captured trackId
+        // Track ID is stored on audio element via data-track-id attribute
         const currentTrackId = audio.getAttribute("data-track-id");
         if (currentTrackId) {
           localStorage.setItem(

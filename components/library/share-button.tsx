@@ -34,7 +34,12 @@ export function ShareButton({
       } catch (err) {
         // User cancelled share or share failed
         // Fall through to copy link
-        if ((err as Error).name === "AbortError") {
+        if (
+          err &&
+          typeof err === "object" &&
+          "name" in err &&
+          err.name === "AbortError"
+        ) {
           return; // User cancelled, don't copy
         }
       }

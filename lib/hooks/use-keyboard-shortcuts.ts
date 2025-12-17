@@ -23,6 +23,10 @@ export function useKeyboardShortcuts() {
   }, [currentTime]);
 
   useEffect(() => {
+    // Helper to check if no modifier keys are pressed
+    const hasNoModifiers = (e: KeyboardEvent) =>
+      !e.ctrlKey && !e.metaKey && !e.altKey;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in inputs
       const target = e.target;
@@ -64,14 +68,14 @@ export function useKeyboardShortcuts() {
       }
 
       // N: next track
-      if (e.code === "KeyN" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.code === "KeyN" && hasNoModifiers(e)) {
         e.preventDefault();
         playNext();
         return;
       }
 
       // P: previous track
-      if (e.code === "KeyP" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.code === "KeyP" && hasNoModifiers(e)) {
         e.preventDefault();
         playPrevious();
         return;
