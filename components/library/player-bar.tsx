@@ -32,7 +32,8 @@ export function PlayerBar() {
 
   const handleSeekStart = useCallback(() => {
     setIsSeeking(true);
-  }, []);
+    setSeekValue(currentTime);
+  }, [currentTime]);
 
   const handleSeekChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,14 +43,10 @@ export function PlayerBar() {
     []
   );
 
-  const handleSeekEnd = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newTime = parseFloat(e.target.value);
-      seek(newTime);
-      setIsSeeking(false);
-    },
-    [seek]
-  );
+  const handleSeekEnd = useCallback(() => {
+    seek(seekValue);
+    setIsSeeking(false);
+  }, [seek, seekValue]);
 
   const handleVolumeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

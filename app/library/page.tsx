@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { usePlayer, type PublicTrack } from "@/lib/contexts/player-context";
 import {
   FiltersPanel,
@@ -27,7 +27,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function LibraryPage() {
-  const { setQueue, playTrack, queue: playerQueue } = usePlayer();
+  const { setQueue, playTrack } = usePlayer();
 
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -48,6 +48,7 @@ export default function LibraryPage() {
 
   const [tracks, setTracks] = useState<PublicTrack[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
 
@@ -104,10 +105,11 @@ export default function LibraryPage() {
     ]
   );
 
-  // Fetch tracks
+  // Fetch tracks - properly memoized
   const fetchTracks = useCallback(
     async (cursor?: string) => {
       setLoading(true);
+      setError(null);
       try {
         const params = buildQueryParams(cursor);
         const response = await fetch(`/api/public/tracks?${params.toString()}`);
@@ -125,7 +127,8 @@ export default function LibraryPage() {
           // Replace tracks (new search/filter)
           setTracks(data.items);
 
-          // Update queue with new tracks and auto-play first if no current track
+          // Update queue only for new searches (not for load more)
+          // Only auto-play if queue changes significantly
           if (data.items.length > 0) {
             setQueue(data.items, 0);
           }
@@ -133,8 +136,11 @@ export default function LibraryPage() {
 
         setNextCursor(data.nextCursor);
         setHasMore(!!data.nextCursor);
-      } catch (error) {
-        console.error("Error fetching tracks:", error);
+      } catch (err) {
+        console.error("Error fetching tracks:", err);
+        setError(
+          "Failed to load tracks. Please check your connection and try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -142,10 +148,52 @@ export default function LibraryPage() {
     [buildQueryParams, setQueue]
   );
 
-  // Initial fetch and fetch on filter change
+  // Initial fetch and fetch on filter change - properly managed dependencies
   useEffect(() => {
     fetchTracks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    debouncedSearch,
+    filters.artist,
+    filters.genre,
+    filters.bpmMin,
+    filters.bpmMax,
+    filters.energyMin,
+    filters.energyMax,
+    filters.focusMin,
+    filters.focusMax,
+    filters.chillMin,
+    filters.chillMax,
+    filters.tags,
+    filters.instrumentation,
+    filters.sort,
+    fetchTracks, // Now stable because it's memoized with useCallback
+  ]);
+
+  // Handle load more
+  const handleLoadMore = useCallback(() => {
+    if (nextCursor && !loading) {
+      fetchTracks(nextCursor);
+    }
+  }, [nextCursor, loading, fetchTracks]);
+
+  // Handle track play - Improved queue comparison using filter fingerprint
+  const filterFingerprint = useMemo(() => {
+    return JSON.stringify({
+      search: debouncedSearch,
+      artist: filters.artist,
+      genre: filters.genre,
+      bpmMin: filters.bpmMin,
+      bpmMax: filters.bpmMax,
+      energyMin: filters.energyMin,
+      energyMax: filters.energyMax,
+      focusMin: filters.focusMin,
+      focusMax: filters.focusMax,
+      chillMin: filters.chillMin,
+      chillMax: filters.chillMax,
+      tags: filters.tags.sort(),
+      instrumentation: filters.instrumentation.sort(),
+      sort: filters.sort,
+    });
   }, [
     debouncedSearch,
     filters.artist,
@@ -163,30 +211,21 @@ export default function LibraryPage() {
     filters.sort,
   ]);
 
-  // Handle load more
-  const handleLoadMore = useCallback(() => {
-    if (nextCursor && !loading) {
-      fetchTracks(nextCursor);
-    }
-  }, [nextCursor, loading, fetchTracks]);
+  const lastFilterFingerprint = useRef<string | null>(null);
 
-  // Handle track play
   const handleTrackPlay = useCallback(
     (track: PublicTrack, index: number) => {
-      // Check if queue needs updating by comparing first track ID (fast check)
-      const queueNeedsUpdate =
-        playerQueue.length !== tracks.length ||
-        (playerQueue.length > 0 &&
-          tracks.length > 0 &&
-          playerQueue[0]?.id !== tracks[0]?.id);
-
-      if (queueNeedsUpdate) {
+      // Check if filters have changed since last queue update
+      if (lastFilterFingerprint.current !== filterFingerprint) {
+        // Filters changed, update queue
         setQueue(tracks, index);
+        lastFilterFingerprint.current = filterFingerprint;
       } else {
+        // Same filter state, just play the track
         playTrack(track);
       }
     },
-    [tracks, playerQueue, setQueue, playTrack]
+    [tracks, filterFingerprint, setQueue, playTrack]
   );
 
   // Clear all filters
@@ -314,6 +353,7 @@ export default function LibraryPage() {
                     key={filter.key}
                     onClick={() => handleRemoveFilter(filter.key)}
                     className="flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-700 transition hover:bg-emerald-200"
+                    aria-label={`Remove ${filter.value} filter`}
                   >
                     <span>{filter.value}</span>
                     <svg
@@ -321,6 +361,7 @@ export default function LibraryPage() {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -334,9 +375,39 @@ export default function LibraryPage() {
                 <button
                   onClick={handleClearAll}
                   className="text-xs text-slate-500 hover:text-slate-700"
+                  aria-label="Clear all filters"
                 >
                   Clear all
                 </button>
+              </div>
+            )}
+
+            {/* Error message */}
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="flex items-start gap-3">
+                  <svg
+                    className="h-5 w-5 flex-shrink-0 text-red-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-red-800">Error</h3>
+                    <p className="mt-1 text-sm text-red-700">{error}</p>
+                    <button
+                      onClick={() => fetchTracks()}
+                      className="mt-2 text-sm font-medium text-red-800 underline hover:text-red-900"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 

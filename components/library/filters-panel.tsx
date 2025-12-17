@@ -344,6 +344,8 @@ export function FiltersPanel({
                       ? "bg-emerald-600 text-white"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
+                  aria-pressed={filters.tags.includes(tag)}
+                  aria-label={`Filter by ${tag} tag`}
                 >
                   {tag}
                 </button>
@@ -366,6 +368,8 @@ export function FiltersPanel({
                       ? "bg-emerald-600 text-white"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
+                  aria-pressed={filters.instrumentation.includes(instrument)}
+                  aria-label={`Filter by ${instrument} instrument`}
                 >
                   {instrument}
                 </button>

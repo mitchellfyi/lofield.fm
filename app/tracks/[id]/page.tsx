@@ -62,6 +62,9 @@ export default function TrackPage() {
 
   const handlePlay = () => {
     if (track) {
+      // Create a single-track queue for the player
+      // Note: Next/prev buttons will have no effect with a single track
+      // This is expected behavior for individual track pages
       setQueue([track], 0);
       playTrack(track);
     }

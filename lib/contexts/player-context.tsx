@@ -284,7 +284,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     (tracks: PublicTrack[], startIndex = 0) => {
       setState((prev) => {
         const shouldAutoplay = prev.autoplay && tracks.length > 0;
-        
+
         // Schedule autoplay after state update
         if (shouldAutoplay) {
           setTimeout(() => playTrack(tracks[startIndex]), 0);
