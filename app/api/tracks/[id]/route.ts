@@ -10,7 +10,7 @@ type Params = {
 const UpdateTrackSchema = z.object({
   visibility: z.enum(["public", "unlisted", "private"]).optional(),
   title: z.string().min(1).max(200).optional(),
-  description: z.string().max(1000).optional(),
+  description: z.string().min(1).max(1000).nullable().optional(),
   genre: z.string().max(100).optional(),
   bpm: z.number().int().min(20).max(300).optional(),
   metadata: z
@@ -69,8 +69,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   // Validate input
   const validation = UpdateTrackSchema.safeParse(body);
   if (!validation.success) {
+    // Sanitize error details for production - only return field names
+    const fieldErrors = validation.error.errors.map((err) => ({
+      field: err.path.join("."),
+      message: err.message,
+    }));
     return NextResponse.json(
-      { error: "Invalid input", details: validation.error.errors },
+      {
+        error: "Invalid input",
+        fields: fieldErrors,
+      },
       { status: 400 }
     );
   }
@@ -80,7 +88,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   // Check if user owns the track
   const { data: track, error: trackError } = await supabase
     .from("tracks")
-    .select("id, user_id, visibility")
+    .select("id, user_id, visibility, published_at")
     .eq("id", trackId)
     .single();
 
@@ -121,10 +129,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     // Set published_at when changing to public or unlisted
     if (updates.visibility === "public" || updates.visibility === "unlisted") {
-      // Only set if not already published or if changing from private
-      if (track.visibility === "private") {
+      // Only set if not already published (preserve existing timestamp)
+      if (!track.published_at) {
         updateData.published_at = new Date().toISOString();
       }
+      // If already published, keep the existing timestamp
     } else if (updates.visibility === "private") {
       // Clear published_at when changing to private
       updateData.published_at = null;

@@ -7,7 +7,6 @@ import { PlayerBar } from "@/components/library/player-bar";
 import { EditTrackPanel } from "@/components/studio/edit-track-panel";
 import Link from "next/link";
 import { formatDuration } from "@/lib/utils/format";
-import { createClient } from "@/lib/supabase/client";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "Unknown";
@@ -40,12 +39,6 @@ export default function TrackPage() {
       setError(null);
 
       try {
-        // Check if user is authenticated
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
         const response = await fetch(`/api/public/tracks/${trackId}`);
 
         if (!response.ok) {
@@ -60,10 +53,8 @@ export default function TrackPage() {
         const data = await response.json();
         setTrack(data);
 
-        // Check if user owns this track
-        if (user && data.user_id === user.id) {
-          setIsOwner(true);
-        }
+        // Set ownership from server response
+        setIsOwner(data.is_owner || false);
       } catch (err) {
         console.error("Error fetching track:", err);
         setError("Failed to load track");
@@ -165,14 +156,24 @@ export default function TrackPage() {
               bpm: track.bpm,
               metadata: track.metadata,
             }}
-            onSave={async () => {
+            onSave={async (updatedData) => {
               setIsEditing(false);
+
+              // If changed to private, redirect to studio since track is no longer accessible
+              if (updatedData?.visibility === "private") {
+                window.location.href = "/app";
+                return;
+              }
+
               // Refetch track data instead of full page reload
               try {
                 const response = await fetch(`/api/public/tracks/${trackId}`);
                 if (response.ok) {
                   const data = await response.json();
                   setTrack(data);
+                } else if (response.status === 404) {
+                  // Track became private or deleted, redirect to studio
+                  window.location.href = "/app";
                 }
               } catch (err) {
                 console.error("Failed to refetch track:", err);

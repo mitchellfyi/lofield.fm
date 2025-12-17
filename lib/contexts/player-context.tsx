@@ -12,7 +12,7 @@ import React, {
 // Type definitions for public track (from API)
 export type PublicTrack = {
   id: string;
-  user_id?: string; // Optional for ownership check
+  is_owner?: boolean; // Server-computed ownership flag
   title: string;
   description: string | null;
   artist_name: string | null;

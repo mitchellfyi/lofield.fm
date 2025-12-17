@@ -26,7 +26,7 @@ type Track = {
 
 type Props = {
   track: Track;
-  onSave: () => void;
+  onSave: (updatedData?: { visibility?: string }) => void;
   onCancel: () => void;
 };
 
@@ -52,27 +52,44 @@ export function EditTrackPanel({ track, onSave, onCancel }: Props) {
     setError(null);
 
     try {
-      const updates: Record<string, unknown> = {
-        title,
-        description,
-        visibility,
-      };
+      const updates: Record<string, unknown> = {};
+
+      // Only include fields that have changed
+      if (title !== track.title) {
+        updates.title = title;
+      }
+
+      if (description !== track.description) {
+        updates.description = description;
+      }
+
+      if (visibility !== track.visibility) {
+        updates.visibility = visibility;
+      }
 
       // Update genre if changed
       if (genre !== (track.genre || track.metadata?.genre || "")) {
         updates.genre = genre;
       }
 
-      // Update BPM if changed
-      const bpmNum = bpm ? parseInt(bpm, 10) : undefined;
-      if (
-        bpmNum !== undefined &&
-        bpmNum !== (track.bpm || track.metadata?.bpm)
-      ) {
-        updates.bpm = bpmNum;
+      // Update BPM if changed - validate numeric input
+      if (bpm) {
+        const bpmNum = parseInt(bpm, 10);
+        // Validate that bpm is a valid number and in acceptable range
+        if (isNaN(bpmNum)) {
+          setError("BPM must be a valid number");
+          return;
+        }
+        if (bpmNum < 20 || bpmNum > 300) {
+          setError("BPM must be between 20 and 300");
+          return;
+        }
+        if (bpmNum !== (track.bpm || track.metadata?.bpm)) {
+          updates.bpm = bpmNum;
+        }
       }
 
-      // Update tags if changed
+      // Update tags if changed - preserve other metadata fields
       const newTags = tags
         .split(",")
         .map((t) => t.trim())
@@ -96,7 +113,8 @@ export function EditTrackPanel({ track, onSave, onCancel }: Props) {
         throw new Error(data.error || "Failed to update track");
       }
 
-      onSave();
+      // Pass the visibility change info to parent
+      onSave({ visibility: updates.visibility as string | undefined });
     } catch (err) {
       console.error("Failed to update track:", err);
       setError(err instanceof Error ? err.message : "Failed to update track");
