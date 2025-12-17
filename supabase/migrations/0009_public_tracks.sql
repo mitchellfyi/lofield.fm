@@ -31,14 +31,33 @@ alter table public.tracks
     check (mood_chill is null or (mood_chill >= 0 and mood_chill <= 100));
 
 -- Add full-text search column (generated)
--- Combines title, description, artist_name, and genre for search
+-- Combines title, description, artist_name, genre, and tags for search
 alter table public.tracks
   add column if not exists search_tsv tsvector
     generated always as (
       setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
       setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
       setweight(to_tsvector('english', coalesce(artist_name, '')), 'C') ||
-      setweight(to_tsvector('english', coalesce(genre, '')), 'D')
+      setweight(to_tsvector('english', coalesce(genre, '')), 'D') ||
+      setweight(
+        to_tsvector(
+          'english',
+          coalesce(
+            (
+              select string_agg(value, ' ')
+              from jsonb_array_elements_text(
+                case
+                  when jsonb_typeof(metadata->'tags') = 'array'
+                  then metadata->'tags'
+                  else '[]'::jsonb
+                end
+              ) as value
+            ),
+            ''
+          )
+        ),
+        'D'
+      )
     ) stored;
 
 -- Create indexes for efficient querying
