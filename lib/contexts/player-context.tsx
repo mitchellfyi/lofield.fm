@@ -85,6 +85,7 @@ const PlayerContext = createContext<PlayerContextType | null>(null);
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const autoplayRef = useRef(true);
+  const lastPositionSaveTime = useRef<number>(0);
 
   // Initialize state with localStorage values
   const [state, setState] = useState<PlayerState>(() => {
@@ -179,6 +180,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           error: null, // Clear any previous errors
         };
       });
+
+      // Persist last track ID
+      if (typeof window !== "undefined") {
+        localStorage.setItem("player-last-track-id", track.id);
+      }
     },
     [fetchTrackUrl]
   );
@@ -337,10 +343,28 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
 
     const handleTimeUpdate = () => {
+      const newTime = audio.currentTime;
       setState((prev) => ({
         ...prev,
-        currentTime: audio.currentTime,
+        currentTime: newTime,
       }));
+
+      // Save position to localStorage every 5 seconds
+      const now = Date.now();
+      if (
+        now - lastPositionSaveTime.current > 5000 &&
+        typeof window !== "undefined"
+      ) {
+        lastPositionSaveTime.current = now;
+        // Track ID is stored on audio element via data-track-id attribute
+        const currentTrackId = audio.getAttribute("data-track-id");
+        if (currentTrackId) {
+          localStorage.setItem(
+            `player-position-${currentTrackId}`,
+            newTime.toString()
+          );
+        }
+      }
     };
 
     const handleDurationChange = () => {
@@ -351,6 +375,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     };
 
     const handleEnded = () => {
+      // Clear saved position when track ends
+      const currentTrackId = audio.getAttribute("data-track-id");
+      if (currentTrackId && typeof window !== "undefined") {
+        localStorage.removeItem(`player-position-${currentTrackId}`);
+      }
+
       // Use ref to get current autoplay value without re-registering listeners
       if (autoplayRef.current) {
         playNext();
@@ -380,14 +410,30 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
     };
-  }, [playNext]); // Only depend on playNext, use ref for autoplay
+  }, [playNext]); // Only depend on playNext, use ref for autoplay and data attribute for track ID
 
   // Load audio when currentTrackUrl changes - Fixed: Remove isPlaying from dependencies
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !state.currentTrackUrl) return;
+    if (!audio || !state.currentTrackUrl || !state.currentTrack) return;
 
     audio.src = state.currentTrackUrl;
+    // Store track ID on audio element for event handlers
+    audio.setAttribute("data-track-id", state.currentTrack.id);
+
+    // Restore saved position if available
+    if (typeof window !== "undefined") {
+      const savedPosition = localStorage.getItem(
+        `player-position-${state.currentTrack.id}`
+      );
+      if (savedPosition) {
+        const position = parseFloat(savedPosition);
+        // Validate position: must be a valid number and greater than 0
+        if (!isNaN(position) && isFinite(position) && position > 0) {
+          audio.currentTime = position;
+        }
+      }
+    }
 
     // Check current playing state directly from state
     const shouldPlay = state.isPlaying;
@@ -401,7 +447,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }));
       });
     }
-  }, [state.currentTrackUrl, state.isPlaying]);
+  }, [state.currentTrackUrl, state.isPlaying, state.currentTrack]);
 
   const value: PlayerContextType = {
     ...state,
