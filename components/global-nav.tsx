@@ -24,6 +24,9 @@ export function GlobalNav({ userEmail }: Props) {
             Lofield Studio
           </Link>
           <nav className="hidden items-center gap-3 text-sm text-slate-700 sm:flex">
+            <Link href="/library" className="transition hover:text-emerald-700">
+              Library
+            </Link>
             <Link href="/app" className="transition hover:text-emerald-700">
               App
             </Link>

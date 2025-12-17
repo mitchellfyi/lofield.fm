@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { GlobalNav } from "@/components/global-nav";
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "Lofield Studio",
@@ -25,7 +26,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <GlobalNav userEmail={userEmail} />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
