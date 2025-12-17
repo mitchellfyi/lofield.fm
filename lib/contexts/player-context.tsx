@@ -45,6 +45,9 @@ type PlayerState = {
   // Settings
   autoplay: boolean;
   repeat: boolean;
+
+  // Error state
+  error: string | null;
 };
 
 type PlayerContextType = PlayerState & {
@@ -68,6 +71,9 @@ type PlayerContextType = PlayerState & {
   toggleAutoplay: () => void;
   toggleRepeat: () => void;
 
+  // Error handling
+  clearError: () => void;
+
   // Audio element ref (for advanced controls)
   audioRef: React.RefObject<HTMLAudioElement | null>;
 };
@@ -76,6 +82,7 @@ const PlayerContext = createContext<PlayerContextType | null>(null);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const autoplayRef = useRef(true);
 
   // Initialize state with localStorage values
   const [state, setState] = useState<PlayerState>(() => {
@@ -92,12 +99,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         currentIndex: -1,
         autoplay: true,
         repeat: false,
+        error: null,
       };
     }
 
     const savedVolume = localStorage.getItem("player-volume");
     const savedAutoplay = localStorage.getItem("player-autoplay");
     const savedRepeat = localStorage.getItem("player-repeat");
+
+    const autoplay = savedAutoplay ? savedAutoplay === "true" : true;
 
     return {
       currentTrack: null,
@@ -108,10 +118,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       volume: savedVolume ? parseFloat(savedVolume) : 0.7,
       queue: [],
       currentIndex: -1,
-      autoplay: savedAutoplay ? savedAutoplay === "true" : true,
+      autoplay,
       repeat: savedRepeat ? savedRepeat === "true" : false,
+      error: null,
     };
   });
+
+  // Sync autoplayRef with state after initial render
+  useEffect(() => {
+    autoplayRef.current = state.autoplay;
+  }, [state.autoplay]);
 
   // Sync audio element volume with state
   useEffect(() => {
@@ -125,44 +141,47 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch(`/api/public/tracks/${trackId}/play`);
       if (!response.ok) {
-        console.error("Failed to fetch track URL");
+        setState((prev) => ({
+          ...prev,
+          error: "Failed to load track. Please try again.",
+        }));
         return null;
       }
       const data = await response.json();
       return data.signedUrl as string;
     } catch (error) {
       console.error("Error fetching track URL:", error);
+      setState((prev) => ({
+        ...prev,
+        error: "Network error. Please check your connection.",
+      }));
       return null;
     }
   }, []);
 
-  // Play a specific track
+  // Play a specific track - Fixed: Combine setState calls
   const playTrack = useCallback(
     async (track: PublicTrack) => {
       const url = await fetchTrackUrl(track.id);
       if (!url) return;
 
-      setState((prev) => ({
-        ...prev,
-        currentTrack: track,
-        currentTrackUrl: url,
-        isPlaying: true,
-        currentTime: 0,
-      }));
-
-      // Find track in queue and update index
       setState((prev) => {
         const index = prev.queue.findIndex((t) => t.id === track.id);
         return {
           ...prev,
+          currentTrack: track,
+          currentTrackUrl: url,
+          isPlaying: true,
+          currentTime: 0,
           currentIndex: index >= 0 ? index : prev.currentIndex,
+          error: null, // Clear any previous errors
         };
       });
     },
     [fetchTrackUrl]
   );
 
-  // Play next track in queue
+  // Play next track in queue - Fixed: Extract track outside setState, then call playTrack
   const playNext = useCallback(() => {
     setState((prev) => {
       const nextIndex = prev.currentIndex + 1;
@@ -172,7 +191,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         if (prev.repeat && prev.queue.length > 0) {
           // Loop to beginning
           const firstTrack = prev.queue[0];
-          playTrack(firstTrack);
+          // Schedule playTrack to run after state update
+          setTimeout(() => playTrack(firstTrack), 0);
           return { ...prev, currentIndex: 0 };
         }
         // Stop playback
@@ -181,12 +201,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       // Play next track
       const nextTrack = prev.queue[nextIndex];
-      playTrack(nextTrack);
+      // Schedule playTrack to run after state update
+      setTimeout(() => playTrack(nextTrack), 0);
       return { ...prev, currentIndex: nextIndex };
     });
   }, [playTrack]);
 
-  // Play previous track in queue
+  // Play previous track in queue - Fixed: Extract track outside setState, then call playTrack
   const playPrevious = useCallback(() => {
     setState((prev) => {
       // If more than 3 seconds into track, restart current track
@@ -203,7 +224,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         // Beginning of queue - restart current or loop to end
         if (prev.repeat && prev.queue.length > 0) {
           const lastTrack = prev.queue[prev.queue.length - 1];
-          playTrack(lastTrack);
+          // Schedule playTrack to run after state update
+          setTimeout(() => playTrack(lastTrack), 0);
           return { ...prev, currentIndex: prev.queue.length - 1 };
         }
         // Restart current track
@@ -215,7 +237,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
       // Play previous track
       const prevTrack = prev.queue[prevIndex];
-      playTrack(prevTrack);
+      // Schedule playTrack to run after state update
+      setTimeout(() => playTrack(prevTrack), 0);
       return { ...prev, currentIndex: prevIndex };
     });
   }, [playTrack]);
@@ -256,23 +279,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("player-volume", clampedVolume.toString());
   }, []);
 
-  // Queue management
+  // Queue management - Fixed: Extract playTrack call outside setState
   const setQueue = useCallback(
     (tracks: PublicTrack[], startIndex = 0) => {
       setState((prev) => {
-        const newQueue = {
+        const shouldAutoplay = prev.autoplay && tracks.length > 0;
+        
+        // Schedule autoplay after state update
+        if (shouldAutoplay) {
+          setTimeout(() => playTrack(tracks[startIndex]), 0);
+        }
+
+        return {
           ...prev,
           queue: tracks,
           currentIndex: startIndex,
         };
-
-        // Auto-play first track if autoplay is enabled and tracks exist
-        if (prev.autoplay && tracks.length > 0) {
-          // This will be handled asynchronously, so we don't block state update
-          playTrack(tracks[startIndex]);
-        }
-
-        return newQueue;
       });
     },
     [playTrack]
@@ -303,7 +325,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Audio event handlers
+  const clearError = useCallback(() => {
+    setState((prev) => ({ ...prev, error: null }));
+  }, []);
+
+  // Audio event handlers - Fixed: Use ref to avoid re-registration
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -323,7 +349,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     };
 
     const handleEnded = () => {
-      if (state.autoplay) {
+      // Use ref to get current autoplay value without re-registering listeners
+      if (autoplayRef.current) {
         playNext();
       } else {
         setState((prev) => ({ ...prev, isPlaying: false }));
@@ -351,19 +378,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
     };
-  }, [state.autoplay, playNext]);
+  }, [playNext]); // Only depend on playNext, use ref for autoplay
 
-  // Load audio when currentTrackUrl changes
+  // Load audio when currentTrackUrl changes - Fixed: Remove isPlaying from dependencies
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !state.currentTrackUrl) return;
 
     audio.src = state.currentTrackUrl;
 
-    if (state.isPlaying) {
+    // Check current playing state directly from state
+    const shouldPlay = state.isPlaying;
+    if (shouldPlay) {
       audio.play().catch((error) => {
         console.error("Error playing audio:", error);
-        setState((prev) => ({ ...prev, isPlaying: false }));
+        setState((prev) => ({
+          ...prev,
+          isPlaying: false,
+          error: "Playback failed. Please try again.",
+        }));
       });
     }
   }, [state.currentTrackUrl, state.isPlaying]);
@@ -382,6 +415,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     clearQueue,
     toggleAutoplay,
     toggleRepeat,
+    clearError,
     audioRef,
   };
 

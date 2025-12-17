@@ -3,25 +3,20 @@
 import { PublicTrack } from "@/lib/contexts/player-context";
 import { usePlayer } from "@/lib/contexts/player-context";
 import Link from "next/link";
+import { formatDuration } from "@/lib/utils/format";
 
 type TrackCardProps = {
   track: PublicTrack;
   onPlay: (track: PublicTrack) => void;
 };
 
-function formatDuration(ms: number | null): string {
-  if (!ms) return "--:--";
-  const totalSeconds = Math.floor(ms / 1000);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
 export function TrackCard({ track, onPlay }: TrackCardProps) {
   const { currentTrack, isPlaying } = usePlayer();
   const isCurrentTrack = currentTrack?.id === track.id;
 
-  const tags = (track.metadata?.tags as string[]) || [];
+  const tags = Array.isArray(track.metadata?.tags)
+    ? (track.metadata.tags as string[])
+    : [];
   const displayTags = tags.slice(0, 3);
 
   return (

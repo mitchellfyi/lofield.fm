@@ -1,15 +1,8 @@
 "use client";
 
 import { usePlayer } from "@/lib/contexts/player-context";
-import { useCallback, useMemo } from "react";
-
-// Helper to format time (seconds) to mm:ss
-function formatTime(seconds: number): string {
-  if (!isFinite(seconds)) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+import { useCallback, useMemo, useState } from "react";
+import { formatTime } from "@/lib/utils/format";
 
 export function PlayerBar() {
   const {
@@ -22,6 +15,7 @@ export function PlayerBar() {
     currentIndex,
     autoplay,
     repeat,
+    error,
     togglePlayPause,
     playNext,
     playPrevious,
@@ -29,12 +23,30 @@ export function PlayerBar() {
     setVolume,
     toggleAutoplay,
     toggleRepeat,
+    clearError,
   } = usePlayer();
 
-  const handleSeek = useCallback(
+  // Track seeking state to prevent slider jumps
+  const [isSeeking, setIsSeeking] = useState(false);
+  const [seekValue, setSeekValue] = useState(0);
+
+  const handleSeekStart = useCallback(() => {
+    setIsSeeking(true);
+  }, []);
+
+  const handleSeekChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newTime = parseFloat(e.target.value);
+      setSeekValue(newTime);
+    },
+    []
+  );
+
+  const handleSeekEnd = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTime = parseFloat(e.target.value);
       seek(newTime);
+      setIsSeeking(false);
     },
     [seek]
   );
@@ -47,11 +59,14 @@ export function PlayerBar() {
     [setVolume]
   );
 
+  // Use seekValue when seeking, otherwise use currentTime
+  const displayTime = isSeeking ? seekValue : currentTime;
+
   // Memoize gradient calculations for seek bar
   const seekGradient = useMemo(() => {
-    const progress = (currentTime / (duration || 1)) * 100;
+    const progress = (displayTime / (duration || 1)) * 100;
     return `linear-gradient(to right, rgb(5 150 105) 0%, rgb(5 150 105) ${progress}%, rgb(226 232 240) ${progress}%, rgb(226 232 240) 100%)`;
-  }, [currentTime, duration]);
+  }, [displayTime, duration]);
 
   const volumeGradient = useMemo(() => {
     const volumePercent = volume * 100;
@@ -159,19 +174,27 @@ export function PlayerBar() {
           {/* Seek bar and time - desktop only */}
           <div className="hidden md:flex flex-1 items-center gap-2">
             <span className="text-xs text-slate-600 w-12 text-right">
-              {formatTime(currentTime)}
+              {formatTime(displayTime)}
             </span>
             <input
               type="range"
               min="0"
               max={duration || 0}
-              value={currentTime}
-              onChange={handleSeek}
+              value={displayTime}
+              onMouseDown={handleSeekStart}
+              onTouchStart={handleSeekStart}
+              onChange={handleSeekChange}
+              onMouseUp={handleSeekEnd}
+              onTouchEnd={handleSeekEnd}
               className="flex-1 h-1 rounded-lg appearance-none cursor-pointer bg-slate-200"
               style={{
                 background: seekGradient,
               }}
-              aria-label="Seek"
+              aria-label="Seek position"
+              aria-valuemin={0}
+              aria-valuemax={duration || 0}
+              aria-valuenow={displayTime}
+              aria-valuetext={`${formatTime(displayTime)} of ${formatTime(duration)}`}
             />
             <span className="text-xs text-slate-600 w-12">
               {formatTime(duration)}
@@ -199,6 +222,10 @@ export function PlayerBar() {
                 background: volumeGradient,
               }}
               aria-label="Volume"
+              aria-valuemin={0}
+              aria-valuemax={1}
+              aria-valuenow={volume}
+              aria-valuetext={`${Math.round(volume * 100)}%`}
             />
           </div>
 
@@ -255,19 +282,27 @@ export function PlayerBar() {
         {/* Mobile seek bar */}
         <div className="mt-2 flex md:hidden items-center gap-2">
           <span className="text-xs text-slate-600">
-            {formatTime(currentTime)}
+            {formatTime(displayTime)}
           </span>
           <input
             type="range"
             min="0"
             max={duration || 0}
-            value={currentTime}
-            onChange={handleSeek}
+            value={displayTime}
+            onMouseDown={handleSeekStart}
+            onTouchStart={handleSeekStart}
+            onChange={handleSeekChange}
+            onMouseUp={handleSeekEnd}
+            onTouchEnd={handleSeekEnd}
             className="flex-1 h-1 rounded-lg appearance-none cursor-pointer"
             style={{
               background: seekGradient,
             }}
-            aria-label="Seek"
+            aria-label="Seek position"
+            aria-valuemin={0}
+            aria-valuemax={duration || 0}
+            aria-valuenow={displayTime}
+            aria-valuetext={`${formatTime(displayTime)} of ${formatTime(duration)}`}
           />
           <span className="text-xs text-slate-600">{formatTime(duration)}</span>
         </div>

@@ -5,14 +5,7 @@ import { useParams } from "next/navigation";
 import { usePlayer, type PublicTrack } from "@/lib/contexts/player-context";
 import { PlayerBar } from "@/components/library/player-bar";
 import Link from "next/link";
-
-function formatDuration(ms: number | null): string {
-  if (!ms) return "--:--";
-  const totalSeconds = Math.floor(ms / 1000);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+import { formatDuration } from "@/lib/utils/format";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "Unknown";
@@ -111,8 +104,12 @@ export default function TrackPage() {
     );
   }
 
-  const tags = (track.metadata?.tags as string[]) || [];
-  const instrumentation = (track.metadata?.instrumentation as string[]) || [];
+  const tags = Array.isArray(track.metadata?.tags)
+    ? (track.metadata.tags as string[])
+    : [];
+  const instrumentation = Array.isArray(track.metadata?.instrumentation)
+    ? (track.metadata.instrumentation as string[])
+    : [];
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
