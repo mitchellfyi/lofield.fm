@@ -165,10 +165,20 @@ export default function TrackPage() {
               bpm: track.bpm,
               metadata: track.metadata,
             }}
-            onSave={() => {
+            onSave={async () => {
               setIsEditing(false);
-              // Reload track data
-              window.location.reload();
+              // Refetch track data instead of full page reload
+              try {
+                const response = await fetch(`/api/public/tracks/${trackId}`);
+                if (response.ok) {
+                  const data = await response.json();
+                  setTrack(data);
+                }
+              } catch (err) {
+                console.error("Failed to refetch track:", err);
+                // Fallback to page reload if refetch fails
+                window.location.reload();
+              }
             }}
             onCancel={() => setIsEditing(false)}
           />

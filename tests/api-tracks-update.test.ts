@@ -18,6 +18,9 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: () => Promise.resolve(mockSupabase),
 }));
 
+// Helper function to create params
+const createParams = (id: string) => ({ params: Promise.resolve({ id }) });
+
 describe("PATCH /api/tracks/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -71,7 +74,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "public" }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -126,7 +129,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "unlisted" }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -181,7 +184,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "private" }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -239,7 +242,7 @@ describe("PATCH /api/tracks/[id]", () => {
         description: "Updated description",
       }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -299,7 +302,7 @@ describe("PATCH /api/tracks/[id]", () => {
         metadata: { tags: ["chill", "relaxing"] },
       }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -317,7 +320,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "public" }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -348,7 +351,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "public" }),
     });
-    const params = { params: Promise.resolve({ id: "track-999" }) };
+    const params = createParams("track-999");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -383,7 +386,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "private" }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -401,7 +404,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ visibility: "invalid" }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -419,7 +422,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ title: "a".repeat(201) }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
@@ -437,7 +440,7 @@ describe("PATCH /api/tracks/[id]", () => {
       method: "PATCH",
       body: JSON.stringify({ bpm: 1000 }),
     });
-    const params = { params: Promise.resolve({ id: "track-1" }) };
+    const params = createParams("track-1");
     const res = await PATCH(req, params);
     const json = await res.json();
 
