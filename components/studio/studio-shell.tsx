@@ -191,6 +191,7 @@ export function StudioShell({
             tracks={tracks}
             selectedTrackId={selectedTrackId}
             onSelectTrack={setSelectedTrackId}
+            onRefresh={handleRefresh}
           />
         </div>
       </div>

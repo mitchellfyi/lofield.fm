@@ -19,6 +19,11 @@ export async function GET(request: NextRequest, { params }: Params) {
   const supabase = await createServerSupabaseClient();
 
   try {
+    // Get current user (may be null for anonymous users)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     // Get track - RLS policies will handle access control
     // Public and unlisted tracks are readable by anyone
     // Private tracks are only readable by owner
@@ -27,6 +32,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       .select(
         `
         id,
+        user_id,
         title,
         description,
         artist_name,
@@ -57,7 +63,16 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Track not found" }, { status: 404 });
     }
 
-    return NextResponse.json(track);
+    // Add ownership flag instead of exposing user_id
+    const isOwner = user ? track.user_id === user.id : false;
+
+    // Remove user_id from response to protect privacy
+    const { user_id, ...trackWithoutUserId } = track;
+
+    return NextResponse.json({
+      ...trackWithoutUserId,
+      is_owner: isOwner,
+    });
   } catch (err) {
     console.error("Unexpected error in public track detail API:", err);
     return NextResponse.json(

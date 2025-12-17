@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { usePlayer, type PublicTrack } from "@/lib/contexts/player-context";
 import { PlayerBar } from "@/components/library/player-bar";
+import { EditTrackPanel } from "@/components/studio/edit-track-panel";
 import Link from "next/link";
 import { formatDuration } from "@/lib/utils/format";
 
@@ -25,6 +26,8 @@ export default function TrackPage() {
   const [track, setTrack] = useState<PublicTrack | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isCurrentTrack = currentTrack?.id === trackId;
 
@@ -49,6 +52,9 @@ export default function TrackPage() {
 
         const data = await response.json();
         setTrack(data);
+
+        // Set ownership from server response
+        setIsOwner(data.is_owner || false);
       } catch (err) {
         console.error("Error fetching track:", err);
         setError("Failed to load track");
@@ -139,192 +145,242 @@ export default function TrackPage() {
         </Link>
 
         {/* Track header */}
-        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-start gap-6">
-            {/* Play button */}
-            <button
-              onClick={handlePlay}
-              className={`flex-shrink-0 rounded-full p-4 transition ${
-                isCurrentTrack && isPlaying
-                  ? "bg-emerald-600 text-white"
-                  : "bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white"
-              }`}
-              aria-label={isCurrentTrack && isPlaying ? "Pause" : "Play"}
-            >
-              {isCurrentTrack && isPlaying ? (
-                <svg
-                  className="h-8 w-8"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
-              ) : (
-                <svg
-                  className="h-8 w-8"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
+        {isEditing && isOwner ? (
+          <EditTrackPanel
+            track={{
+              id: track.id,
+              title: track.title,
+              description: track.description || "",
+              visibility: track.visibility || "public",
+              genre: track.genre,
+              bpm: track.bpm,
+              metadata: track.metadata,
+            }}
+            onSave={async (updatedData) => {
+              setIsEditing(false);
 
-            {/* Track info */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                {track.title}
-              </h1>
-              <p className="text-lg text-slate-600 mb-4">
-                {track.artist_name || "Unknown Artist"}
-              </p>
-              {track.description && (
-                <p className="text-slate-700 mb-6">{track.description}</p>
-              )}
+              // If changed to private, redirect to studio since track is no longer accessible
+              if (updatedData?.visibility === "private") {
+                window.location.href = "/app";
+                return;
+              }
 
-              {/* Metadata grid */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {track.genre && (
-                  <div>
-                    <span className="font-medium text-slate-700">Genre:</span>
-                    <span className="ml-2 text-slate-600">{track.genre}</span>
-                  </div>
+              // Refetch track data instead of full page reload
+              try {
+                const response = await fetch(`/api/public/tracks/${trackId}`);
+                if (response.ok) {
+                  const data = await response.json();
+                  setTrack(data);
+                } else if (response.status === 404) {
+                  // Track became private or deleted, redirect to studio
+                  window.location.href = "/app";
+                }
+              } catch (err) {
+                console.error("Failed to refetch track:", err);
+                // Fallback to page reload if refetch fails
+                window.location.reload();
+              }
+            }}
+            onCancel={() => setIsEditing(false)}
+          />
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+            {isOwner && (
+              <div className="mb-4 flex justify-end">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  Edit Track
+                </button>
+              </div>
+            )}
+            <div className="flex items-start gap-6">
+              {/* Play button */}
+              <button
+                onClick={handlePlay}
+                className={`flex-shrink-0 rounded-full p-4 transition ${
+                  isCurrentTrack && isPlaying
+                    ? "bg-emerald-600 text-white"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white"
+                }`}
+                aria-label={isCurrentTrack && isPlaying ? "Pause" : "Play"}
+              >
+                {isCurrentTrack && isPlaying ? (
+                  <svg
+                    className="h-8 w-8"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="h-8 w-8"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
                 )}
-                {track.bpm && (
-                  <div>
-                    <span className="font-medium text-slate-700">BPM:</span>
-                    <span className="ml-2 text-slate-600">{track.bpm}</span>
-                  </div>
+              </button>
+
+              {/* Track info */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                  {track.title}
+                </h1>
+                <p className="text-lg text-slate-600 mb-4">
+                  {track.artist_name || "Unknown Artist"}
+                </p>
+                {track.description && (
+                  <p className="text-slate-700 mb-6">{track.description}</p>
                 )}
-                {track.length_ms && (
+
+                {/* Metadata grid */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {track.genre && (
+                    <div>
+                      <span className="font-medium text-slate-700">Genre:</span>
+                      <span className="ml-2 text-slate-600">{track.genre}</span>
+                    </div>
+                  )}
+                  {track.bpm && (
+                    <div>
+                      <span className="font-medium text-slate-700">BPM:</span>
+                      <span className="ml-2 text-slate-600">{track.bpm}</span>
+                    </div>
+                  )}
+                  {track.length_ms && (
+                    <div>
+                      <span className="font-medium text-slate-700">
+                        Duration:
+                      </span>
+                      <span className="ml-2 text-slate-600">
+                        {formatDuration(track.length_ms)}
+                      </span>
+                    </div>
+                  )}
                   <div>
-                    <span className="font-medium text-slate-700">
-                      Duration:
-                    </span>
+                    <span className="font-medium text-slate-700">Type:</span>
                     <span className="ml-2 text-slate-600">
-                      {formatDuration(track.length_ms)}
+                      {track.instrumental ? "Instrumental" : "With Vocals"}
                     </span>
                   </div>
-                )}
-                <div>
-                  <span className="font-medium text-slate-700">Type:</span>
-                  <span className="ml-2 text-slate-600">
-                    {track.instrumental ? "Instrumental" : "With Vocals"}
-                  </span>
+                  {track.published_at && (
+                    <div>
+                      <span className="font-medium text-slate-700">
+                        Published:
+                      </span>
+                      <span className="ml-2 text-slate-600">
+                        {formatDate(track.published_at)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                {track.published_at && (
-                  <div>
-                    <span className="font-medium text-slate-700">
-                      Published:
-                    </span>
-                    <span className="ml-2 text-slate-600">
-                      {formatDate(track.published_at)}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
+
+            {/* Mood indicators */}
+            {(track.mood_energy !== null ||
+              track.mood_focus !== null ||
+              track.mood_chill !== null) && (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  Mood
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {track.mood_energy !== null && (
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-slate-600">Energy</span>
+                        <span className="font-medium text-slate-900">
+                          {track.mood_energy}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <div
+                          className="h-2 rounded-full bg-emerald-600"
+                          style={{ width: `${track.mood_energy}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {track.mood_focus !== null && (
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-slate-600">Focus</span>
+                        <span className="font-medium text-slate-900">
+                          {track.mood_focus}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <div
+                          className="h-2 rounded-full bg-emerald-600"
+                          style={{ width: `${track.mood_focus}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {track.mood_chill !== null && (
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-slate-600">Chill</span>
+                        <span className="font-medium text-slate-900">
+                          {track.mood_chill}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <div
+                          className="h-2 rounded-full bg-emerald-600"
+                          style={{ width: `${track.mood_chill}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  Tags
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Instrumentation */}
+            {instrumentation.length > 0 && (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  Instrumentation
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {instrumentation.map((instrument) => (
+                    <span
+                      key={instrument}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"
+                    >
+                      {instrument}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Mood indicators */}
-          {(track.mood_energy !== null ||
-            track.mood_focus !== null ||
-            track.mood_chill !== null) && (
-            <div className="mt-6 border-t border-slate-200 pt-6">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">
-                Mood
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {track.mood_energy !== null && (
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-slate-600">Energy</span>
-                      <span className="font-medium text-slate-900">
-                        {track.mood_energy}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-emerald-600"
-                        style={{ width: `${track.mood_energy}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                {track.mood_focus !== null && (
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-slate-600">Focus</span>
-                      <span className="font-medium text-slate-900">
-                        {track.mood_focus}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-emerald-600"
-                        style={{ width: `${track.mood_focus}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                {track.mood_chill !== null && (
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-slate-600">Chill</span>
-                      <span className="font-medium text-slate-900">
-                        {track.mood_chill}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-emerald-600"
-                        style={{ width: `${track.mood_chill}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="mt-6 border-t border-slate-200 pt-6">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">
-                Tags
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Instrumentation */}
-          {instrumentation.length > 0 && (
-            <div className="mt-6 border-t border-slate-200 pt-6">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">
-                Instrumentation
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {instrumentation.map((instrument) => (
-                  <span
-                    key={instrument}
-                    className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"
-                  >
-                    {instrument}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Bottom player bar */}

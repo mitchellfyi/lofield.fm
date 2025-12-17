@@ -25,12 +25,18 @@ vi.mock("@/lib/supabase/server", () => ({
 describe("Public Track Detail and Play APIs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock auth.getUser to return null (anonymous user) by default
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: null,
+    });
   });
 
   describe("GET /api/public/tracks/[id]", () => {
     it("returns public track details", async () => {
       const mockTrack = {
         id: "t1",
+        user_id: "user-1",
         title: "Public Track",
         description: "A public track",
         artist_name: "Artist",
@@ -71,11 +77,14 @@ describe("Public Track Detail and Play APIs", () => {
       expect(json.id).toBe("t1");
       expect(json.title).toBe("Public Track");
       expect(json.final_prompt).toBe("Create a lofi track");
+      expect(json.is_owner).toBe(false); // Anonymous user is not owner
+      expect(json.user_id).toBeUndefined(); // user_id should not be exposed
     });
 
     it("returns unlisted track details", async () => {
       const mockTrack = {
         id: "t2",
+        user_id: "user-1",
         title: "Unlisted Track",
         visibility: "unlisted",
         status: "ready",
@@ -104,6 +113,7 @@ describe("Public Track Detail and Play APIs", () => {
     it("returns 404 for private tracks", async () => {
       const mockTrack = {
         id: "t3",
+        user_id: "user-1",
         visibility: "private",
       };
 

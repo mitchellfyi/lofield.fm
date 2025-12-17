@@ -1,12 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { EditTrackPanel } from "./edit-track-panel";
 
 type Track = {
   id: string;
   title: string;
   description: string;
   final_prompt: string;
+  visibility?: "public" | "unlisted" | "private";
+  genre?: string | null;
+  bpm?: number | null;
   metadata: {
     genre?: string;
     bpm?: number;
@@ -32,6 +36,7 @@ type Props = {
   tracks: Track[];
   selectedTrackId: string | null;
   onSelectTrack: (trackId: string) => void;
+  onRefresh?: () => void;
 };
 
 function formatTime(ms: number) {
@@ -192,8 +197,16 @@ function AudioPlayer({ track }: { track: Track }) {
   );
 }
 
-export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
+export function TrackPlayer({
+  tracks,
+  selectedTrackId,
+  onSelectTrack,
+  onRefresh,
+}: Props) {
   const selectedTrack = tracks.find((t) => t.id === selectedTrackId) ?? null;
+
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
 
   // Filter state
   const [genreFilter, setGenreFilter] = useState<string>("");
@@ -398,206 +411,245 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
       {/* Selected track details */}
       {selectedTrack && (
         <div className="flex flex-1 flex-col overflow-y-auto p-4">
-          {/* Player - use key to reset state when track changes */}
-          {selectedTrack.status === "ready" && selectedTrack.storage_path && (
-            <AudioPlayer key={selectedTrack.id} track={selectedTrack} />
-          )}
+          {/* Edit mode */}
+          {isEditing ? (
+            <EditTrackPanel
+              track={{
+                id: selectedTrack.id,
+                title: selectedTrack.title,
+                description: selectedTrack.description,
+                visibility: selectedTrack.visibility || "public",
+                genre: selectedTrack.genre,
+                bpm: selectedTrack.bpm,
+                metadata: selectedTrack.metadata,
+              }}
+              onSave={() => {
+                setIsEditing(false);
+                if (onRefresh) {
+                  onRefresh();
+                }
+              }}
+              onCancel={() => setIsEditing(false)}
+            />
+          ) : (
+            <>
+              {/* Player - use key to reset state when track changes */}
+              {selectedTrack.status === "ready" &&
+                selectedTrack.storage_path && (
+                  <AudioPlayer key={selectedTrack.id} track={selectedTrack} />
+                )}
 
-          {/* Status display */}
-          {selectedTrack.status === "generating" && (
-            <div className="rounded-xl bg-amber-50 p-4 text-amber-800">
-              <div className="flex items-center gap-2">
-                <svg
-                  className="h-5 w-5 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="text-sm font-medium">
-                  Generating your track...
-                </span>
-              </div>
-            </div>
-          )}
-
-          {selectedTrack.status === "failed" && (
-            <div className="rounded-xl bg-red-50 p-4 text-red-800">
-              <p className="text-sm font-medium">Generation failed</p>
-              {selectedTrack.error?.message && (
-                <p className="mt-1 text-xs">{selectedTrack.error.message}</p>
-              )}
-              {selectedTrack.error?.suggestion && (
-                <div className="mt-3">
-                  <p className="text-xs font-medium">Suggestion:</p>
-                  <p className="mt-1 text-xs">
-                    {selectedTrack.error.suggestion}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Metadata */}
-          <div className="mt-4 space-y-3">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                {selectedTrack.title}
-              </h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {selectedTrack.description}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {selectedTrack.metadata.genre && (
-                <div>
-                  <span className="text-xs text-slate-500">Genre</span>
-                  <p className="font-medium text-slate-800">
-                    {selectedTrack.metadata.genre}
-                  </p>
-                </div>
-              )}
-              {selectedTrack.metadata.bpm && (
-                <div>
-                  <span className="text-xs text-slate-500">BPM</span>
-                  <p className="font-medium text-slate-800">
-                    {selectedTrack.metadata.bpm}
-                  </p>
-                </div>
-              )}
-              <div>
-                <span className="text-xs text-slate-500">Length</span>
-                <p className="font-medium text-slate-800">
-                  {formatTime(selectedTrack.length_ms)}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs text-slate-500">Type</span>
-                <p className="font-medium text-slate-800">
-                  {selectedTrack.instrumental ? "Instrumental" : "With Vocals"}
-                </p>
-              </div>
-              {selectedTrack.metadata.key && (
-                <div>
-                  <span className="text-xs text-slate-500">Key</span>
-                  <p className="font-medium text-slate-800">
-                    {selectedTrack.metadata.key}
-                  </p>
-                </div>
-              )}
-              {selectedTrack.metadata.time_signature && (
-                <div>
-                  <span className="text-xs text-slate-500">Time Signature</span>
-                  <p className="font-medium text-slate-800">
-                    {selectedTrack.metadata.time_signature}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Instrumentation */}
-            {selectedTrack.metadata.instrumentation &&
-              selectedTrack.metadata.instrumentation.length > 0 && (
-                <div>
-                  <span className="text-xs text-slate-500">
-                    Instrumentation
-                  </span>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {selectedTrack.metadata.instrumentation.map(
-                      (instrument) => (
-                        <span
-                          key={instrument}
-                          className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700"
-                        >
-                          {instrument}
-                        </span>
-                      )
-                    )}
+              {/* Status display */}
+              {selectedTrack.status === "generating" && (
+                <div className="rounded-xl bg-amber-50 p-4 text-amber-800">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="h-5 w-5 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium">
+                      Generating your track...
+                    </span>
                   </div>
                 </div>
               )}
 
-            {/* Mood scores */}
-            {selectedTrack.metadata.mood && (
-              <div>
-                <span className="text-xs text-slate-500">Mood</span>
-                <div className="mt-1 flex gap-2">
-                  {selectedTrack.metadata.mood.energy !== undefined && (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                      Energy:{" "}
-                      {Math.round(selectedTrack.metadata.mood.energy * 100)}%
-                    </span>
+              {selectedTrack.status === "failed" && (
+                <div className="rounded-xl bg-red-50 p-4 text-red-800">
+                  <p className="text-sm font-medium">Generation failed</p>
+                  {selectedTrack.error?.message && (
+                    <p className="mt-1 text-xs">
+                      {selectedTrack.error.message}
+                    </p>
                   )}
-                  {selectedTrack.metadata.mood.focus !== undefined && (
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                      Focus:{" "}
-                      {Math.round(selectedTrack.metadata.mood.focus * 100)}%
-                    </span>
-                  )}
-                  {selectedTrack.metadata.mood.chill !== undefined && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                      Chill:{" "}
-                      {Math.round(selectedTrack.metadata.mood.chill * 100)}%
-                    </span>
+                  {selectedTrack.error?.suggestion && (
+                    <div className="mt-3">
+                      <p className="text-xs font-medium">Suggestion:</p>
+                      <p className="mt-1 text-xs">
+                        {selectedTrack.error.suggestion}
+                      </p>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Tags */}
-            {selectedTrack.metadata.tags &&
-              selectedTrack.metadata.tags.length > 0 && (
-                <div>
-                  <span className="text-xs text-slate-500">Tags</span>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {selectedTrack.metadata.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
-                      >
-                        {tag}
+              {/* Metadata */}
+              <div className="mt-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {selectedTrack.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {selectedTrack.description}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="ml-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                    aria-label="Edit track"
+                  >
+                    Edit
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {selectedTrack.metadata.genre && (
+                    <div>
+                      <span className="text-xs text-slate-500">Genre</span>
+                      <p className="font-medium text-slate-800">
+                        {selectedTrack.metadata.genre}
+                      </p>
+                    </div>
+                  )}
+                  {selectedTrack.metadata.bpm && (
+                    <div>
+                      <span className="text-xs text-slate-500">BPM</span>
+                      <p className="font-medium text-slate-800">
+                        {selectedTrack.metadata.bpm}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-xs text-slate-500">Length</span>
+                    <p className="font-medium text-slate-800">
+                      {formatTime(selectedTrack.length_ms)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500">Type</span>
+                    <p className="font-medium text-slate-800">
+                      {selectedTrack.instrumental
+                        ? "Instrumental"
+                        : "With Vocals"}
+                    </p>
+                  </div>
+                  {selectedTrack.metadata.key && (
+                    <div>
+                      <span className="text-xs text-slate-500">Key</span>
+                      <p className="font-medium text-slate-800">
+                        {selectedTrack.metadata.key}
+                      </p>
+                    </div>
+                  )}
+                  {selectedTrack.metadata.time_signature && (
+                    <div>
+                      <span className="text-xs text-slate-500">
+                        Time Signature
                       </span>
-                    ))}
-                  </div>
+                      <p className="font-medium text-slate-800">
+                        {selectedTrack.metadata.time_signature}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
 
-            {/* Final prompt */}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <span className="text-xs font-medium text-slate-500">
-                Final Prompt
-              </span>
-              <p className="mt-1 text-xs text-slate-700">
-                {selectedTrack.final_prompt}
-              </p>
-            </div>
+                {/* Instrumentation */}
+                {selectedTrack.metadata.instrumentation &&
+                  selectedTrack.metadata.instrumentation.length > 0 && (
+                    <div>
+                      <span className="text-xs text-slate-500">
+                        Instrumentation
+                      </span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {selectedTrack.metadata.instrumentation.map(
+                          (instrument) => (
+                            <span
+                              key={instrument}
+                              className="rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700"
+                            >
+                              {instrument}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(selectedTrack.final_prompt);
-                  // Could add a toast notification here
-                }}
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                Copy Prompt
-              </button>
-              {/* TODO: Implement regenerate - needs to create a new track with same prompt */}
-              {/* <button
+                {/* Mood scores */}
+                {selectedTrack.metadata.mood && (
+                  <div>
+                    <span className="text-xs text-slate-500">Mood</span>
+                    <div className="mt-1 flex gap-2">
+                      {selectedTrack.metadata.mood.energy !== undefined && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Energy:{" "}
+                          {Math.round(selectedTrack.metadata.mood.energy * 100)}
+                          %
+                        </span>
+                      )}
+                      {selectedTrack.metadata.mood.focus !== undefined && (
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                          Focus:{" "}
+                          {Math.round(selectedTrack.metadata.mood.focus * 100)}%
+                        </span>
+                      )}
+                      {selectedTrack.metadata.mood.chill !== undefined && (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                          Chill:{" "}
+                          {Math.round(selectedTrack.metadata.mood.chill * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {selectedTrack.metadata.tags &&
+                  selectedTrack.metadata.tags.length > 0 && (
+                    <div>
+                      <span className="text-xs text-slate-500">Tags</span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {selectedTrack.metadata.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Final prompt */}
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <span className="text-xs font-medium text-slate-500">
+                    Final Prompt
+                  </span>
+                  <p className="mt-1 text-xs text-slate-700">
+                    {selectedTrack.final_prompt}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedTrack.final_prompt);
+                      // Could add a toast notification here
+                    }}
+                    className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Copy Prompt
+                  </button>
+                  {/* TODO: Implement regenerate - needs to create a new track with same prompt */}
+                  {/* <button
                 onClick={() => {
                   // Would need to call the tracks API with the same prompt
                 }}
@@ -605,8 +657,10 @@ export function TrackPlayer({ tracks, selectedTrackId, onSelectTrack }: Props) {
               >
                 Regenerate
               </button> */}
-            </div>
-          </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
