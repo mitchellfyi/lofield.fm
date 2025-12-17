@@ -352,15 +352,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       // Save position to localStorage every 5 seconds
       const now = Date.now();
       if (
-        state.currentTrack &&
         now - lastPositionSaveTime.current > 5000 &&
         typeof window !== "undefined"
       ) {
         lastPositionSaveTime.current = now;
-        localStorage.setItem(
-          `player-position-${state.currentTrack.id}`,
-          newTime.toString()
-        );
+        // Access current track via audio element's data attribute or state snapshot
+        // We'll use a closure-captured trackId
+        const currentTrackId = audio.getAttribute("data-track-id");
+        if (currentTrackId) {
+          localStorage.setItem(
+            `player-position-${currentTrackId}`,
+            newTime.toString()
+          );
+        }
       }
     };
 
@@ -373,8 +377,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
     const handleEnded = () => {
       // Clear saved position when track ends
-      if (state.currentTrack && typeof window !== "undefined") {
-        localStorage.removeItem(`player-position-${state.currentTrack.id}`);
+      const currentTrackId = audio.getAttribute("data-track-id");
+      if (currentTrackId && typeof window !== "undefined") {
+        localStorage.removeItem(`player-position-${currentTrackId}`);
       }
 
       // Use ref to get current autoplay value without re-registering listeners
@@ -406,25 +411,26 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
     };
-  }, [playNext, state.currentTrack]); // Add state.currentTrack dependency
+  }, [playNext]); // Only depend on playNext, use ref for autoplay and data attribute for track ID
 
   // Load audio when currentTrackUrl changes - Fixed: Remove isPlaying from dependencies
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !state.currentTrackUrl) return;
+    if (!audio || !state.currentTrackUrl || !state.currentTrack) return;
 
     audio.src = state.currentTrackUrl;
+    // Store track ID on audio element for event handlers
+    audio.setAttribute("data-track-id", state.currentTrack.id);
 
     // Restore saved position if available
-    if (state.currentTrack && typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
       const savedPosition = localStorage.getItem(
         `player-position-${state.currentTrack.id}`
       );
       if (savedPosition) {
         const position = parseFloat(savedPosition);
-        // Only restore if position is valid and not too close to the end
-        // Set directly on audio element, will trigger timeupdate event
-        if (position > 0) {
+        // Validate position: must be a valid number and greater than 0
+        if (!isNaN(position) && isFinite(position) && position > 0) {
           audio.currentTime = position;
         }
       }

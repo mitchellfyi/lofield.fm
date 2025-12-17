@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePlayer } from "@/lib/contexts/player-context";
 
 /**
@@ -15,10 +15,23 @@ export function useKeyboardShortcuts() {
   const { togglePlayPause, seek, playNext, playPrevious, currentTime } =
     usePlayer();
 
+  // Use ref to track current time without re-registering listeners
+  const currentTimeRef = useRef(currentTime);
+
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in inputs
-      const target = e.target as HTMLElement;
+      const target = e.target;
+
+      // Type guard: check if target is an HTMLElement
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
       if (
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
@@ -37,7 +50,7 @@ export function useKeyboardShortcuts() {
       // Left arrow: seek -5 seconds
       if (e.code === "ArrowLeft") {
         e.preventDefault();
-        const newTime = Math.max(0, currentTime - 5);
+        const newTime = Math.max(0, currentTimeRef.current - 5);
         seek(newTime);
         return;
       }
@@ -45,7 +58,7 @@ export function useKeyboardShortcuts() {
       // Right arrow: seek +5 seconds
       if (e.code === "ArrowRight") {
         e.preventDefault();
-        const newTime = currentTime + 5;
+        const newTime = currentTimeRef.current + 5;
         seek(newTime);
         return;
       }
@@ -70,5 +83,5 @@ export function useKeyboardShortcuts() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [togglePlayPause, seek, playNext, playPrevious, currentTime]);
+  }, [togglePlayPause, seek, playNext, playPrevious]);
 }

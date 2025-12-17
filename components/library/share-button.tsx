@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 type ShareButtonProps = {
   trackId: string;
@@ -15,11 +15,15 @@ export function ShareButton({
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/tracks/${trackId}`;
+  // Compute share URL once
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/tracks/${trackId}`;
+  }, [trackId]);
 
   const handleShare = async () => {
     // Try Web Share API first (mobile)
-    if (navigator.share) {
+    if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({
           title: trackTitle,
@@ -37,12 +41,14 @@ export function ShareButton({
     }
 
     // Fallback to copy to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy link:", err);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy link:", err);
+      }
     }
   };
 
