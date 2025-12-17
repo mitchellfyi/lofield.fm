@@ -173,11 +173,14 @@ export default function LibraryPage() {
   // Handle track play
   const handleTrackPlay = useCallback(
     (track: PublicTrack, index: number) => {
-      // Update queue if it's different from current tracks
-      if (
+      // Check if queue needs updating by comparing first track ID (fast check)
+      const queueNeedsUpdate =
         playerQueue.length !== tracks.length ||
-        playerQueue[0]?.id !== tracks[0]?.id
-      ) {
+        (playerQueue.length > 0 &&
+          tracks.length > 0 &&
+          playerQueue[0]?.id !== tracks[0]?.id);
+
+      if (queueNeedsUpdate) {
         setQueue(tracks, index);
       } else {
         playTrack(track);

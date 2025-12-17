@@ -259,18 +259,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // Queue management
   const setQueue = useCallback(
     (tracks: PublicTrack[], startIndex = 0) => {
-      setState((prev) => ({
-        ...prev,
-        queue: tracks,
-        currentIndex: startIndex,
-      }));
+      setState((prev) => {
+        const newQueue = {
+          ...prev,
+          queue: tracks,
+          currentIndex: startIndex,
+        };
 
-      // Auto-play first track if autoplay is enabled
-      if (state.autoplay && tracks.length > 0) {
-        playTrack(tracks[startIndex]);
-      }
+        // Auto-play first track if autoplay is enabled and tracks exist
+        if (prev.autoplay && tracks.length > 0) {
+          // This will be handled asynchronously, so we don't block state update
+          playTrack(tracks[startIndex]);
+        }
+
+        return newQueue;
+      });
     },
-    [state.autoplay, playTrack]
+    [playTrack]
   );
 
   const clearQueue = useCallback(() => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePlayer } from "@/lib/contexts/player-context";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 // Helper to format time (seconds) to mm:ss
 function formatTime(seconds: number): string {
@@ -46,6 +46,17 @@ export function PlayerBar() {
     },
     [setVolume]
   );
+
+  // Memoize gradient calculations for seek bar
+  const seekGradient = useMemo(() => {
+    const progress = (currentTime / (duration || 1)) * 100;
+    return `linear-gradient(to right, rgb(5 150 105) 0%, rgb(5 150 105) ${progress}%, rgb(226 232 240) ${progress}%, rgb(226 232 240) 100%)`;
+  }, [currentTime, duration]);
+
+  const volumeGradient = useMemo(() => {
+    const volumePercent = volume * 100;
+    return `linear-gradient(to right, rgb(5 150 105) 0%, rgb(5 150 105) ${volumePercent}%, rgb(226 232 240) ${volumePercent}%, rgb(226 232 240) 100%)`;
+  }, [volume]);
 
   // Don't show player if no track
   if (!currentTrack) {
@@ -158,7 +169,7 @@ export function PlayerBar() {
               onChange={handleSeek}
               className="flex-1 h-1 rounded-lg appearance-none cursor-pointer bg-slate-200"
               style={{
-                background: `linear-gradient(to right, rgb(5 150 105) 0%, rgb(5 150 105) ${(currentTime / (duration || 1)) * 100}%, rgb(226 232 240) ${(currentTime / (duration || 1)) * 100}%, rgb(226 232 240) 100%)`,
+                background: seekGradient,
               }}
               aria-label="Seek"
             />
@@ -185,7 +196,7 @@ export function PlayerBar() {
               onChange={handleVolumeChange}
               className="flex-1 h-1 rounded-lg appearance-none cursor-pointer bg-slate-200"
               style={{
-                background: `linear-gradient(to right, rgb(5 150 105) 0%, rgb(5 150 105) ${volume * 100}%, rgb(226 232 240) ${volume * 100}%, rgb(226 232 240) 100%)`,
+                background: volumeGradient,
               }}
               aria-label="Volume"
             />
@@ -254,7 +265,7 @@ export function PlayerBar() {
             onChange={handleSeek}
             className="flex-1 h-1 rounded-lg appearance-none cursor-pointer"
             style={{
-              background: `linear-gradient(to right, rgb(5 150 105) 0%, rgb(5 150 105) ${(currentTime / (duration || 1)) * 100}%, rgb(226 232 240) ${(currentTime / (duration || 1)) * 100}%, rgb(226 232 240) 100%)`,
+              background: seekGradient,
             }}
             aria-label="Seek"
           />
