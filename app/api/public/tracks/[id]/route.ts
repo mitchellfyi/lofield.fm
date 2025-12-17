@@ -27,6 +27,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       .select(
         `
         id,
+        user_id,
         title,
         description,
         artist_name,

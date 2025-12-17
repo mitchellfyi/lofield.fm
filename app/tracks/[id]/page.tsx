@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { usePlayer, type PublicTrack } from "@/lib/contexts/player-context";
 import { PlayerBar } from "@/components/library/player-bar";
+import { EditTrackPanel } from "@/components/studio/edit-track-panel";
 import Link from "next/link";
 import { formatDuration } from "@/lib/utils/format";
+import { createClient } from "@/lib/supabase/client";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "Unknown";
@@ -25,6 +27,8 @@ export default function TrackPage() {
   const [track, setTrack] = useState<PublicTrack | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isCurrentTrack = currentTrack?.id === trackId;
 
@@ -36,6 +40,12 @@ export default function TrackPage() {
       setError(null);
 
       try {
+        // Check if user is authenticated
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         const response = await fetch(`/api/public/tracks/${trackId}`);
 
         if (!response.ok) {
@@ -49,6 +59,11 @@ export default function TrackPage() {
 
         const data = await response.json();
         setTrack(data);
+
+        // Check if user owns this track
+        if (user && data.user_id === user.id) {
+          setIsOwner(true);
+        }
       } catch (err) {
         console.error("Error fetching track:", err);
         setError("Failed to load track");
@@ -139,8 +154,37 @@ export default function TrackPage() {
         </Link>
 
         {/* Track header */}
-        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-start gap-6">
+        {isEditing && isOwner ? (
+          <EditTrackPanel
+            track={{
+              id: track.id,
+              title: track.title,
+              description: track.description || "",
+              visibility: track.visibility || "public",
+              genre: track.genre,
+              bpm: track.bpm,
+              metadata: track.metadata,
+            }}
+            onSave={() => {
+              setIsEditing(false);
+              // Reload track data
+              window.location.reload();
+            }}
+            onCancel={() => setIsEditing(false)}
+          />
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+            {isOwner && (
+              <div className="mb-4 flex justify-end">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  Edit Track
+                </button>
+              </div>
+            )}
+            <div className="flex items-start gap-6">
             {/* Play button */}
             <button
               onClick={handlePlay}
@@ -325,6 +369,7 @@ export default function TrackPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Bottom player bar */}

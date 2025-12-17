@@ -12,6 +12,7 @@ import React, {
 // Type definitions for public track (from API)
 export type PublicTrack = {
   id: string;
+  user_id?: string; // Optional for ownership check
   title: string;
   description: string | null;
   artist_name: string | null;
@@ -23,6 +24,7 @@ export type PublicTrack = {
   length_ms: number | null;
   instrumental: boolean;
   metadata: Record<string, unknown>;
+  visibility?: "public" | "unlisted" | "private";
   created_at: string;
   published_at: string | null;
 };
