@@ -161,6 +161,181 @@ describe("Track APIs", () => {
       expect(res.status).toBe(200);
     });
 
+    it("returns structured JSON with reply and draft", async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+        insert: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+        update: vi.fn().mockReturnThis(),
+      });
+
+      const req = new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ message: "make it more chill" }),
+      });
+      const res = await RefinePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
+      expect(res.status).toBe(200);
+
+      const json = await res.json();
+      // Response should have both reply and draft fields
+      expect(json).toHaveProperty("reply");
+      expect(json).toHaveProperty("draft");
+      expect(json.draft).toHaveProperty("title");
+      expect(json.draft).toHaveProperty("prompt_final");
+      expect(json.draft).toHaveProperty("bpm");
+      expect(json.draft).toHaveProperty("mood");
+    });
+
+    it("persists user message to chat_messages", async () => {
+      const insertMock = vi.fn().mockReturnThis();
+
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === "chat_messages") {
+          return {
+            insert: insertMock,
+            select: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: "msg-1" } }),
+          };
+        }
+        if (table === "chats") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+            update: vi.fn().mockReturnThis(),
+          };
+        }
+        if (table === "profiles") {
+          return createProfilesMock();
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+        };
+      });
+
+      const req = new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ message: "add more drums" }),
+      });
+      await RefinePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
+
+      // Verify user message was inserted
+      expect(insertMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chat_id: "c1",
+          role: "user",
+          content: "add more drums",
+        })
+      );
+    });
+
+    it("persists assistant message with draft_spec", async () => {
+      const insertMock = vi.fn().mockReturnThis();
+
+      mockSupabase.from.mockImplementation((table) => {
+        if (table === "chat_messages") {
+          return {
+            insert: insertMock,
+            select: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: "msg-1" } }),
+          };
+        }
+        if (table === "chats") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+            update: vi.fn().mockReturnThis(),
+          };
+        }
+        if (table === "profiles") {
+          return createProfilesMock();
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+        };
+      });
+
+      const req = new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ message: "add piano" }),
+      });
+      await RefinePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
+
+      // Verify assistant message was inserted with draft_spec
+      // The second insert call should be the assistant message
+      const insertCalls = insertMock.mock.calls;
+      expect(insertCalls.length).toBeGreaterThanOrEqual(2);
+
+      // Find the assistant message insert
+      const assistantInsert = insertCalls.find(
+        (call) => call[0]?.role === "assistant"
+      );
+      expect(assistantInsert).toBeDefined();
+      if (assistantInsert) {
+        expect(assistantInsert[0]).toMatchObject({
+          chat_id: "c1",
+          role: "assistant",
+          content: expect.any(String),
+          draft_spec: expect.objectContaining({
+            title: expect.any(String),
+            prompt_final: expect.any(String),
+          }),
+        });
+      }
+    });
+
+    it("accepts controls and latest_draft in request body", async () => {
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { id: "c1", user_id: "u1" } }),
+        insert: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+        update: vi.fn().mockReturnThis(),
+      });
+
+      const req = new NextRequest("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({
+          message: "make it faster",
+          controls: {
+            genre: "Lo-fi Hip Hop",
+            bpm: 120,
+            mood: { energy: 60, focus: 50, chill: 40 },
+          },
+          latest_draft: {
+            title: "Previous Title",
+            prompt_final: "Previous prompt",
+          },
+        }),
+      });
+      const res = await RefinePOST(req, {
+        params: Promise.resolve({ id: "c1" }),
+      });
+      expect(res.status).toBe(200);
+    });
+
     it("returns 400 for invalid body", async () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnThis(),

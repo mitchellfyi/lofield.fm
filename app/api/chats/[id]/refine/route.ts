@@ -148,10 +148,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   const artistName = profile?.artist_name ?? null;
 
   // Build system prompt for lo-fi optimization
-  const systemPrompt = buildSystemPrompt(artistName);
+  const systemPrompt = buildSystemPrompt(artistName, true);
 
   // Build user prompt from message, controls, and latest_draft
-  const userPrompt = buildUserPrompt(message, controls, latest_draft);
+  const userPrompt = buildUserPrompt(message, controls, latest_draft, true);
 
   // Save user message first
   const { error: userMsgError } = await supabase.from("chat_messages").insert({
@@ -175,12 +175,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const openai = createOpenAI({ apiKey });
 
-    // We need to modify the System Prompt to remove the "text format" instructions
-    // because `generateObject` handles the formatting.
-    const systemPromptForObject = systemPrompt.replace(
-      /CRITICAL: You MUST format your response exactly as follows:[\s\S]*$/,
-      "Return a JSON object with a 'reply' field (conversational explanation) and a 'draft' field (the track configuration)."
-    );
+    // System prompt already updated for JSON mode via buildSystemPrompt(..., true)
 
     const {
       object: aiData,
@@ -196,7 +191,7 @@ export async function POST(request: NextRequest, { params }: Params) {
           ),
         draft: TrackDraftSchema.describe("The updated track configuration"),
       }),
-      system: systemPromptForObject,
+      system: systemPrompt,
       prompt: userPrompt,
     });
 
@@ -270,22 +265,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       latencyMs: durationMs,
     });
 
-    // Stream the text reply back to the client
-    // Include draft JSON in a custom header for reliable parsing
-    const stream = new ReadableStream({
-      start(controller) {
-        const encoder = new TextEncoder();
-        controller.enqueue(encoder.encode(textReply));
-        controller.close();
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-Vercel-AI-Data-Stream": "v1",
-        "X-Draft-Spec": JSON.stringify(trackDraft),
-      },
+    // Return structured JSON response instead of stream
+    return Response.json({
+      reply: textReply,
+      draft: trackDraft,
     });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";

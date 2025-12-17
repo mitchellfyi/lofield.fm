@@ -168,58 +168,79 @@ If the user asks for a specific style (e.g. "west coast rap"), discuss the music
       let costUsd: number | undefined;
       let costNotes: string | undefined;
 
-      if (usage?.inputTokens && usage?.outputTokens) {
-        const cost = await calculateOpenAICost({
-          model: "gpt-4o-mini",
-          inputTokens: usage.inputTokens,
-          outputTokens: usage.outputTokens,
-        });
-        if (cost) {
-          costUsd = cost.costUsd;
-          costNotes = cost.costNotes;
+      try {
+        if (usage?.inputTokens && usage?.outputTokens) {
+          const cost = await calculateOpenAICost({
+            model: "gpt-4o-mini",
+            inputTokens: usage.inputTokens,
+            outputTokens: usage.outputTokens,
+          });
+          if (cost) {
+            costUsd = cost.costUsd;
+            costNotes = cost.costNotes;
+          }
+        }
+      } catch (error) {
+        console.error("[api/chat] Failed to calculate cost", error);
+      }
+
+      // Save message first as it's critical for UI
+      if (chatId) {
+        try {
+          const { error: assistantError } = await supabase
+            .from("chat_messages")
+            .insert({
+              chat_id: chatId,
+              role: "assistant",
+              content: text,
+              draft_spec: null,
+            });
+
+          if (assistantError) {
+            console.error(
+              "[api/chat] Failed to save assistant message",
+              assistantError
+            );
+          } else {
+            // Update chat updated_at
+            try {
+              await supabase
+                .from("chats")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", chatId);
+            } catch (timestampErr) {
+              console.error(
+                "[api/chat] Failed to update chat timestamp",
+                timestampErr
+              );
+            }
+          }
+        } catch (error) {
+          console.error("[api/chat] Exception saving assistant message", error);
         }
       }
 
       // Log usage event
-      await logUsageEvent({
-        userId: user.id,
-        chatId: chatId ?? undefined,
-        actionGroupId,
-        actionType: "chat_stream",
-        provider: "openai",
-        providerOperation: "responses.streamText",
-        providerRequestId: response?.id,
-        model: "gpt-4o-mini",
-        inputTokens: usage?.inputTokens,
-        outputTokens: usage?.outputTokens,
-        totalTokens: usage?.totalTokens,
-        costUsd,
-        costNotes,
-        status: "ok",
-        latencyMs: durationMs,
-      });
-
-      if (chatId) {
-        const { error: assistantError } = await supabase
-          .from("chat_messages")
-          .insert({
-            chat_id: chatId,
-            role: "assistant",
-            content: text,
-            draft_spec: null,
-          });
-        if (assistantError) {
-          console.error(
-            "[api/chat] Failed to save assistant message",
-            assistantError
-          );
-        }
-
-        // Update chat updated_at
-        await supabase
-          .from("chats")
-          .update({ updated_at: new Date().toISOString() })
-          .eq("id", chatId);
+      try {
+        await logUsageEvent({
+          userId: user.id,
+          chatId: chatId ?? undefined,
+          actionGroupId,
+          actionType: "chat_stream",
+          provider: "openai",
+          providerOperation: "responses.streamText",
+          providerRequestId: response?.id,
+          model: "gpt-4o-mini",
+          inputTokens: usage?.inputTokens,
+          outputTokens: usage?.outputTokens,
+          totalTokens: usage?.totalTokens,
+          costUsd,
+          costNotes,
+          status: "ok",
+          latencyMs: durationMs,
+        });
+      } catch (error) {
+        console.error("[api/chat] Failed to log usage event", error);
       }
     },
   });

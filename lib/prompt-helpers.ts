@@ -3,10 +3,17 @@ import type { RefineInput, TrackDraft } from "@/lib/schemas/track-draft";
 /**
  * Build system prompt optimized for lo-fi music generation
  */
-export function buildSystemPrompt(artistName: string | null): string {
+export function buildSystemPrompt(
+  artistName: string | null,
+  isJSON: boolean = false
+): string {
   const contextNote = artistName
     ? `The user's artist name is "${artistName}" - use this for context but avoid mentioning it unless relevant.`
     : "";
+
+  const formatInstruction = isJSON
+    ? "Return a JSON object with a 'reply' field (conversational explanation) and a 'draft' field (the track configuration)."
+    : "Keep responses concise (2-4 sentences plus the final prompt and title).";
 
   return `You are an AI assistant specializing in lo-fi instrumental music production and prompt engineering for music generation.
 Your role is to ACT AS A MUSIC PRODUCER configuring a generative AI tool. You are NOT a general chatbot or music recommender.
@@ -35,7 +42,7 @@ CRITICAL: User Controls are REQUIREMENTS, not suggestions.
 When responding:
 - Be conversational and helpful, but stay focused on the configuration.
 - Acknowledge the user's input and explain your refinements.
-- Keep responses concise (2-4 sentences plus the final prompt and title).`;
+- ${formatInstruction}`;
 }
 
 /**
@@ -44,7 +51,8 @@ When responding:
 export function buildUserPrompt(
   message: string,
   controls?: RefineInput["controls"],
-  latestDraft?: RefineInput["latest_draft"]
+  latestDraft?: RefineInput["latest_draft"],
+  isJSON: boolean = false
 ): string {
   const parts: string[] = [];
 
@@ -99,12 +107,16 @@ export function buildUserPrompt(
     parts.push(`Previous Draft State: None (New Track)`);
   }
 
+  const outputInstructions = isJSON
+    ? "4. Output the response as a JSON object matching the schema."
+    : '4. Output the response in the required format with "Title:" and "Final prompt:".';
+
   parts.push(
     `\nINSTRUCTIONS:
 1. Update the track configuration based on the "User request".
 2. Refine the "Previous Prompt" (or create a new one) to incorporate the user's feedback (e.g. "more old school rap").
 3. Generate a CREATIVE title for this version.
-4. Output the response in the required format with "Title:" and "Final prompt:".`
+${outputInstructions}`
   );
 
   return parts.join("\n");

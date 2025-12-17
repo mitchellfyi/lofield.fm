@@ -1,7 +1,5 @@
 "use client";
 
-import { TextStreamChatTransport } from "ai";
-import { useChat } from "@ai-sdk/react";
 import {
   useMemo,
   useState,
@@ -64,30 +62,6 @@ const INSTRUMENTATION_PRESETS = [
   "Lo-fi synth pads",
 ];
 
-type StreamMessage = {
-  id: string;
-  role: string;
-  parts?: Array<{ type: string; text?: string }>;
-};
-
-function convertStreamMessage(msg: StreamMessage): Message {
-  const parts = msg.parts ?? [];
-  const textContent = parts
-    .filter(
-      (part): part is { type: "text"; text: string } =>
-        part.type === "text" && typeof part.text === "string"
-    )
-    .map((part) => part.text)
-    .join("");
-
-  return {
-    id: msg.id,
-    role: msg.role as "user" | "assistant",
-    content: textContent,
-    created_at: new Date().toISOString(),
-  };
-}
-
 export function PromptBuilder({
   chatId,
   chatTitle,
@@ -96,32 +70,6 @@ export function PromptBuilder({
   hasDraftSpec,
   onTrackGenerated,
 }: Props) {
-  const transport = useMemo(
-    () =>
-      new TextStreamChatTransport({
-        api: "/api/chat",
-        body: chatId ? { chat_id: chatId } : undefined,
-      }),
-    [chatId]
-  );
-  const {
-    messages: streamMessages,
-    sendMessage,
-    status,
-    stop,
-    setMessages,
-  } = useChat({
-    transport,
-    onFinish: () => {
-      onRefresh();
-    },
-    onError: (err) => {
-      setChatError(
-        err instanceof Error ? err.message : "Failed to send chat message."
-      );
-    },
-  });
-
   const [input, setInput] = useState("");
 
   // Prompt builder controls
@@ -143,19 +91,7 @@ export function PromptBuilder({
   >("idle");
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [refineError, setRefineError] = useState<string | null>(null);
-  const [chatError, setChatError] = useState<string | null>(null);
   const [titleOverride, setTitleOverride] = useState("");
-
-  // Clear stream messages when DB messages update (persistence catch-up)
-  const prevMessagesLengthRef = useRef(messages.length);
-  useEffect(() => {
-    if (messages.length > prevMessagesLengthRef.current) {
-      if (streamMessages.length > 0) {
-        setMessages([]);
-      }
-    }
-    prevMessagesLengthRef.current = messages.length;
-  }, [messages, streamMessages, setMessages]);
 
   const [lastProcessedDraftId, setLastProcessedDraftId] = useState<
     string | null
@@ -207,33 +143,105 @@ export function PromptBuilder({
     }
   }, [latestDraftMessage, lastProcessedDraftId]);
 
-  const isLoading = status === "streaming" || status === "submitted";
+  // Check if currently refining (used for loading state)
+  const isLoading = refineStatus === "loading";
 
-  // Combine persisted messages with streaming messages
-  const allMessages = useMemo(() => {
-    // Show persisted messages first, then any streaming messages
-    if (streamMessages.length > 0) {
-      return [
-        ...messages,
-        ...streamMessages.map((msg) => convertStreamMessage(msg)),
-      ];
-    }
-    return messages;
-  }, [messages, streamMessages]);
-
-  function handleSubmit(e: FormEvent) {
+  /**
+   * Handle free-form chat submission - now calls the refine endpoint
+   * so that AI responses update UI controls with structured output
+   */
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading) {
-      setChatError("Message cannot be empty");
+    if (!chatId) {
+      setRefineError("Please select or create a chat first.");
       return;
     }
-    setChatError(null);
-    sendMessage({ text: input }).catch((err) => {
-      setChatError(
-        err instanceof Error ? err.message : "Failed to send chat message."
+    if (!input.trim() || isLoading) {
+      setRefineError("Message cannot be empty");
+      return;
+    }
+
+    // Use the same logic as handleRefine but with the input message
+    setRefineStatus("loading");
+    setRefineError(null);
+
+    const promptSpec = {
+      title: title || undefined,
+      genre: genre || undefined,
+      bpm,
+      mood: { energy, focus, chill },
+      instrumentation: instrumentation.length > 0 ? instrumentation : undefined,
+      length_ms: lengthMins * 60 * 1000,
+      instrumental,
+    };
+
+    // Get latest draft from messages to provide context
+    const currentLatestDraft = latestDraftMessage?.draft_spec ?? null;
+
+    try {
+      const response = await fetch(`/api/chats/${chatId}/refine`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: input.trim(),
+          controls: promptSpec,
+          latest_draft: currentLatestDraft,
+        }),
+      });
+
+      if (response.ok) {
+        try {
+          const data = await response.json();
+          const { draft } = data;
+
+          if (draft) {
+            startTransition(() => {
+              if (draft.title) setTitle(draft.title);
+              if (draft.genre) setGenre(draft.genre);
+              if (draft.bpm) setBpm(draft.bpm);
+              if (draft.mood) {
+                if (draft.mood.energy !== undefined)
+                  setEnergy(Math.round(draft.mood.energy));
+                if (draft.mood.focus !== undefined)
+                  setFocus(Math.round(draft.mood.focus));
+                if (draft.mood.chill !== undefined)
+                  setChill(Math.round(draft.mood.chill));
+              }
+              if (draft.instrumentation)
+                setInstrumentation(draft.instrumentation);
+              if (draft.length_ms)
+                setLengthMins(Math.round(draft.length_ms / 60000));
+              if (draft.instrumental !== undefined)
+                setInstrumental(draft.instrumental);
+              if (draft.prompt_final) {
+                setPromptFinal(draft.prompt_final);
+              }
+            });
+          }
+        } catch (parseError) {
+          console.error("Failed to parse response", parseError);
+        }
+
+        setRefineStatus("success");
+        setInput(""); // Clear input on success
+        onRefresh();
+        setTimeout(() => setRefineStatus("idle"), 2000);
+      } else {
+        setRefineStatus("error");
+        const data = await response.json().catch(async () => {
+          const text = await response.text().catch(() => "");
+          return text ? { error: text } : null;
+        });
+        setRefineError(
+          data?.error ?? "Failed to send message. Please try again."
+        );
+      }
+    } catch (error) {
+      setRefineStatus("error");
+      setRefineError(
+        error instanceof Error ? error.message : "Failed to send message."
       );
-    });
-    setInput("");
+    }
   }
 
   async function handleRefine() {
@@ -277,45 +285,36 @@ export function PromptBuilder({
       });
 
       if (response.ok) {
-        // Consume the stream to ensure server-side persistence completes
-        if (response.body) {
-          const reader = response.body.getReader();
-          while (true) {
-            const { done } = await reader.read();
-            if (done) break;
-          }
-        }
+        try {
+          const data = await response.json();
+          const { draft } = data;
 
-        // Parse draft from custom header
-        const draftHeader = response.headers.get("X-Draft-Spec");
-        if (draftHeader) {
-          try {
-            const draft = JSON.parse(draftHeader) as DraftSpec;
-            // Apply draft to UI controls immediately
-            if (draft.title) setTitle(draft.title);
-            if (draft.genre) setGenre(draft.genre);
-            if (draft.bpm) setBpm(draft.bpm);
-            if (draft.mood) {
-              if (draft.mood.energy !== undefined)
-                setEnergy(Math.round(draft.mood.energy));
-              if (draft.mood.focus !== undefined)
-                setFocus(Math.round(draft.mood.focus));
-              if (draft.mood.chill !== undefined)
-                setChill(Math.round(draft.mood.chill));
-            }
-            if (draft.instrumentation)
-              setInstrumentation(draft.instrumentation);
-            if (draft.length_ms)
-              setLengthMins(Math.round(draft.length_ms / 60000));
-            if (draft.instrumental !== undefined)
-              setInstrumental(draft.instrumental);
-            // Update prompt_final display
-            if (draft.prompt_final) {
-              setPromptFinal(draft.prompt_final);
-            }
-          } catch (parseError) {
-            console.warn("Failed to parse draft JSON from header", parseError);
+          if (draft) {
+            startTransition(() => {
+              if (draft.title) setTitle(draft.title);
+              if (draft.genre) setGenre(draft.genre);
+              if (draft.bpm) setBpm(draft.bpm);
+              if (draft.mood) {
+                if (draft.mood.energy !== undefined)
+                  setEnergy(Math.round(draft.mood.energy));
+                if (draft.mood.focus !== undefined)
+                  setFocus(Math.round(draft.mood.focus));
+                if (draft.mood.chill !== undefined)
+                  setChill(Math.round(draft.mood.chill));
+              }
+              if (draft.instrumentation)
+                setInstrumentation(draft.instrumentation);
+              if (draft.length_ms)
+                setLengthMins(Math.round(draft.length_ms / 60000));
+              if (draft.instrumental !== undefined)
+                setInstrumental(draft.instrumental);
+              if (draft.prompt_final) {
+                setPromptFinal(draft.prompt_final);
+              }
+            });
           }
+        } catch (e) {
+          console.error("Failed to parse response", e);
         }
 
         setRefineStatus("success");
@@ -420,7 +419,7 @@ export function PromptBuilder({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [allMessages, isLoading]); // Scroll on new messages or loading state change
+  }, [messages, isLoading]); // Scroll on new messages or loading state change
 
   if (!chatId) {
     return (
@@ -450,14 +449,14 @@ export function PromptBuilder({
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        {allMessages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="py-8 text-center text-sm text-slate-500">
             No messages yet. Use the prompt builder below to refine your track
             idea.
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {allMessages.map((message) => (
+            {messages.map((message) => (
               <div
                 key={message.id}
                 className={`rounded-lg p-3 ${
@@ -744,7 +743,7 @@ export function PromptBuilder({
         </div>
 
         {/* Error display */}
-        {(generateError || refineError || chatError) && (
+        {(generateError || refineError) && (
           <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm font-medium text-red-800">Error</p>
             {generateError && (
@@ -753,38 +752,26 @@ export function PromptBuilder({
             {refineError && (
               <p className="mt-1 text-sm text-red-700">{refineError}</p>
             )}
-            {chatError && (
-              <p className="mt-1 text-sm text-red-700">{chatError}</p>
-            )}
           </div>
         )}
 
-        {/* Free-form chat input */}
+        {/* Free-form chat input - uses refine endpoint for structured output */}
         <form onSubmit={handleSubmit} className="mt-4">
           <div className="flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Chat with AI to refine your prompt..."
+              placeholder="Describe your track idea or request changes..."
               className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-600 outline-none focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-100"
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || !input.trim() || !chatId}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? "..." : "Send"}
+              {isLoading ? "Sending..." : "Send"}
             </button>
-            {isLoading && (
-              <button
-                type="button"
-                onClick={stop}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-              >
-                Stop
-              </button>
-            )}
           </div>
         </form>
       </div>
