@@ -38,19 +38,11 @@ export function TrackCard({ track, onPlay }: TrackCardProps) {
           aria-label={isCurrentTrack && isPlaying ? "Pause" : "Play"}
         >
           {isCurrentTrack && isPlaying ? (
-            <svg
-              className="h-5 w-5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
             </svg>
           ) : (
-            <svg
-              className="h-5 w-5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
@@ -66,7 +58,7 @@ export function TrackCard({ track, onPlay }: TrackCardProps) {
               {track.title}
             </h3>
           </Link>
-          
+
           <p className="text-sm text-slate-600 mt-0.5">
             {track.artist_name || "Unknown Artist"}
           </p>
@@ -85,9 +77,7 @@ export function TrackCard({ track, onPlay }: TrackCardProps) {
               </span>
             )}
             {track.bpm && <span>{track.bpm} BPM</span>}
-            {track.length_ms && (
-              <span>{formatDuration(track.length_ms)}</span>
-            )}
+            {track.length_ms && <span>{formatDuration(track.length_ms)}</span>}
             {displayTags.length > 0 && (
               <div className="flex gap-1">
                 {displayTags.map((tag) => (
@@ -99,9 +89,7 @@ export function TrackCard({ track, onPlay }: TrackCardProps) {
                   </span>
                 ))}
                 {tags.length > 3 && (
-                  <span className="text-slate-500">
-                    +{tags.length - 3}
-                  </span>
+                  <span className="text-slate-500">+{tags.length - 3}</span>
                 )}
               </div>
             )}

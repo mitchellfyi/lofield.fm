@@ -52,7 +52,8 @@ export function PlayerBar() {
     return null;
   }
 
-  const queuePosition = currentIndex >= 0 ? `${currentIndex + 1} of ${queue.length}` : "";
+  const queuePosition =
+    currentIndex >= 0 ? `${currentIndex + 1} of ${queue.length}` : "";
 
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white shadow-lg z-50">
@@ -195,7 +196,7 @@ export function PlayerBar() {
             {queuePosition && (
               <span className="text-xs text-slate-600">{queuePosition}</span>
             )}
-            
+
             {/* Autoplay toggle */}
             <button
               onClick={toggleAutoplay}
@@ -207,11 +208,7 @@ export function PlayerBar() {
               title={autoplay ? "Autoplay on" : "Autoplay off"}
               aria-label={autoplay ? "Autoplay on" : "Autoplay off"}
             >
-              <svg
-                className="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
               </svg>
             </button>
@@ -261,9 +258,7 @@ export function PlayerBar() {
             }}
             aria-label="Seek"
           />
-          <span className="text-xs text-slate-600">
-            {formatTime(duration)}
-          </span>
+          <span className="text-xs text-slate-600">{formatTime(duration)}</span>
         </div>
       </div>
     </div>

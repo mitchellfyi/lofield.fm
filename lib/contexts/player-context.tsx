@@ -31,17 +31,17 @@ type PlayerState = {
   // Current track
   currentTrack: PublicTrack | null;
   currentTrackUrl: string | null;
-  
+
   // Playback state
   isPlaying: boolean;
   currentTime: number;
   duration: number;
   volume: number;
-  
+
   // Queue
   queue: PublicTrack[];
   currentIndex: number;
-  
+
   // Settings
   autoplay: boolean;
   repeat: boolean;
@@ -54,55 +54,64 @@ type PlayerContextType = PlayerState & {
   togglePlayPause: () => void;
   seek: (time: number) => void;
   setVolume: (volume: number) => void;
-  
+
   // Track controls
   playTrack: (track: PublicTrack) => void;
   playNext: () => void;
   playPrevious: () => void;
-  
+
   // Queue management
   setQueue: (tracks: PublicTrack[], startIndex?: number) => void;
   clearQueue: () => void;
-  
+
   // Settings
   toggleAutoplay: () => void;
   toggleRepeat: () => void;
-  
+
   // Audio element ref (for advanced controls)
-  audioRef: React.RefObject<HTMLAudioElement>;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
 };
 
 const PlayerContext = createContext<PlayerContextType | null>(null);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  
-  const [state, setState] = useState<PlayerState>({
-    currentTrack: null,
-    currentTrackUrl: null,
-    isPlaying: false,
-    currentTime: 0,
-    duration: 0,
-    volume: 0.7,
-    queue: [],
-    currentIndex: -1,
-    autoplay: true,
-    repeat: false,
-  });
 
-  // Load saved settings from localStorage
-  useEffect(() => {
+  // Initialize state with localStorage values
+  const [state, setState] = useState<PlayerState>(() => {
+    // Check if we're in the browser
+    if (typeof window === "undefined") {
+      return {
+        currentTrack: null,
+        currentTrackUrl: null,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        volume: 0.7,
+        queue: [],
+        currentIndex: -1,
+        autoplay: true,
+        repeat: false,
+      };
+    }
+
     const savedVolume = localStorage.getItem("player-volume");
     const savedAutoplay = localStorage.getItem("player-autoplay");
     const savedRepeat = localStorage.getItem("player-repeat");
-    
-    setState((prev) => ({
-      ...prev,
+
+    return {
+      currentTrack: null,
+      currentTrackUrl: null,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
       volume: savedVolume ? parseFloat(savedVolume) : 0.7,
+      queue: [],
+      currentIndex: -1,
       autoplay: savedAutoplay ? savedAutoplay === "true" : true,
       repeat: savedRepeat ? savedRepeat === "true" : false,
-    }));
-  }, []);
+    };
+  });
 
   // Sync audio element volume with state
   useEffect(() => {
@@ -157,7 +166,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const playNext = useCallback(() => {
     setState((prev) => {
       const nextIndex = prev.currentIndex + 1;
-      
+
       if (nextIndex >= prev.queue.length) {
         // End of queue
         if (prev.repeat && prev.queue.length > 0) {
@@ -169,7 +178,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         // Stop playback
         return { ...prev, isPlaying: false };
       }
-      
+
       // Play next track
       const nextTrack = prev.queue[nextIndex];
       playTrack(nextTrack);
@@ -187,9 +196,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
         return { ...prev, currentTime: 0 };
       }
-      
+
       const prevIndex = prev.currentIndex - 1;
-      
+
       if (prevIndex < 0) {
         // Beginning of queue - restart current or loop to end
         if (prev.repeat && prev.queue.length > 0) {
@@ -203,7 +212,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
         return { ...prev, currentTime: 0 };
       }
-      
+
       // Play previous track
       const prevTrack = prev.queue[prevIndex];
       playTrack(prevTrack);
@@ -345,7 +354,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!audio || !state.currentTrackUrl) return;
 
     audio.src = state.currentTrackUrl;
-    
+
     if (state.isPlaying) {
       audio.play().catch((error) => {
         console.error("Error playing audio:", error);

@@ -28,7 +28,7 @@ export default function TrackPage() {
   const params = useParams();
   const trackId = params?.id as string;
   const { playTrack, currentTrack, isPlaying, setQueue } = usePlayer();
-  
+
   const [track, setTrack] = useState<PublicTrack | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,13 +38,13 @@ export default function TrackPage() {
   useEffect(() => {
     async function fetchTrack() {
       if (!trackId) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         const response = await fetch(`/api/public/tracks/${trackId}`);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             setError("Track not found");
@@ -53,7 +53,7 @@ export default function TrackPage() {
           }
           return;
         }
-        
+
         const data = await response.json();
         setTrack(data);
       } catch (err) {
@@ -198,7 +198,9 @@ export default function TrackPage() {
                 )}
                 {track.length_ms && (
                   <div>
-                    <span className="font-medium text-slate-700">Duration:</span>
+                    <span className="font-medium text-slate-700">
+                      Duration:
+                    </span>
                     <span className="ml-2 text-slate-600">
                       {formatDuration(track.length_ms)}
                     </span>
@@ -212,7 +214,9 @@ export default function TrackPage() {
                 </div>
                 {track.published_at && (
                   <div>
-                    <span className="font-medium text-slate-700">Published:</span>
+                    <span className="font-medium text-slate-700">
+                      Published:
+                    </span>
                     <span className="ml-2 text-slate-600">
                       {formatDate(track.published_at)}
                     </span>
@@ -227,7 +231,9 @@ export default function TrackPage() {
             track.mood_focus !== null ||
             track.mood_chill !== null) && (
             <div className="mt-6 border-t border-slate-200 pt-6">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">Mood</h3>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                Mood
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {track.mood_energy !== null && (
                   <div>
@@ -284,7 +290,9 @@ export default function TrackPage() {
           {/* Tags */}
           {tags.length > 0 && (
             <div className="mt-6 border-t border-slate-200 pt-6">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">Tags</h3>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                Tags
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <span
