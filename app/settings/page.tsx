@@ -14,7 +14,11 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDeleteKey = async () => {
-    if (!confirm("Are you sure you want to delete your API key? You will need to add a new key to use AI chat.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete your API key? You will need to add a new key to use AI chat."
+      )
+    ) {
       return;
     }
 
@@ -83,7 +87,12 @@ export default function SettingsPage() {
               className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300 transition-colors mb-4"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back to Studio
             </Link>
@@ -96,7 +105,12 @@ export default function SettingsPage() {
           <div className="bg-slate-900/50 border border-cyan-500/20 rounded-xl p-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-lg bg-slate-800/50 border border-cyan-500/30 flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6 text-cyan-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -177,7 +191,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <ApiKeyModal isOpen={showModal} onClose={() => setShowModal(false)} onSuccess={handleKeySuccess} />
+      <ApiKeyModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={handleKeySuccess}
+      />
     </>
   );
 }

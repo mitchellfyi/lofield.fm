@@ -8,7 +8,12 @@ export function ApiKeyPrompt({ onAddKey }: ApiKeyPromptProps) {
   return (
     <div className="flex flex-col items-center justify-center p-6 text-center">
       <div className="w-16 h-16 mb-4 rounded-full bg-slate-800/50 border border-cyan-500/30 flex items-center justify-center">
-        <svg className="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-8 h-8 text-cyan-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -19,7 +24,8 @@ export function ApiKeyPrompt({ onAddKey }: ApiKeyPromptProps) {
       </div>
       <h3 className="text-lg font-semibold text-cyan-300 mb-2">API Key Required</h3>
       <p className="text-sm text-slate-400 mb-4 max-w-sm">
-        To use AI chat, please add your OpenAI API key. Your key is stored securely and never shared.
+        To use AI chat, please add your OpenAI API key. Your key is stored securely and never
+        shared.
       </p>
       <button
         onClick={onAddKey}

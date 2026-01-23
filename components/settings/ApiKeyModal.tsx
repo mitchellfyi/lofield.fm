@@ -101,9 +101,7 @@ export function ApiKeyModal({ isOpen, onClose, onSuccess }: ApiKeyModalProps) {
       <div className="w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800">
           <h2 className="text-xl font-bold text-cyan-300">Add OpenAI API Key</h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Enter your OpenAI API key to enable AI chat
-          </p>
+          <p className="text-sm text-slate-400 mt-1">Enter your OpenAI API key to enable AI chat</p>
         </div>
 
         <div className="p-6 space-y-4">

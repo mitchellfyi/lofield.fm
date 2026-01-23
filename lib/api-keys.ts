@@ -35,7 +35,10 @@ export function decryptApiKey(encrypted: string): string {
 
   // Extract IV, authTag, and encrypted data
   const iv = Buffer.from(encrypted.slice(0, IV_LENGTH * 2), "hex");
-  const authTag = Buffer.from(encrypted.slice(IV_LENGTH * 2, IV_LENGTH * 2 + AUTH_TAG_LENGTH * 2), "hex");
+  const authTag = Buffer.from(
+    encrypted.slice(IV_LENGTH * 2, IV_LENGTH * 2 + AUTH_TAG_LENGTH * 2),
+    "hex"
+  );
   const encryptedData = encrypted.slice(IV_LENGTH * 2 + AUTH_TAG_LENGTH * 2);
 
   const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
@@ -70,7 +73,9 @@ async function createServiceClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
           } catch {
             // Ignore errors in Server Components
           }
