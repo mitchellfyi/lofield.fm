@@ -152,3 +152,30 @@ export function extractLatestCode(messageContent: string): string | null {
   const validation = validateToneCode(messageContent);
   return validation.code || null;
 }
+
+/**
+ * Extract code from streaming text (handles incomplete code blocks)
+ * Returns the code content even if the closing ``` hasn't arrived yet
+ */
+export function extractStreamingCode(text: string): {
+  code: string | null;
+  isComplete: boolean;
+} {
+  // First try to extract a complete code block
+  const completeBlocks = extractCodeBlocks(text);
+  if (completeBlocks.length > 0) {
+    return { code: completeBlocks[0], isComplete: true };
+  }
+
+  // Look for an incomplete code block (has opening ``` but no closing ```)
+  const incompleteMatch = text.match(/```(?:js|javascript)?\s*([\s\S]*)$/);
+  if (incompleteMatch && incompleteMatch[1]) {
+    // Make sure this isn't just an empty code block starting
+    const partialCode = incompleteMatch[1].trim();
+    if (partialCode.length > 0) {
+      return { code: partialCode, isComplete: false };
+    }
+  }
+
+  return { code: null, isComplete: false };
+}

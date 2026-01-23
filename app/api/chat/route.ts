@@ -1,4 +1,9 @@
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
+
+// Explicitly configure OpenAI with API key from environment
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 import { streamText, type ModelMessage } from 'ai';
 import { validateToneCode, buildRetryPrompt } from '@/lib/audio/llmContract';
 
@@ -63,17 +68,22 @@ TONE.JS CODE REQUIREMENTS
 5. DO NOT include Tone.Transport.start() - handled automatically by runtime
 6. NEVER use: import, require, fetch, document, window
 
-**INSTRUMENT GUIDE:**
+**MASTER CHAIN (ALWAYS INCLUDE):**
+- Create: limiter -> compressor -> masterLowpass (8000Hz)
+- Route all instruments through masterLowpass for cohesion
+- Prevents harsh highs and glues the mix together
+
+**INSTRUMENT GUIDE (use triangle/sawtooth, NOT sine):**
 - Kick: Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 4 })
 - Snare: Tone.NoiseSynth({ noise: { type: "white" }, envelope: { decay: 0.15 }})
 - Clap: Tone.NoiseSynth with longer attack (0.01) and decay (0.1)
-- Closed Hat: Tone.MetalSynth({ envelope: { decay: 0.03 }})
-- Open Hat: Tone.MetalSynth({ envelope: { decay: 0.15 }})
-- Bass: Tone.MonoSynth with filterEnvelope
-- Chords: Tone.PolySynth(Tone.Synth) - triggerAttackRelease(["C3","E3","G3"], "2n", time)
-- Lead: Tone.Synth or Tone.FMSynth
-- Pad: Tone.PolySynth with long attack (0.5+) and release (1+)
-- Arp: Tone.Synth with Tone.Sequence on 16th notes
+- Closed Hat: Tone.MetalSynth({ frequency: 300, harmonicity: 3.5, resonance: 2000, octaves: 1 }) - LOW settings!
+- Open Hat: Tone.MetalSynth({ frequency: 300, harmonicity: 3.5, resonance: 2000, octaves: 1.5 })
+- Bass: Tone.MonoSynth({ oscillator: { type: "triangle" }}) through lowpass filter (600Hz)
+- Chords: Tone.PolySynth with oscillator: { type: "triangle" } through lowpass (1500Hz)
+- Lead: Tone.Synth({ oscillator: { type: "sawtooth" }}) through lowpass filter
+- Pad: Tone.PolySynth with type: "triangle", long attack (0.5+) and release (1+)
+- Arp: Tone.Synth with type: "triangle" or "sawtooth" through lowpass
 
 **COMPLETE EXAMPLE STRUCTURE:**
 \`\`\`js
@@ -81,42 +91,50 @@ TONE.JS CODE REQUIREMENTS
 Tone.Transport.bpm.value = 85;
 Tone.Transport.swing = 0.05;
 
-// Effects Chain
-const reverb = new Tone.Reverb({ decay: 3, wet: 0.35 }).toDestination();
-const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(reverb);
-const filter = new Tone.Filter(1200, "lowpass").connect(delay);
+// Master Chain (ALWAYS include for warmth)
+const limiter = new Tone.Limiter(-3).toDestination();
+const masterComp = new Tone.Compressor({ threshold: -20, ratio: 4, attack: 0.003, release: 0.25 }).connect(limiter);
+const masterLowpass = new Tone.Filter(8000, "lowpass").connect(masterComp);
 
-// Drums
-const kick = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 4, envelope: { decay: 0.4 }}).toDestination();
+// Effects Chain
+const reverb = new Tone.Reverb({ decay: 3, wet: 0.35 }).connect(masterLowpass);
+const delay = new Tone.FeedbackDelay("8n.", 0.35).connect(reverb);
+
+// Drums - connect to masterLowpass for cohesion
+const kick = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 4, envelope: { decay: 0.4 }}).connect(masterLowpass);
 kick.volume.value = -6;
 
-const snare = new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 }}).toDestination();
+const snare = new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.005, decay: 0.15, sustain: 0, release: 0.1 }}).connect(masterLowpass);
 snare.volume.value = -8;
 
-const hihat = new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, resonance: 4000, octaves: 1.5 }).toDestination();
-hihat.volume.value = -18;
+// Hi-hat with reduced harshness (lower frequency, resonance)
+const hihat = new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 3.5, resonance: 2000, octaves: 1, frequency: 300 }).connect(masterLowpass);
+hihat.volume.value = -20;
 
-// Bass
-const bass = new Tone.MonoSynth({ oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.5 }}).toDestination();
+// Bass with lowpass filter for warmth
+const bassFilter = new Tone.Filter(600, "lowpass").connect(masterLowpass);
+const bass = new Tone.MonoSynth({ oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.4, release: 0.5 }}).connect(bassFilter);
 bass.volume.value = -8;
 
-// Chords
-const chords = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "sine" }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.6, release: 1 }}).connect(filter);
+// Chords - use triangle oscillator and lowpass for warmth (NOT sine!)
+const chordsFilter = new Tone.Filter(1500, "lowpass").connect(delay);
+const chords = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.6, release: 1 }}).connect(chordsFilter);
 chords.volume.value = -14;
 
-// Lead/Arp
-const lead = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 }}).connect(delay);
+// Lead/Arp - triangle or sawtooth, NOT sine
+const arpFilter = new Tone.Filter(2500, "lowpass").connect(delay);
+const lead = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 }}).connect(arpFilter);
 lead.volume.value = -12;
 
 // Drum Patterns - use velocity for groove
-const kickSeq = new Tone.Sequence((t, v) => v && kick.triggerAttackRelease("C1", "8n", t, v), 
+const kickSeq = new Tone.Sequence((t, v) => v && kick.triggerAttackRelease("C1", "8n", t, v),
   [0.9, null, null, 0.5, 0.9, null, 0.3, null], "8n").start(0);
 
 const snareSeq = new Tone.Sequence((t, v) => v && snare.triggerAttackRelease("8n", t, v),
   [null, null, 0.9, null, null, null, 0.85, 0.4], "8n").start(0);
 
 const hatSeq = new Tone.Sequence((t, v) => v && hihat.triggerAttackRelease("32n", t, v),
-  [0.6, 0.3, 0.5, 0.3, 0.6, 0.3, 0.5, 0.4], "8n").start(0);
+  [0.5, 0.2, 0.4, 0.2, 0.5, 0.2, 0.4, 0.3], "8n").start(0);
 
 // Bass Pattern - follows chord roots
 const bassSeq = new Tone.Sequence((t, n) => n && bass.triggerAttackRelease(n, "8n", t),
@@ -153,7 +171,10 @@ DO NOT OUTPUT:
 - Missing drums OR bass OR chords - every track needs all three minimum
 - Synths created INSIDE sequence callbacks
 - window.__toneCleanup or Tone.Transport.start() - these are handled by the runtime!
-- Simple sine wave beeps - use proper synth configurations!`;
+- Sine wave oscillators - they sound thin/tinny! Use triangle or sawtooth instead
+- Synths connected directly to destination without master chain
+- MetalSynth hi-hats with high resonance/harmonicity (causes harsh piercing sound)
+- Missing lowpass filters on melodic instruments`;
 
 const MAX_RETRIES = 2;
 
@@ -224,11 +245,36 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { messages } = body;
 
-  // Build messages with context: include previous accepted code if available
-  const contextMessages: ModelMessage[] = messages.map((msg: ModelMessage) => ({
-    role: msg.role,
-    content: msg.content
-  }));
+  // Build messages with context, filtering out invalid messages
+  // The frontend may send messages with 'text' instead of 'content' or parts array
+  const contextMessages: ModelMessage[] = messages
+    .map((msg: Record<string, unknown>) => {
+      // Handle different message formats from useChat
+      let content = msg.content;
+
+      // Try to extract content from 'text' field (TextStreamChatTransport format)
+      if (!content && msg.text) {
+        content = msg.text;
+      }
+
+      // Try to extract from parts array (UIMessage format)
+      if (!content && Array.isArray(msg.parts)) {
+        const textParts = msg.parts.filter((p: Record<string, unknown>) => p.type === 'text');
+        content = textParts.map((p: Record<string, unknown>) => p.text).join('\n');
+      }
+
+      return {
+        role: msg.role as 'user' | 'assistant',
+        content: content as string
+      };
+    })
+    .filter((msg: { role: string; content: string }) =>
+      typeof msg.content === 'string' && msg.content.trim() !== ''
+    ) as ModelMessage[];
+
+  if (contextMessages.length === 0) {
+    return new Response('No valid messages provided', { status: 400 });
+  }
 
   return generateWithValidation(contextMessages);
 }

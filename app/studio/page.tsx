@@ -3,7 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { TextStreamChatTransport } from 'ai';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { validateToneCode, validateRawToneCode, extractCodeBlocks } from '@/lib/audio/llmContract';
+import { validateToneCode, validateRawToneCode, extractStreamingCode } from '@/lib/audio/llmContract';
 import { getAudioRuntime, type PlayerState, type RuntimeEvent } from '@/lib/audio/runtime';
 import { TopBar } from '@/components/studio/TopBar';
 import { ChatPanel } from '@/components/studio/ChatPanel';
@@ -21,95 +21,98 @@ Tone.Transport.bpm.value = 82;
 Tone.Transport.swing = 0.08;
 
 // ─────────────────────────────────────────────────────────────
-// Effects Chain - Warm and spacious
+// Master Chain - Warmth and glue
 // ─────────────────────────────────────────────────────────────
-const masterReverb = new Tone.Reverb({ decay: 3.5, wet: 0.3 }).toDestination();
-const tapeDelay = new Tone.FeedbackDelay("8n.", 0.38).connect(masterReverb);
-tapeDelay.wet.value = 0.25;
-const warmFilter = new Tone.Filter(2200, "lowpass").connect(tapeDelay);
-const chorus = new Tone.Chorus(3, 2.5, 0.4).connect(warmFilter).start();
-const vinylFilter = new Tone.Filter(4000, "lowpass").toDestination();
+const limiter = new Tone.Limiter(-3).toDestination();
+const masterComp = new Tone.Compressor({ threshold: -20, ratio: 3, attack: 0.1, release: 0.25 }).connect(limiter);
+const masterLowpass = new Tone.Filter(8000, "lowpass").connect(masterComp);
+const masterReverb = new Tone.Reverb({ decay: 2.5, wet: 0.25 }).connect(masterLowpass);
+const tapeDelay = new Tone.FeedbackDelay("8n.", 0.32).connect(masterReverb);
+tapeDelay.wet.value = 0.2;
+const warmFilter = new Tone.Filter(1800, "lowpass").connect(tapeDelay);
+const chorus = new Tone.Chorus(2.5, 3.5, 0.5).connect(warmFilter).start();
+const vinylFilter = new Tone.Filter(2500, "lowpass").connect(masterLowpass);
 
 // ─────────────────────────────────────────────────────────────
-// Drums - Dusty, laid-back kit
+// Drums - Dusty, punchy kit
 // ─────────────────────────────────────────────────────────────
 const kick = new Tone.MembraneSynth({
-  pitchDecay: 0.08, octaves: 5,
+  pitchDecay: 0.05, octaves: 6,
   oscillator: { type: "sine" },
-  envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.5 }
-}).toDestination();
-kick.volume.value = -5;
+  envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.4 }
+}).connect(masterComp);
+kick.volume.value = -4;
 
 const snare = new Tone.NoiseSynth({
   noise: { type: "brown" },
-  envelope: { attack: 0.002, decay: 0.18, sustain: 0, release: 0.15 }
+  envelope: { attack: 0.001, decay: 0.2, sustain: 0.02, release: 0.15 }
 }).connect(masterReverb);
-snare.volume.value = -9;
+snare.volume.value = -8;
 
 const rim = new Tone.NoiseSynth({
   noise: { type: "pink" },
-  envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.02 }
-}).toDestination();
-rim.volume.value = -14;
+  envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.03 }
+}).connect(masterLowpass);
+rim.volume.value = -16;
 
 const hihatClosed = new Tone.MetalSynth({
-  frequency: 350, envelope: { attack: 0.001, decay: 0.04, release: 0.01 },
-  harmonicity: 5.1, modulationIndex: 28, resonance: 3500, octaves: 1.2
+  frequency: 250, envelope: { attack: 0.001, decay: 0.05, release: 0.01 },
+  harmonicity: 4, modulationIndex: 20, resonance: 1800, octaves: 1
 }).connect(vinylFilter);
-hihatClosed.volume.value = -19;
+hihatClosed.volume.value = -22;
 
 const hihatOpen = new Tone.MetalSynth({
-  frequency: 320, envelope: { attack: 0.001, decay: 0.12, release: 0.05 },
-  harmonicity: 5.1, modulationIndex: 28, resonance: 3200, octaves: 1.3
+  frequency: 220, envelope: { attack: 0.001, decay: 0.15, release: 0.08 },
+  harmonicity: 4, modulationIndex: 18, resonance: 1500, octaves: 1
 }).connect(vinylFilter);
-hihatOpen.volume.value = -21;
+hihatOpen.volume.value = -24;
 
-// Drum Patterns - Groove with velocity dynamics
+// Drum Patterns
 const kickPat = new Tone.Sequence((t, v) => v && kick.triggerAttackRelease("C1", "8n", t, v),
-  [0.95, null, null, 0.4, 0.9, null, 0.35, null, 0.85, null, null, 0.45, 0.9, null, 0.3, 0.5], "16n").start(0);
+  [0.95, null, null, 0.5, 0.9, null, 0.4, null, 0.85, null, null, 0.5, 0.9, null, 0.35, 0.55], "16n").start(0);
 
 const snarePat = new Tone.Sequence((t, v) => v && snare.triggerAttackRelease("16n", t, v),
-  [null, null, null, null, 0.9, null, null, null, null, null, null, null, 0.85, null, null, 0.35], "16n").start(0);
+  [null, null, null, null, 0.9, null, null, null, null, null, null, null, 0.85, null, null, 0.4], "16n").start(0);
 
 const rimPat = new Tone.Sequence((t, v) => v && rim.triggerAttackRelease("32n", t, v),
-  [null, null, 0.5, null, null, null, null, 0.4, null, null, 0.45, null, null, null, null, null], "16n").start(0);
+  [null, null, 0.5, null, null, null, null, 0.45, null, null, 0.5, null, null, null, null, null], "16n").start(0);
 
 const hatPat = new Tone.Sequence((t, v) => {
-  if (v > 0.7) hihatOpen.triggerAttackRelease("32n", t, v * 0.6);
+  if (v > 0.7) hihatOpen.triggerAttackRelease("32n", t, v * 0.5);
   else if (v) hihatClosed.triggerAttackRelease("32n", t, v);
-}, [0.6, 0.25, 0.5, 0.3, 0.55, 0.2, 0.8, 0.35, 0.55, 0.25, 0.5, 0.3, 0.6, 0.2, 0.75, 0.4], "16n").start(0);
+}, [0.5, 0.2, 0.4, 0.25, 0.45, 0.2, 0.75, 0.3, 0.5, 0.2, 0.4, 0.25, 0.5, 0.2, 0.7, 0.35], "16n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Bass - Warm sub with filter movement
+// Bass - Fat sub with warmth
 // ─────────────────────────────────────────────────────────────
+const bassFilter = new Tone.Filter(600, "lowpass").connect(masterComp);
 const bass = new Tone.MonoSynth({
-  oscillator: { type: "triangle" },
-  envelope: { attack: 0.03, decay: 0.25, sustain: 0.5, release: 0.6 },
-  filterEnvelope: { attack: 0.04, decay: 0.15, sustain: 0.4, release: 0.5, baseFrequency: 80, octaves: 2.5 }
-}).toDestination();
-bass.volume.value = -7;
+  oscillator: { type: "sawtooth" },
+  envelope: { attack: 0.02, decay: 0.2, sustain: 0.6, release: 0.4 },
+  filterEnvelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.3, baseFrequency: 120, octaves: 2 }
+}).connect(bassFilter);
+bass.volume.value = -6;
 
-// Bass follows Dm7 - G7 - Cmaj7 - Am7 progression
 const bassPat = new Tone.Sequence((t, n) => n && bass.triggerAttackRelease(n, "8n", t, 0.85),
-  ["D2", null, "D2", "D2", null, null, "F2", null, 
+  ["D2", null, "D2", "D2", null, null, "F2", null,
    "G2", null, "G2", "G2", null, null, "B1", null,
    "C2", null, "C2", "E2", null, null, "G2", null,
    "A1", null, "A1", "C2", null, null, "E2", null], "8n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Rhodes-style Electric Piano - Jazzy chords
+// Rhodes-style Electric Piano - Warm jazzy chords
 // ─────────────────────────────────────────────────────────────
+const rhodesFilter = new Tone.Filter(2000, "lowpass").connect(chorus);
 const rhodes = new Tone.PolySynth(Tone.FMSynth, {
-  harmonicity: 3, modulationIndex: 2,
-  oscillator: { type: "sine" },
-  envelope: { attack: 0.01, decay: 0.8, sustain: 0.3, release: 1.2 },
-  modulation: { type: "sine" },
-  modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.8 }
-}).connect(chorus);
-rhodes.volume.value = -13;
+  harmonicity: 2, modulationIndex: 1.5,
+  oscillator: { type: "triangle" },
+  envelope: { attack: 0.005, decay: 1, sustain: 0.3, release: 1.5 },
+  modulation: { type: "triangle" },
+  modulationEnvelope: { attack: 0.01, decay: 0.4, sustain: 0.3, release: 0.6 }
+}).connect(rhodesFilter);
+rhodes.volume.value = -11;
 
-// Dm7 - G7 - Cmaj7 - Am7 (2 bars each)
-const chordPat = new Tone.Sequence((t, c) => c && rhodes.triggerAttackRelease(c, "1n", t, 0.4), [
+const chordPat = new Tone.Sequence((t, c) => c && rhodes.triggerAttackRelease(c, "1n", t, 0.5), [
   ["D3", "F3", "A3", "C4"], null, null, null, null, null, null, null,
   ["G2", "B2", "D3", "F3"], null, null, null, null, null, null, null,
   ["C3", "E3", "G3", "B3"], null, null, null, null, null, null, null,
@@ -117,32 +120,33 @@ const chordPat = new Tone.Sequence((t, c) => c && rhodes.triggerAttackRelease(c,
 ], "4n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Dreamy Arpeggio - Hypnotic melodic movement
+// Arpeggio - Warm melodic movement
 // ─────────────────────────────────────────────────────────────
+const arpFilter = new Tone.Filter(2500, "lowpass").connect(tapeDelay);
 const arp = new Tone.Synth({
-  oscillator: { type: "sine" },
-  envelope: { attack: 0.01, decay: 0.25, sustain: 0.15, release: 0.6 }
-}).connect(tapeDelay);
-arp.volume.value = -14;
+  oscillator: { type: "triangle" },
+  envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 0.5 }
+}).connect(arpFilter);
+arp.volume.value = -13;
 
-// Arpeggiate through chord tones
-const arpPat = new Tone.Sequence((t, n) => n && arp.triggerAttackRelease(n, "16n", t, 0.55), [
-  "D4", "F4", "A4", "C5", "A4", "F4", "D4", "C4",  // Dm7
-  "G4", "B4", "D5", "F5", "D5", "B4", "G4", "F4",  // G7
-  "C4", "E4", "G4", "B4", "G4", "E4", "C4", "B3",  // Cmaj7
-  "A3", "C4", "E4", "G4", "E4", "C4", "A3", "G3"   // Am7
+const arpPat = new Tone.Sequence((t, n) => n && arp.triggerAttackRelease(n, "16n", t, 0.6), [
+  "D4", "F4", "A4", "C5", "A4", "F4", "D4", "C4",
+  "G4", "B4", "D5", "F5", "D5", "B4", "G4", "F4",
+  "C4", "E4", "G4", "B4", "G4", "E4", "C4", "B3",
+  "A3", "C4", "E4", "G4", "E4", "C4", "A3", "G3"
 ], "16n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Atmospheric Pad - Soft background texture
+// Pad - Warm atmospheric texture
 // ─────────────────────────────────────────────────────────────
+const padFilter = new Tone.Filter(1200, "lowpass").connect(masterReverb);
 const pad = new Tone.PolySynth(Tone.Synth, {
-  oscillator: { type: "sine" },
-  envelope: { attack: 2, decay: 1.5, sustain: 0.7, release: 3 }
-}).connect(masterReverb);
-pad.volume.value = -20;
+  oscillator: { type: "triangle" },
+  envelope: { attack: 1.5, decay: 1, sustain: 0.8, release: 2.5 }
+}).connect(padFilter);
+pad.volume.value = -18;
 
-const padPat = new Tone.Sequence((t, c) => c && pad.triggerAttackRelease(c, "2n", t, 0.25), [
+const padPat = new Tone.Sequence((t, c) => c && pad.triggerAttackRelease(c, "2n", t, 0.3), [
   ["D4", "A4"], null, null, null, ["G4", "D5"], null, null, null,
   ["C4", "G4"], null, null, null, ["A3", "E4"], null, null, null
 ], "1n").start(0);`;
@@ -280,43 +284,13 @@ export default function StudioPage() {
     }
   }, [audioLoaded]);
 
-  const processAssistantMessage = useCallback((fullText: string) => {
-    // Use shared validator
-    const validation = validateToneCode(fullText);
-    
-    if (validation.valid && validation.code) {
-      const newCode = validation.code;
-      setCode(newCode);
-      setValidationErrors([]);
-      
-      // Auto-restart if playing
-      const runtime = runtimeRef.current;
-      if (runtime.getState() === 'playing' && audioLoaded) {
-        playCode(newCode);
-      }
-    } else if (validation.code) {
-      // Code extracted but has validation errors
-      setCode(validation.code);
-      setValidationErrors(validation.errors.map(e => e.message));
-    } else {
-      // Fallback: try to extract any code block
-      const blocks = extractCodeBlocks(fullText);
-      if (blocks.length > 0) {
-        setCode(blocks[0]);
-        setValidationErrors(['Code may not be valid Tone.js']);
-      }
-    }
-  }, [audioLoaded, playCode]);
-
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Extract code from assistant messages
-  // Note: Processing messages in useEffect is the standard pattern for chat interfaces.
-  // We extract and validate code when new assistant messages arrive. The ref prevents
-  // duplicate processing of the same message content.
+  // Extract code from assistant messages - LIVE during streaming
+  // Updates the code editor in real-time as the AI generates code
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -324,33 +298,40 @@ export default function StudioPage() {
         // Collect all text parts
         const textParts = lastMessage.parts.filter(part => part.type === 'text');
         const fullText = textParts.map(part => part.text).join('\n');
-        
-        // Skip if already processed
+
+        // Skip if already processed this exact text
         if (lastProcessedMessageRef.current === fullText) {
           return;
         }
-        lastProcessedMessageRef.current = fullText;
-        
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        processAssistantMessage(fullText);
+
+        // Extract code (handles both complete and streaming code blocks)
+        const { code, isComplete } = extractStreamingCode(fullText);
+
+        if (code) {
+          // Update the code editor live as text streams in
+          setCode(code);
+
+          if (isComplete) {
+            // Code block is complete - do final validation and auto-restart if playing
+            lastProcessedMessageRef.current = fullText;
+
+            const validation = validateToneCode(fullText);
+            if (validation.valid) {
+              setValidationErrors([]);
+              // Auto-restart if playing
+              const runtime = runtimeRef.current;
+              if (runtime.getState() === 'playing' && audioLoaded) {
+                playCode(code);
+              }
+            } else {
+              setValidationErrors(validation.errors.map(e => e.message));
+            }
+          }
+          // While streaming (isComplete=false), just update the editor without validation
+        }
       }
     }
-  }, [messages, processAssistantMessage]);
-
-  const initAudio = async () => {
-    if (!audioLoaded) {
-      setError('Audio system not ready. Please wait.');
-      return;
-    }
-    try {
-      const runtime = runtimeRef.current;
-      await runtime.init();
-      setError('');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to initialize audio: ${errorMsg}`);
-    }
-  };
+  }, [messages, audioLoaded, playCode]);
 
   const stop = () => {
     if (!audioLoaded) {
@@ -418,7 +399,6 @@ export default function StudioPage() {
                 <PlayerControls
                   playerState={playerState}
                   audioLoaded={audioLoaded}
-                  onInitAudio={initAudio}
                   onPlay={() => playCode(code)}
                   onStop={stop}
                 />
@@ -441,7 +421,6 @@ export default function StudioPage() {
               isLoading={isLoading}
               playerState={playerState}
               audioLoaded={audioLoaded}
-              initAudio={initAudio}
               playCode={() => playCode(code)}
               stop={stop}
               runtimeEvents={runtimeEvents}
@@ -469,7 +448,6 @@ interface MobileTabsProps {
   isLoading: boolean;
   playerState: PlayerState;
   audioLoaded: boolean;
-  initAudio: () => void;
   playCode: () => void;
   stop: () => void;
   runtimeEvents: RuntimeEvent[];
@@ -490,7 +468,6 @@ function MobileTabs({
   isLoading,
   playerState,
   audioLoaded,
-  initAudio,
   playCode,
   stop,
   runtimeEvents,
@@ -565,7 +542,6 @@ function MobileTabs({
               <PlayerControls
                 playerState={playerState}
                 audioLoaded={audioLoaded}
-                onInitAudio={initAudio}
                 onPlay={playCode}
                 onStop={stop}
               />
