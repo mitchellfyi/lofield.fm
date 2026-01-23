@@ -24,7 +24,7 @@ export function CodePanel({ code, onChange, validationErrors, defaultCode }: Cod
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-cyan-500/20 bg-slate-900/50">
+      <div className="flex items-center justify-between px-4 h-16 border-b border-cyan-500/20 bg-slate-900/50">
         <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Code Editor</h2>
         <div className="flex gap-2">
           <button

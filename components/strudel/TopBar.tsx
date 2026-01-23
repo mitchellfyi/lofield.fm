@@ -37,7 +37,7 @@ export function TopBar({ playerState }: TopBarProps) {
             <div className="flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
               <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500 bg-clip-text text-transparent tracking-tight">
-                Lofield Strudel Lab
+                LoField Music Lab
               </h1>
             </div>
             
@@ -60,7 +60,7 @@ export function TopBar({ playerState }: TopBarProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="max-w-2xl w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden">
             <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800">
-              <h2 className="text-xl font-bold text-cyan-300">How to Use Strudel Lab</h2>
+              <h2 className="text-xl font-bold text-cyan-300">How to Use LoField Music Lab</h2>
             </div>
             
             <div className="p-6 space-y-6 max-h-96 overflow-y-auto">

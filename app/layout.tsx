@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "lofield.fm - Strudel Chat",
+  title: "LoField Music Lab",
   description: "Chat to create lofi beats with Strudel",
 };
 

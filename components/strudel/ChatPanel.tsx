@@ -26,7 +26,7 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-cyan-500/20 bg-slate-900/50">
+      <div className="px-4 h-16 flex flex-col justify-center border-b border-cyan-500/20 bg-slate-900/50">
         <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Chat Interface</h2>
         <p className="text-xs text-slate-400 mt-1">Generate and modify beats with AI</p>
       </div>

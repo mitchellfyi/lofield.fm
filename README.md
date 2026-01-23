@@ -1,4 +1,4 @@
-# lofield.fm
+# LoField Music Lab
 
 ## Strudel MVP
 
