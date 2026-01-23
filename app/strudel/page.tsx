@@ -158,6 +158,11 @@ export default function StrudelPage() {
       setError('Strudel not loaded yet. Please wait.');
       return;
     }
+    // Double-check that the function is actually available
+    if (typeof window === 'undefined' || typeof window.initStrudel === 'undefined') {
+      setError('Strudel library not fully initialized. Please wait a moment and try again.');
+      return;
+    }
     try {
       const runtime = runtimeRef.current;
       await runtime.init();
@@ -196,7 +201,21 @@ export default function StrudelPage() {
       <Script
         src="https://unpkg.com/@strudel/web@1.0.1"
         onLoad={() => {
-          setStrudelLoaded(true);
+          // Wait for Strudel library to actually expose its globals
+          // The script may load before the library initializes its globals
+          let attempts = 0;
+          const maxAttempts = 50; // 5 seconds max (50 * 100ms)
+          const checkStrudelReady = () => {
+            if (typeof window !== 'undefined' && typeof window.initStrudel !== 'undefined') {
+              setStrudelLoaded(true);
+            } else if (attempts < maxAttempts) {
+              attempts++;
+              setTimeout(checkStrudelReady, 100);
+            } else {
+              setError('Strudel library loaded but initStrudel not available');
+            }
+          };
+          checkStrudelReady();
         }}
         onError={() => setError('Failed to load Strudel library')}
       />
