@@ -129,6 +129,9 @@ export default function StrudelPage() {
   }, [messages]);
 
   // Extract code from assistant messages
+  // Note: Processing messages in useEffect is the standard pattern for chat interfaces.
+  // We extract and validate code when new assistant messages arrive. The ref prevents
+  // duplicate processing of the same message content.
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];

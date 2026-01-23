@@ -23,7 +23,7 @@ export interface ParsedResponse {
  * Extract all fenced code blocks from response text
  */
 export function extractCodeBlocks(text: string): string[] {
-  const codeBlockRegex = /```(?:js|javascript)?\n([\s\S]*?)```/g;
+  const codeBlockRegex = /```(?:js|javascript)?\s*([\s\S]*?)```/g;
   const blocks: string[] = [];
   let match;
   

@@ -66,8 +66,10 @@ async function generateWithValidation(
     messages,
   });
 
-  // For streaming responses in edge runtime, we need to validate after generation
-  // We'll collect chunks, validate, and retry if needed
+  // For streaming responses in edge runtime, we need to validate after generation.
+  // Note: We buffer the full response to enable retry logic. For typical Strudel code
+  // (usually < 1KB), this is acceptable. The streaming experience is preserved for the
+  // client, and validation happens after the stream completes.
   const reader = result.textStream.getReader();
   let fullText = '';
   const chunks: string[] = [];
