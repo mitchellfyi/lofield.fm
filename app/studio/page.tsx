@@ -3,22 +3,123 @@
 import { useChat } from '@ai-sdk/react';
 import { TextStreamChatTransport } from 'ai';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Script from 'next/script';
-import { validateStrudelCode, extractCodeBlocks } from '@/lib/strudel/llmContract';
-import { getStrudelRuntime, type PlayerState, type RuntimeEvent } from '@/lib/strudel/runtime';
-import { TopBar } from '@/components/strudel/TopBar';
-import { ChatPanel } from '@/components/strudel/ChatPanel';
-import { CodePanel } from '@/components/strudel/CodePanel';
-import { PlayerControls } from '@/components/strudel/PlayerControls';
-import { ConsolePanel } from '@/components/strudel/ConsolePanel';
+import { validateToneCode, validateRawToneCode, extractCodeBlocks } from '@/lib/audio/llmContract';
+import { getAudioRuntime, type PlayerState, type RuntimeEvent } from '@/lib/audio/runtime';
+import { TopBar } from '@/components/studio/TopBar';
+import { ChatPanel } from '@/components/studio/ChatPanel';
+import { CodePanel } from '@/components/studio/CodePanel';
+import { PlayerControls } from '@/components/studio/PlayerControls';
+import { ConsolePanel } from '@/components/studio/ConsolePanel';
 import type { UIMessage } from '@ai-sdk/react';
 
-const DEFAULT_CODE = `setcps(85/60/4)
-stack(
-  s("bd sd:1 bd sd:2").slow(2),
-  s("hh*8").gain(0.4),
-  note("c3 eb3 g3").s("piano").slow(4).delay(0.3)
-).play()`;
+const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
+// Trancey Lofi - Dreamy downtempo with hypnotic arpeggios
+// ═══════════════════════════════════════════════════════════
+
+// Set tempo - slow and dreamy
+Tone.Transport.bpm.value = 78;
+Tone.Transport.swing = 0.02;
+
+// ─────────────────────────────────────────────────────────────
+// Effects chain
+// ─────────────────────────────────────────────────────────────
+const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).toDestination();
+const delay = new Tone.FeedbackDelay("8n.", 0.4).connect(reverb);
+const filter = new Tone.Filter(800, "lowpass").connect(delay);
+const chorus = new Tone.Chorus(4, 2.5, 0.5).connect(filter).start();
+
+// ─────────────────────────────────────────────────────────────
+// Drums - dusty lofi kit
+// ─────────────────────────────────────────────────────────────
+const kick = new Tone.MembraneSynth({
+  pitchDecay: 0.05,
+  octaves: 4,
+  oscillator: { type: "sine" },
+  envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.4 }
+}).toDestination();
+kick.volume.value = -6;
+
+const snare = new Tone.NoiseSynth({
+  noise: { type: "brown" },
+  envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 }
+}).toDestination();
+snare.volume.value = -12;
+
+const hat = new Tone.MetalSynth({
+  frequency: 300,
+  envelope: { attack: 0.001, decay: 0.05, release: 0.01 },
+  harmonicity: 5.1,
+  modulationIndex: 32,
+  resonance: 4000,
+  octaves: 1.5
+}).toDestination();
+hat.volume.value = -20;
+
+// Drum patterns
+const kickSeq = new Tone.Sequence((time, vel) => {
+  if (vel) kick.triggerAttackRelease("C1", "8n", time, vel);
+}, [0.9, null, null, 0.5, 0.9, null, 0.3, null], "8n").start(0);
+
+const snareSeq = new Tone.Sequence((time, vel) => {
+  if (vel) snare.triggerAttackRelease("8n", time, vel);
+}, [null, null, 0.8, null, null, null, 0.7, 0.3], "8n").start(0);
+
+const hatSeq = new Tone.Sequence((time, vel) => {
+  if (vel) hat.triggerAttackRelease("32n", time, vel);
+}, [0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.4], "8n").start(0);
+
+// ─────────────────────────────────────────────────────────────
+// Bass - deep sub bass
+// ─────────────────────────────────────────────────────────────
+const bass = new Tone.MonoSynth({
+  oscillator: { type: "triangle" },
+  envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 0.8 },
+  filterEnvelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 0.8, baseFrequency: 100, octaves: 2 }
+}).toDestination();
+bass.volume.value = -8;
+
+const bassSeq = new Tone.Sequence((time, note) => {
+  if (note) bass.triggerAttackRelease(note, "4n", time);
+}, ["C2", null, "C2", null, "Eb2", null, "G1", null], "4n").start(0);
+
+// ─────────────────────────────────────────────────────────────
+// Trance arpeggio - hypnotic pattern
+// ─────────────────────────────────────────────────────────────
+const arp = new Tone.PolySynth(Tone.Synth, {
+  oscillator: { type: "sine" },
+  envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 0.8 }
+}).connect(chorus);
+arp.volume.value = -14;
+
+const arpNotes = ["C4", "Eb4", "G4", "Bb4", "C5", "Bb4", "G4", "Eb4"];
+const arpSeq = new Tone.Sequence((time, note) => {
+  arp.triggerAttackRelease(note, "16n", time, 0.5);
+}, arpNotes, "16n").start(0);
+
+// ─────────────────────────────────────────────────────────────
+// Pad - warm atmospheric chords
+// ─────────────────────────────────────────────────────────────
+const pad = new Tone.PolySynth(Tone.Synth, {
+  oscillator: { type: "sine" },
+  envelope: { attack: 1.5, decay: 1, sustain: 0.8, release: 2 }
+}).connect(reverb);
+pad.volume.value = -18;
+
+const padSeq = new Tone.Sequence((time, chord) => {
+  if (chord) pad.triggerAttackRelease(chord, "2n", time, 0.3);
+}, [["C3", "Eb3", "G3", "Bb3"], null, null, null, ["Ab2", "C3", "Eb3", "G3"], null, null, null], "2n").start(0);
+
+// ─────────────────────────────────────────────────────────────
+// Cleanup function for when code restarts
+// ─────────────────────────────────────────────────────────────
+window.__toneCleanup = () => {
+  [kickSeq, snareSeq, hatSeq, bassSeq, arpSeq, padSeq].forEach(s => s.dispose());
+  [kick, snare, hat, bass, arp, pad].forEach(s => s.dispose());
+  [reverb, delay, filter, chorus].forEach(e => e.dispose());
+};
+
+// Start the transport
+Tone.Transport.start();`;
 
 // Dangerous tokens to reject
 const DANGEROUS_TOKENS = [
@@ -26,7 +127,6 @@ const DANGEROUS_TOKENS = [
   'XMLHttpRequest',
   'WebSocket',
   'document',
-  'window',
   'localStorage',
   'sessionStorage',
   'import',
@@ -35,17 +135,24 @@ const DANGEROUS_TOKENS = [
   'Function'
 ];
 
-export default function StrudelPage() {
+// Patterns that are allowed even if they contain blocked words
+const ALLOWED_PATTERNS = [
+  '__toneCleanup' // Cleanup function for Tone.js
+];
+
+export default function StudioPage() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [playerState, setPlayerState] = useState<PlayerState>('idle');
-  const [strudelLoaded, setStrudelLoaded] = useState(false);
+  const [audioLoaded, setAudioLoaded] = useState(true); // Tone.js is always available as a module
   const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [liveMode, setLiveMode] = useState(true); // Live coding mode - auto-update on edit
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>('');
-  const runtimeRef = useRef(getStrudelRuntime());
+  const runtimeRef = useRef(getAudioRuntime());
+  const liveUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { messages, sendMessage, status: chatStatus } = useChat({
     transport: new TextStreamChatTransport({ api: '/api/chat' }),
@@ -70,12 +177,26 @@ export default function StrudelPage() {
         return false;
       }
     }
+    
+    // Check for window usage - only allow __toneCleanup
+    if (code.includes('window')) {
+      // Remove allowed patterns and check if window is still used
+      let codeWithoutAllowed = code;
+      for (const pattern of ALLOWED_PATTERNS) {
+        codeWithoutAllowed = codeWithoutAllowed.replace(new RegExp(`window\\.${pattern}`, 'g'), '');
+      }
+      if (codeWithoutAllowed.includes('window')) {
+        setError('Code contains dangerous token: window (only window.__toneCleanup is allowed)');
+        return false;
+      }
+    }
+    
     return true;
   };
 
   const playCode = useCallback(async (codeToPlay: string) => {
-    if (!strudelLoaded) {
-      setError('Strudel not loaded yet. Please wait.');
+    if (!audioLoaded) {
+      setError('Audio system not ready. Please wait.');
       return;
     }
 
@@ -83,8 +204,8 @@ export default function StrudelPage() {
       return;
     }
 
-    // Validate Strudel code before playing
-    const validation = validateStrudelCode(codeToPlay);
+    // Validate raw Tone.js code before playing (code from editor, not LLM response)
+    const validation = validateRawToneCode(codeToPlay);
     if (!validation.valid) {
       setError(`Code validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
       setValidationErrors(validation.errors.map(e => e.message));
@@ -100,11 +221,11 @@ export default function StrudelPage() {
       const errorMsg = err instanceof Error ? err.message : String(err);
       setError(`Failed to play: ${errorMsg}`);
     }
-  }, [strudelLoaded]);
+  }, [audioLoaded]);
 
   const processAssistantMessage = useCallback((fullText: string) => {
     // Use shared validator
-    const validation = validateStrudelCode(fullText);
+    const validation = validateToneCode(fullText);
     
     if (validation.valid && validation.code) {
       const newCode = validation.code;
@@ -113,7 +234,7 @@ export default function StrudelPage() {
       
       // Auto-restart if playing
       const runtime = runtimeRef.current;
-      if (runtime.getState() === 'playing' && strudelLoaded) {
+      if (runtime.getState() === 'playing' && audioLoaded) {
         playCode(newCode);
       }
     } else if (validation.code) {
@@ -125,10 +246,10 @@ export default function StrudelPage() {
       const blocks = extractCodeBlocks(fullText);
       if (blocks.length > 0) {
         setCode(blocks[0]);
-        setValidationErrors(['Code may not be valid Strudel - check for tempo and playback']);
+        setValidationErrors(['Code may not be valid Tone.js - check for Transport.start()']);
       }
     }
-  }, [strudelLoaded, playCode]);
+  }, [audioLoaded, playCode]);
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -160,13 +281,8 @@ export default function StrudelPage() {
   }, [messages, processAssistantMessage]);
 
   const initAudio = async () => {
-    if (!strudelLoaded) {
-      setError('Strudel not loaded yet. Please wait.');
-      return;
-    }
-    // Double-check that the function is actually available
-    if (typeof window === 'undefined' || typeof window.initStrudel === 'undefined') {
-      setError('Strudel library not fully initialized. Please wait a moment and try again.');
+    if (!audioLoaded) {
+      setError('Audio system not ready. Please wait.');
       return;
     }
     try {
@@ -180,8 +296,8 @@ export default function StrudelPage() {
   };
 
   const stop = () => {
-    if (!strudelLoaded) {
-      setError('Strudel not loaded yet.');
+    if (!audioLoaded) {
+      setError('Audio system not ready.');
       return;
     }
     try {
@@ -204,126 +320,6 @@ export default function StrudelPage() {
 
   return (
     <>
-      <Script
-        id="strudel-script"
-        src="https://unpkg.com/@strudel/web@latest"
-        strategy="afterInteractive"
-        onLoad={() => {
-          // Wait for Strudel library to expose its globals
-          // The @strudel/web package should expose initStrudel and hush on window
-          let attempts = 0;
-          const maxAttempts = 200; // 20 seconds max (200 * 100ms)
-          
-          const checkStrudelReady = () => {
-            if (typeof window === 'undefined') {
-              if (attempts < maxAttempts) {
-                attempts++;
-                setTimeout(checkStrudelReady, 100);
-              }
-              return;
-            }
-
-            const win = window as any;
-
-            // Check if initStrudel is available (direct global)
-            if (typeof win.initStrudel === 'function') {
-              // Also ensure hush exists
-              if (typeof win.hush !== 'function') {
-                win.hush = () => {}; // Provide a no-op if missing
-              }
-              setStrudelLoaded(true);
-              return;
-            }
-
-            // The library might expose it differently - check common patterns
-            // Pattern 1: Namespaced under strudel object
-            if (win.strudel) {
-              if (typeof win.strudel.init === 'function') {
-                win.initStrudel = win.strudel.init.bind(win.strudel);
-                win.hush = win.strudel.hush?.bind(win.strudel) || (() => {});
-                setStrudelLoaded(true);
-                return;
-              }
-              if (typeof win.strudel.initStrudel === 'function') {
-                win.initStrudel = win.strudel.initStrudel;
-                win.hush = win.strudel.hush || (() => {});
-                setStrudelLoaded(true);
-                return;
-              }
-            }
-
-            // Pattern 2: Check if Strudel code can be evaluated directly
-            // Some versions might not need initStrudel - code might work directly
-            if (attempts === 50) {
-              // After 5 seconds, try to see if we can evaluate Strudel code directly
-              try {
-                // Test if basic Strudel functions are available
-                const testEval = new Function('return typeof setcps !== "undefined" || typeof s !== "undefined"');
-                if (testEval()) {
-                  // Strudel is available but might not need initStrudel
-                  // Create a no-op initStrudel for compatibility
-                  win.initStrudel = () => {
-                    console.log('Strudel already initialized or does not require explicit init');
-                  };
-                  win.hush = win.hush || (() => {
-                    // Try to find hush function
-                    if (typeof win.hush === 'function') return win.hush;
-                    // Try to stop any playing patterns
-                    try {
-                      const hushEval = new Function('if (typeof hush === "function") hush();');
-                      hushEval();
-                    } catch (e) {
-                      // Ignore
-                    }
-                  });
-                  setStrudelLoaded(true);
-                  return;
-                }
-              } catch (e) {
-                // Continue checking
-              }
-            }
-
-            // Continue polling
-            if (attempts < maxAttempts) {
-              attempts++;
-              setTimeout(checkStrudelReady, 100);
-            } else {
-              // Final attempt: Log everything for debugging
-              const allKeys = Object.keys(win);
-              const relevantKeys = allKeys.filter(k => 
-                k.toLowerCase().includes('strudel') || 
-                k.toLowerCase().includes('init') ||
-                k === 'hush' ||
-                k.startsWith('$')
-              );
-              
-              console.error('=== Strudel Loading Debug Info ===');
-              console.error('Relevant window keys:', relevantKeys);
-              console.error('Total window keys:', allKeys.length);
-              console.error('Script src:', 'https://unpkg.com/@strudel/web@latest');
-              console.error('Attempts made:', attempts);
-              
-              // Check if script actually loaded
-              const script = document.getElementById('strudel-script');
-              console.error('Script element:', script ? 'found' : 'not found');
-              if (script) {
-                console.error('Script src attribute:', (script as HTMLScriptElement).src);
-              }
-              
-              setError(`Strudel library loaded but initStrudel function not found after ${maxAttempts} attempts. Please check the browser console for debugging information. The library may have changed its API.`);
-            }
-          };
-          
-          // Start checking after a longer delay to allow script execution and module initialization
-          setTimeout(checkStrudelReady, 500);
-        }}
-        onError={(e) => {
-          console.error('Failed to load Strudel library:', e);
-          setError('Failed to load Strudel library. Please check your internet connection and try refreshing the page.');
-        }}
-      />
-      
       <div className="flex flex-col h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
         {/* Animated background effect */}
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent opacity-50 pointer-events-none" />
@@ -362,7 +358,7 @@ export default function StrudelPage() {
               <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50 space-y-4">
                 <PlayerControls
                   playerState={playerState}
-                  strudelLoaded={strudelLoaded}
+                  audioLoaded={audioLoaded}
                   onInitAudio={initAudio}
                   onPlay={() => playCode(code)}
                   onStop={stop}
@@ -385,7 +381,7 @@ export default function StrudelPage() {
               handleSubmit={handleSubmit}
               isLoading={isLoading}
               playerState={playerState}
-              strudelLoaded={strudelLoaded}
+              audioLoaded={audioLoaded}
               initAudio={initAudio}
               playCode={() => playCode(code)}
               stop={stop}
@@ -411,7 +407,7 @@ interface MobileTabsProps {
   handleSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
   playerState: PlayerState;
-  strudelLoaded: boolean;
+  audioLoaded: boolean;
   initAudio: () => void;
   playCode: () => void;
   stop: () => void;
@@ -430,7 +426,7 @@ function MobileTabs({
   handleSubmit,
   isLoading,
   playerState,
-  strudelLoaded,
+  audioLoaded,
   initAudio,
   playCode,
   stop,
@@ -501,7 +497,7 @@ function MobileTabs({
             <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
               <PlayerControls
                 playerState={playerState}
-                strudelLoaded={strudelLoaded}
+                audioLoaded={audioLoaded}
                 onInitAudio={initAudio}
                 onPlay={playCode}
                 onStop={stop}

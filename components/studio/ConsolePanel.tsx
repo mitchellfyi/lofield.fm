@@ -1,6 +1,6 @@
 'use client';
 
-import { RuntimeEvent } from '@/lib/strudel/runtime';
+import { RuntimeEvent } from '@/lib/audio/runtime';
 
 interface ConsolePanelProps {
   events: RuntimeEvent[];

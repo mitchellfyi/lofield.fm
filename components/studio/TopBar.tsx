@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PlayerState } from '@/lib/strudel/runtime';
+import { PlayerState } from '@/lib/audio/runtime';
 
 interface TopBarProps {
   playerState: PlayerState;
@@ -69,7 +69,7 @@ export function TopBar({ playerState }: TopBarProps) {
                 <ol className="list-decimal list-inside space-y-2 text-slate-300 text-sm">
                   <li>Click "Init Audio" to initialize the audio engine</li>
                   <li>Type your prompt in the chat (e.g., "make a lofi beat at 90bpm")</li>
-                  <li>The AI will generate Strudel code for you</li>
+                  <li>The AI will generate Tone.js code for you</li>
                   <li>Click "Play" to hear your beat</li>
                   <li>Modify the code or chat again to iterate</li>
                 </ol>
@@ -90,7 +90,7 @@ export function TopBar({ playerState }: TopBarProps) {
                 <ul className="list-disc list-inside space-y-2 text-slate-300 text-sm">
                   <li>You can edit the code directly in the editor</li>
                   <li>Watch the console for events and errors</li>
-                  <li>Valid code requires a tempo (setcps) and .play() call</li>
+                  <li>Valid code requires Tone.js API calls and Transport.start()</li>
                 </ul>
               </div>
             </div>

@@ -1,7 +1,9 @@
 /**
- * StrudelRuntime - Singleton wrapper for Strudel audio engine
+ * AudioRuntime - Singleton wrapper for Tone.js audio engine
  * Manages initialization, playback state, and provides a reliable API
  */
+
+import * as Tone from 'tone';
 
 export type PlayerState = 'idle' | 'loading' | 'ready' | 'playing' | 'error';
 
@@ -12,25 +14,22 @@ export interface RuntimeEvent {
   error?: string;
 }
 
-interface StrudelGlobals {
-  initStrudel?: () => void;
-  hush?: () => void;
-}
-
 declare global {
-  interface Window extends StrudelGlobals {
-    __strudelTest?: {
+  interface Window {
+    __audioTest?: {
       getState: () => PlayerState;
       getLastEvents: () => RuntimeEvent[];
       wasInitCalled: () => boolean;
       wasPlayCalled: () => boolean;
-      wasHushCalled: () => boolean;
+      wasStopCalled: () => boolean;
     };
+    // Store cleanup function for user code
+    __toneCleanup?: () => void;
   }
 }
 
-class StrudelRuntime {
-  private static instance: StrudelRuntime | null = null;
+class AudioRuntime {
+  private static instance: AudioRuntime | null = null;
   private state: PlayerState = 'idle';
   private initialized = false;
   private events: RuntimeEvent[] = [];
@@ -38,18 +37,18 @@ class StrudelRuntime {
   private listeners = new Set<() => void>();
   private initCallCount = 0;
   private playCallCount = 0;
-  private hushCallCount = 0;
+  private stopCallCount = 0;
 
   private constructor() {
     // Private constructor for singleton
     this.exposeTestAPI();
   }
 
-  static getInstance(): StrudelRuntime {
-    if (!StrudelRuntime.instance) {
-      StrudelRuntime.instance = new StrudelRuntime();
+  static getInstance(): AudioRuntime {
+    if (!AudioRuntime.instance) {
+      AudioRuntime.instance = new AudioRuntime();
     }
-    return StrudelRuntime.instance;
+    return AudioRuntime.instance;
   }
 
   /**
@@ -60,12 +59,12 @@ class StrudelRuntime {
     if (typeof window === 'undefined') return;
     if (process.env.NEXT_PUBLIC_E2E !== '1') return;
 
-    window.__strudelTest = {
+    window.__audioTest = {
       getState: () => this.getState(),
       getLastEvents: () => this.getEvents(),
       wasInitCalled: () => this.initCallCount > 0,
       wasPlayCalled: () => this.playCallCount > 0,
-      wasHushCalled: () => this.hushCallCount > 0,
+      wasStopCalled: () => this.stopCallCount > 0,
     };
   }
 
@@ -115,7 +114,7 @@ class StrudelRuntime {
   }
 
   /**
-   * Initialize Strudel audio engine (must be called after user gesture)
+   * Initialize Tone.js audio engine (must be called after user gesture)
    */
   async init(): Promise<void> {
     if (this.initialized) {
@@ -130,13 +129,8 @@ class StrudelRuntime {
     this.notifyListeners();
 
     try {
-      // Check if Strudel is loaded
-      if (typeof window === 'undefined' || !window.initStrudel) {
-        throw new Error('Strudel library not loaded');
-      }
-
-      // Initialize Strudel
-      window.initStrudel();
+      // Start Tone.js audio context (requires user gesture)
+      await Tone.start();
       this.initCallCount++;
       this.initialized = true;
       this.state = 'ready';
@@ -159,7 +153,7 @@ class StrudelRuntime {
   }
 
   /**
-   * Play Strudel code
+   * Play Tone.js code
    */
   async play(code: string): Promise<void> {
     if (!this.initialized) {
@@ -167,17 +161,33 @@ class StrudelRuntime {
       await this.init();
     }
 
-    // Always hush before running new code
-    this.hush();
+    // Stop any currently playing code and clean up
+    this.stop();
 
     try {
       this.state = 'playing';
       this.playCallCount++;
       this.notifyListeners();
 
-      // Evaluate code using Function constructor
-      const fn = new Function(code);
-      fn();
+      // The user code should return a cleanup function that disposes synths/sequences
+      // We wrap the code to capture any cleanup function it returns
+      const playFunction = new Function(
+        'Tone',
+        `
+        // Clear any previous cleanup
+        if (window.__toneCleanup) {
+          try { window.__toneCleanup(); } catch(e) {}
+          window.__toneCleanup = undefined;
+        }
+        
+        // User code can store cleanup function in window.__toneCleanup
+        // or return it from this block
+        ${code}
+        `
+      );
+
+      // Execute the code with Tone available
+      playFunction(Tone);
 
       this.addEvent({
         type: 'eval_ok',
@@ -201,29 +211,36 @@ class StrudelRuntime {
   }
 
   /**
-   * Stop playback (hush)
+   * Stop playback
    */
   stop(): void {
-    this.hush();
-    this.state = this.initialized ? 'ready' : 'idle';
-    this.addEvent({
-      type: 'stop',
-      message: 'Stopped',
-    });
-    this.notifyListeners();
-  }
-
-  /**
-   * Internal hush helper
-   */
-  private hush(): void {
-    if (typeof window !== 'undefined' && window.hush) {
-      try {
-        this.hushCallCount++;
-        window.hush();
-      } catch (err) {
-        // Ignore hush errors
+    try {
+      this.stopCallCount++;
+      
+      // Call user's cleanup function if it exists
+      if (typeof window !== 'undefined' && window.__toneCleanup) {
+        try {
+          window.__toneCleanup();
+          window.__toneCleanup = undefined;
+        } catch (e) {
+          console.warn('Error in cleanup function:', e);
+        }
       }
+      
+      // Stop Tone.js Transport
+      Tone.Transport.stop();
+      Tone.Transport.cancel(0); // Cancel all scheduled events
+      Tone.Transport.position = 0; // Reset position
+      
+      this.state = this.initialized ? 'ready' : 'idle';
+      this.addEvent({
+        type: 'stop',
+        message: 'Stopped',
+      });
+      this.notifyListeners();
+    } catch (err) {
+      // Ignore stop errors, but log them
+      console.warn('Error stopping playback:', err);
     }
   }
 
@@ -231,18 +248,18 @@ class StrudelRuntime {
    * Reset runtime state (useful for testing or hot reload)
    */
   reset(): void {
-    this.hush();
+    this.stop();
     this.state = 'idle';
     this.initialized = false;
     this.events = [];
     this.initCallCount = 0;
     this.playCallCount = 0;
-    this.hushCallCount = 0;
+    this.stopCallCount = 0;
     this.notifyListeners();
   }
 }
 
 // Export singleton instance getter
-export function getStrudelRuntime(): StrudelRuntime {
-  return StrudelRuntime.getInstance();
+export function getAudioRuntime(): AudioRuntime {
+  return AudioRuntime.getInstance();
 }

@@ -1,10 +1,10 @@
 'use client';
 
-import { PlayerState } from '@/lib/strudel/runtime';
+import { PlayerState } from '@/lib/audio/runtime';
 
 interface PlayerControlsProps {
   playerState: PlayerState;
-  strudelLoaded: boolean;
+  audioLoaded: boolean;
   onInitAudio: () => void;
   onPlay: () => void;
   onStop: () => void;
@@ -12,13 +12,13 @@ interface PlayerControlsProps {
 
 export function PlayerControls({
   playerState,
-  strudelLoaded,
+  audioLoaded,
   onInitAudio,
   onPlay,
   onStop,
 }: PlayerControlsProps) {
   const needsInit = playerState === 'idle';
-  const canPlay = strudelLoaded && playerState !== 'loading' && playerState !== 'error';
+  const canPlay = audioLoaded && playerState !== 'loading' && playerState !== 'error';
   const isPlaying = playerState === 'playing';
 
   return (
@@ -27,7 +27,7 @@ export function PlayerControls({
         {needsInit && (
           <button
             onClick={onInitAudio}
-            disabled={!strudelLoaded}
+            disabled={!audioLoaded}
             className="px-6 py-3 rounded-lg font-semibold text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white transition-all duration-200 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 disabled:shadow-none border border-purple-500/30 disabled:border-slate-600"
           >
             Init Audio
