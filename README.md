@@ -16,6 +16,7 @@ A Next.js application for generating lofi beats through chat using Strudel live 
 3. Chat "make a lofi beat at 90bpm" to generate new code
 4. Follow-up messages tweak the same track
 
+<<<<<<< Updated upstream
 ## Audio Initialization & Known Quirks
 
 ### Reliable Strudel Player
@@ -42,3 +43,8 @@ The Strudel audio engine has been enhanced with a reliable state machine to prov
 - The runtime maintains a singleton instance to prevent multiple initializations
 - Strudel library is loaded from CDN and must complete loading before use
 
+=======
+### Use with Claude
+
+`claude  --allow-dangerously-skip-permissions   --chrome  --dangerously-skip-permissions --model opus --permission-mode dontAsk`
+>>>>>>> Stashed changes
