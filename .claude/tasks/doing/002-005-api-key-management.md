@@ -12,8 +12,8 @@
 | Completed   |                               |
 | Blocked By  | `002-004-supabase-auth-setup` |
 | Blocks      |                               |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-23 21:24` |
+| Assigned To | `worker-1`                    |
+| Assigned At | `2026-01-23 21:24`            |
 
 ---
 
@@ -50,20 +50,20 @@ Users should provide their own OpenAI API key to use the chat feature. We should
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Modal prompts user for API key if not set | no | Need to create `ApiKeyModal` component + integration with studio chat |
-| API key stored securely in Supabase | no | Need migration `002_api_keys.sql` with encrypted storage column |
-| Settings page to view/update/delete API key | no | Need `/app/settings/page.tsx` with full CRUD UI |
-| API key masked in UI (show last 4 chars only) | no | Store `key_last_4` in DB, mask in UI components |
-| API validates user's key before saving | no | Need `/app/api/validate-key/route.ts` endpoint |
-| Chat API uses user's key from database | no | Need to modify `/app/api/chat/route.ts` to fetch user key |
-| Development fallback to env key | no | Add `NODE_ENV` check in chat route |
-| Production requires user key | no | Add error response when no key in production |
-| Clear error message when key missing/invalid | no | Add error states to modal + chat panel |
-| Tests written and passing | no | Need tests for all new components/routes/services |
-| Quality gates pass | pending | Run after implementation |
-| Changes committed | pending | After quality gates pass |
+| Criterion                                     | Status  | Gap                                                                   |
+| --------------------------------------------- | ------- | --------------------------------------------------------------------- |
+| Modal prompts user for API key if not set     | no      | Need to create `ApiKeyModal` component + integration with studio chat |
+| API key stored securely in Supabase           | no      | Need migration `002_api_keys.sql` with encrypted storage column       |
+| Settings page to view/update/delete API key   | no      | Need `/app/settings/page.tsx` with full CRUD UI                       |
+| API key masked in UI (show last 4 chars only) | no      | Store `key_last_4` in DB, mask in UI components                       |
+| API validates user's key before saving        | no      | Need `/app/api/validate-key/route.ts` endpoint                        |
+| Chat API uses user's key from database        | no      | Need to modify `/app/api/chat/route.ts` to fetch user key             |
+| Development fallback to env key               | no      | Add `NODE_ENV` check in chat route                                    |
+| Production requires user key                  | no      | Add error response when no key in production                          |
+| Clear error message when key missing/invalid  | no      | Add error states to modal + chat panel                                |
+| Tests written and passing                     | no      | Need tests for all new components/routes/services                     |
+| Quality gates pass                            | pending | Run after implementation                                              |
+| Changes committed                             | pending | After quality gates pass                                              |
 
 #### Files to Create
 
@@ -191,6 +191,7 @@ Users should provide their own OpenAI API key to use the chat feature. We should
 #### Test Plan
 
 **Unit Tests:**
+
 - [ ] `lib/api-keys/__tests__/api-keys.test.ts`
   - Test `encryptApiKey` produces encrypted output
   - Test `decryptApiKey` reverses encryption
@@ -218,6 +219,7 @@ Users should provide their own OpenAI API key to use the chat feature. We should
   - Test success callback
 
 **Integration Tests (manual or E2E):**
+
 - [ ] New user flow: no key → prompt → add key → chat works
 - [ ] Existing user: has key → chat works immediately
 - [ ] Settings page: view masked key
@@ -358,6 +360,7 @@ Implementation completed following the plan. 12 commits made:
     - Added instructions for generation
 
 Files created:
+
 - `supabase/migrations/002_api_keys.sql`
 - `lib/api-keys.ts`
 - `lib/hooks/useApiKey.ts`
@@ -368,6 +371,7 @@ Files created:
 - `components/studio/ApiKeyPrompt.tsx`
 
 Files modified:
+
 - `app/api/chat/route.ts`
 - `app/studio/page.tsx`
 - `components/studio/TopBar.tsx`
@@ -379,7 +383,51 @@ Quality checks: ESLint ran on each file, no violations.
 
 ## Testing Evidence
 
-(To be filled during test phase)
+### 2026-01-23 21:37 - Testing Complete
+
+**Tests written:**
+- `lib/__tests__/api-keys.test.ts` - 28 examples
+  - Module structure exports (9 tests)
+  - Encryption/decryption (4 tests)
+  - extractLastFour (2 tests)
+  - maskApiKey (1 test)
+  - getApiKeyInfo (3 tests)
+  - getApiKey (3 tests)
+  - setApiKey (2 tests)
+  - deleteApiKey (2 tests)
+  - hasApiKey (2 tests)
+
+- `lib/hooks/__tests__/useApiKey.test.ts` - 14 examples
+  - Module structure (3 tests)
+  - Fetch behavior (6 tests)
+  - State transitions (2 tests)
+  - Refresh functionality (1 test)
+  - Error handling (2 tests)
+
+- `components/settings/__tests__/ApiKeyModal.test.ts` - 29 examples
+  - Module structure (3 tests)
+  - Validation endpoint integration (4 tests)
+  - Save endpoint integration (3 tests)
+  - Input validation behavior (2 tests)
+  - State management (2 tests)
+  - UI text content (6 tests)
+  - Error display (3 tests)
+  - Button disabled states (4 tests)
+  - Callback behavior (2 tests)
+
+**Test results:**
+- Total: 206 examples, 0 failures, 2 skipped (pre-existing)
+- All 204 passing tests
+
+**Quality gates:**
+- ESLint: PASS
+- TypeScript: PASS (fixed maxTokens type error in validate-key route)
+- Prettier: PASS (formatted all files)
+- RSpec: N/A (Next.js project uses Vitest)
+
+**Commits:**
+- `b5b3826` test: Add specs for API key management [002-005-api-key-management]
+- `7fdf187` style: Format API key management files [002-005-api-key-management]
 
 ---
 
