@@ -3,6 +3,12 @@
 :root {
   --background: #0f172a;
   --foreground: #e2e8f0;
+  
+  /* Mobile-safe viewport height - use dvh (dynamic viewport height) when available */
+  --vh: 100vh;
+  @supports (height: 100dvh) {
+    --vh: 100dvh;
+  }
 }
 
 @theme inline {
@@ -29,16 +35,6 @@ body {
   overflow: hidden;
   position: fixed;
   width: 100%;
-}
-
-/* Mobile-safe viewport height */
-:root {
-  --vh: 100vh;
-  
-  /* Use dvh (dynamic viewport height) when available - accounts for mobile browser UI */
-  @supports (height: 100dvh) {
-    --vh: 100dvh;
-  }
 }
 
 /* Global button cursor */
