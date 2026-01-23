@@ -4,13 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { PlayerState } from "@/lib/audio/runtime";
 import { PRESETS, type Preset } from "@/lib/audio/presets";
 import { WaveformVisualizer } from "./WaveformVisualizer";
+import { ModelSelector } from "./ModelSelector";
 
 interface TopBarProps {
   playerState: PlayerState;
   onLoadPreset?: (code: string) => void;
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
 }
 
-export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
+export function TopBar({ playerState, onLoadPreset, selectedModel, onModelChange }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -76,6 +79,14 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Model Selector */}
+            {selectedModel && onModelChange && (
+              <ModelSelector
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            )}
+
             {/* Demo Songs Dropdown */}
             {onLoadPreset && (
               <div className="relative z-[100]" ref={dropdownRef}>
