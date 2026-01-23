@@ -8,11 +8,9 @@ import { DEFAULT_MODEL } from "@/lib/models";
 describe("useModelSelection localStorage behavior", () => {
   const STORAGE_KEY = "lofield-selected-model";
   let mockStorage: Record<string, string>;
-  let originalWindow: typeof globalThis.window;
 
   beforeEach(() => {
     mockStorage = {};
-    originalWindow = globalThis.window;
 
     // Mock localStorage
     const localStorageMock = {
@@ -108,13 +106,13 @@ describe("useModelSelection localStorage behavior", () => {
 
 describe("useModelSelection module structure", () => {
   it("should export useModelSelection function", async () => {
-    const module = await import("../useModelSelection");
-    expect(module.useModelSelection).toBeDefined();
-    expect(typeof module.useModelSelection).toBe("function");
+    const hookModule = await import("../useModelSelection");
+    expect(hookModule.useModelSelection).toBeDefined();
+    expect(typeof hookModule.useModelSelection).toBe("function");
   });
 
   it("should be a named export", async () => {
-    const module = await import("../useModelSelection");
-    expect(Object.keys(module)).toContain("useModelSelection");
+    const hookModule = await import("../useModelSelection");
+    expect(Object.keys(hookModule)).toContain("useModelSelection");
   });
 });

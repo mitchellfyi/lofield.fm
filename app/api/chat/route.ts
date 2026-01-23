@@ -84,9 +84,7 @@ export async function POST(req: Request) {
   const { messages, model: requestedModel } = body;
 
   // Validate and select model
-  const modelName = requestedModel && isValidModel(requestedModel)
-    ? requestedModel
-    : DEFAULT_MODEL;
+  const modelName = requestedModel && isValidModel(requestedModel) ? requestedModel : DEFAULT_MODEL;
 
   // Build messages with context, filtering out invalid messages
   // The frontend may send messages with 'text' instead of 'content' or parts array

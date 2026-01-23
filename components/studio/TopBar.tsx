@@ -81,10 +81,7 @@ export function TopBar({ playerState, onLoadPreset, selectedModel, onModelChange
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Model Selector */}
             {selectedModel && onModelChange && (
-              <ModelSelector
-                selectedModel={selectedModel}
-                onModelChange={onModelChange}
-              />
+              <ModelSelector selectedModel={selectedModel} onModelChange={onModelChange} />
             )}
 
             {/* Demo Songs Dropdown */}

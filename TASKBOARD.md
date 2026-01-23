@@ -55,9 +55,9 @@ _No tasks in progress._
 
 ## ✅ Done (1)
 
-| ID        | Task                                                                                            | Completed            |
-| --------- | ----------------------------------------------------------------------------------------------- | -------------------- |
-| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/done/002-001-quality-ci-setup.md) | 2026-01-23 20:12     |
+| ID        | Task                                                                                             | Completed        |
+| --------- | ------------------------------------------------------------------------------------------------ | ---------------- |
+| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/done/002-001-quality-ci-setup.md) | 2026-01-23 20:12 |
 
 ---
 

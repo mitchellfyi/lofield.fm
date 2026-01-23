@@ -12,8 +12,8 @@
 | Completed   |                              |
 | Blocked By  |                              |
 | Blocks      |                              |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-23 20:17` |
+| Assigned To | `worker-1`                   |
+| Assigned At | `2026-01-23 20:17`           |
 
 ---
 
@@ -47,20 +47,22 @@ The app currently hardcodes `gpt-4o-mini` in the API route. Users may want to us
 ### Implementation Plan (Generated 2026-01-23 20:30)
 
 #### Gap Analysis
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Create model configuration with supported models list | NO | Need to create `lib/models.ts` with model definitions |
-| Default model is `gpt-4o-mini` | PARTIAL | API uses env var `OPENAI_MODEL` with fallback to gpt-4o-mini (route.ts:16), but no UI default |
-| Model can be selected via UI dropdown | NO | No dropdown exists in UI |
-| Selected model persists in localStorage | NO | Not implemented |
-| Model selection is passed to API route | NO | API expects model from env, not request body |
-| API validates model is in allowed list | NO | No validation currently |
-| UI shows current model name | NO | No model display in UI |
-| Tests written and passing | NO | No tests for model selection |
-| Quality gates pass | TBD | Will verify after implementation |
-| Changes committed with task reference | TBD | Will commit at end |
+
+| Criterion                                             | Status  | Gap                                                                                           |
+| ----------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| Create model configuration with supported models list | NO      | Need to create `lib/models.ts` with model definitions                                         |
+| Default model is `gpt-4o-mini`                        | PARTIAL | API uses env var `OPENAI_MODEL` with fallback to gpt-4o-mini (route.ts:16), but no UI default |
+| Model can be selected via UI dropdown                 | NO      | No dropdown exists in UI                                                                      |
+| Selected model persists in localStorage               | NO      | Not implemented                                                                               |
+| Model selection is passed to API route                | NO      | API expects model from env, not request body                                                  |
+| API validates model is in allowed list                | NO      | No validation currently                                                                       |
+| UI shows current model name                           | NO      | No model display in UI                                                                        |
+| Tests written and passing                             | NO      | No tests for model selection                                                                  |
+| Quality gates pass                                    | TBD     | Will verify after implementation                                                              |
+| Changes committed with task reference                 | TBD     | Will commit at end                                                                            |
 
 #### Files to Create
+
 1. `lib/models.ts` - Model configuration and types
    - Define `AIModel` interface with id, name, description, costTier
    - Define `MODELS` array with supported models (gpt-4o-mini, gpt-4o, gpt-4-turbo)
@@ -87,6 +89,7 @@ The app currently hardcodes `gpt-4o-mini` in the API route. Users may want to us
    - Return `[selectedModel, setSelectedModel]`
 
 #### Files to Modify
+
 1. `app/api/chat/route.ts` (lines 78-115)
    - Import model validation from `@/lib/models`
    - Extract `model` from request body (line ~80)
@@ -106,6 +109,7 @@ The app currently hardcodes `gpt-4o-mini` in the API route. Users may want to us
    - Add ModelSelector component to the bar (between presets and help)
 
 #### Test Plan
+
 - [ ] Unit: `lib/models.ts` - model validation and lookup
 - [ ] Unit: `lib/hooks/useModelSelection.ts` - localStorage mock tests
 - [ ] Integration: API route returns 400 for invalid model
@@ -114,9 +118,11 @@ The app currently hardcodes `gpt-4o-mini` in the API route. Users may want to us
 - [ ] E2E (manual): Dropdown shows models, persists selection, works with chat
 
 #### Docs to Update
+
 - None required for this task
 
 #### Implementation Order
+
 1. Create `lib/models.ts` (no dependencies)
 2. Create tests for `lib/models.ts`
 3. Update API route to accept and validate model

@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  MODELS,
-  DEFAULT_MODEL,
-  isValidModel,
-  getModelById,
-  type AIModel,
-} from "../models";
+import { MODELS, DEFAULT_MODEL, isValidModel, getModelById, type AIModel } from "../models";
 
 describe("models", () => {
   describe("MODELS", () => {
