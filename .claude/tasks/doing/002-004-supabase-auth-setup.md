@@ -294,6 +294,7 @@ The app needs persistent storage and user authentication to support features lik
 ### 2026-01-23 21:03 - Implementation Progress
 
 **Commits Made:**
+
 1. `fccd8ab` - feat: Add Supabase client infrastructure [002-004]
    - Installed @supabase/supabase-js and @supabase/ssr
    - Created lib/supabase/client.ts (browser client)
@@ -329,6 +330,7 @@ The app needs persistent storage and user authentication to support features lik
 7. `466282b` - style: Format auth components with Prettier [002-004]
 
 **Quality Checks:**
+
 - ESLint: Pass
 - TypeScript: Pass
 - Prettier: Pass
@@ -338,13 +340,55 @@ The app needs persistent storage and user authentication to support features lik
 
 ## Testing Evidence
 
-**Unit Tests:**
-- All existing tests pass (90 passed, 2 skipped)
-- Auth-related unit tests to be added in test phase
+### 2026-01-23 21:16 - Testing Complete
+
+**Tests written:**
+
+- `lib/supabase/__tests__/client.test.ts` - 6 tests
+  - Supabase client creation with env vars
+  - createBrowserClient from @supabase/ssr integration
+  - Multiple client instance handling
+  - Module structure validation
+- `lib/hooks/__tests__/useAuth.test.ts` - 10 tests
+  - useAuth hook module structure
+  - AuthProvider context exports
+  - Supabase integration (getSession, onAuthStateChange, signOut)
+  - useAuthContext error handling when used outside provider
+- `components/auth/__tests__/SignInForm.test.ts` - 11 tests
+  - Module structure validation
+  - Email validation (valid/invalid formats)
+  - OAuth provider support (GitHub, Google)
+  - Error handling for auth failures
+  - Successful login response handling
+- `components/auth/__tests__/SignUpForm.test.ts` - 16 tests
+  - Password validation (min 8 chars)
+  - Password confirmation matching
+  - Terms acceptance validation
+  - Form validation rules
+  - Supabase signUp method integration
+  - OAuth signup support
+  - Error handling and success messages
+
+**Test results:**
+
+- Total: 135 examples, 0 failures (2 skipped - pre-existing)
+- New tests: 43 examples added
+- Coverage: Auth flow fully covered with unit tests
+
+**Quality gates:**
+
+- ESLint: Pass
+- Prettier: Pass
+- TypeScript: Pass (build successful)
+- Vitest: 133 passed, 2 skipped
+
+**Commit:** `61ec3b7` - test: Add unit tests for auth components [002-004]
 
 **Manual Testing:**
-- Requires Supabase project setup for full verification
+
+- Requires Supabase project setup for full end-to-end verification
 - Code compiles without TypeScript errors
+- Build successful with Next.js 16.1.4
 
 ---
 
