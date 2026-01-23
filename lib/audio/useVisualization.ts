@@ -4,18 +4,18 @@
  * Uses useSyncExternalStore for efficient React 18+ integration
  */
 
-'use client';
+"use client";
 
-import { useSyncExternalStore, useCallback, useRef, useEffect, useState } from 'react';
+import { useSyncExternalStore, useCallback, useRef, useEffect, useState } from "react";
 import {
   getVisualizationBridge,
   TransportState,
   TriggerEvent,
   AudioAnalysisData,
-} from './visualizationBridge';
+} from "./visualizationBridge";
 
 const DEFAULT_TRANSPORT_STATE: TransportState = {
-  position: '0:0:0',
+  position: "0:0:0",
   seconds: 0,
   bpm: 120,
   playing: false,
@@ -107,9 +107,10 @@ export function useVisualizationBridge() {
 
   // Cleanup on unmount
   useEffect(() => {
+    const bridge = bridgeRef.current;
     return () => {
-      bridgeRef.current.stop();
-      bridgeRef.current.reset();
+      bridge.stop();
+      bridge.reset();
     };
   }, []);
 

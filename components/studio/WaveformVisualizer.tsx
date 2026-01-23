@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRef, useEffect, useState } from 'react';
-import { useAudioAnalysis, useTransportState } from '@/lib/audio/useVisualization';
+import { useRef, useEffect, useState, useMemo } from "react";
+import { useAudioAnalysis, useTransportState } from "@/lib/audio/useVisualization";
 
 interface WaveformVisualizerProps {
   width?: number;
@@ -13,7 +13,7 @@ interface WaveformVisualizerProps {
 export function WaveformVisualizer({
   width = 200,
   height = 40,
-  className = '',
+  className = "",
   fillContainer = false,
 }: WaveformVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,10 +23,15 @@ export function WaveformVisualizer({
   const analysis = useAudioAnalysis();
   const transport = useTransportState();
 
+  // Compute dimensions based on mode
+  const computedDimensions = useMemo(
+    () => (fillContainer ? dimensions : { width, height }),
+    [fillContainer, dimensions, width, height]
+  );
+
   // Handle resize for fill container mode
   useEffect(() => {
     if (!fillContainer) {
-      setDimensions({ width, height });
       return;
     }
 
@@ -38,18 +43,18 @@ export function WaveformVisualizer({
     };
 
     updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, [fillContainer, width, height]);
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, [fillContainer]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const { width: w, height: h } = dimensions;
+    const { width: w, height: h } = computedDimensions;
 
     // Set canvas resolution for crisp rendering
     const dpr = window.devicePixelRatio || 1;
@@ -90,26 +95,20 @@ export function WaveformVisualizer({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [dimensions, analysis, transport.playing, fillContainer]);
+  }, [computedDimensions, analysis, transport.playing, fillContainer]);
 
   if (fillContainer) {
     return (
       <div ref={containerRef} className={className}>
         <canvas
           ref={canvasRef}
-          style={{ width: dimensions.width, height: dimensions.height }}
+          style={{ width: computedDimensions.width, height: computedDimensions.height }}
         />
       </div>
     );
   }
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      style={{ width, height }}
-    />
-  );
+  return <canvas ref={canvasRef} className={className} style={{ width, height }} />;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -165,7 +164,7 @@ function drawBackgroundActive(
   midEnergy = midEnergy / 16;
 
   // Draw frequency bars across full width (behind everything)
-  drawBackgroundFFTBars(ctx, width, height, fft, bassEnergy);
+  drawBackgroundFFTBars(ctx, width, height, fft);
 
   // Draw multiple waveform layers
   const intensity = Math.min(rms * 6, 1);
@@ -184,7 +183,7 @@ function drawBackgroundActive(
   ctx.beginPath();
   ctx.strokeStyle = `rgba(34, 211, 238, ${0.25 + intensity * 0.2})`;
   ctx.lineWidth = 2;
-  ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+  ctx.shadowColor = "rgba(34, 211, 238, 0.5)";
   ctx.shadowBlur = 10 + bassEnergy * 15;
   drawBackgroundWavePath(ctx, width, height, waveform, centerY, rms, time, bassEnergy);
   ctx.stroke();
@@ -201,7 +200,16 @@ function drawBackgroundActive(
   ctx.beginPath();
   ctx.strokeStyle = `rgba(34, 211, 238, ${0.1 + midEnergy * 0.1})`;
   ctx.lineWidth = 1;
-  drawBackgroundWavePath(ctx, width, height, waveform, centerY + 8, rms * 0.5, time + 0.5, midEnergy);
+  drawBackgroundWavePath(
+    ctx,
+    width,
+    height,
+    waveform,
+    centerY + 8,
+    rms * 0.5,
+    time + 0.5,
+    midEnergy
+  );
   ctx.stroke();
 }
 
@@ -236,8 +244,7 @@ function drawBackgroundFFTBars(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  fft: Float32Array,
-  bassEnergy: number
+  fft: Float32Array
 ) {
   const barCount = 32;
   const barWidth = width / barCount;
@@ -257,14 +264,14 @@ function drawBackgroundFFTBars(
     // Top bar
     const gradientTop = ctx.createLinearGradient(x, 0, x, barHeight);
     gradientTop.addColorStop(0, `rgba(34, 211, 238, ${0.12 * shimmer * normalizedValue})`);
-    gradientTop.addColorStop(1, 'rgba(34, 211, 238, 0)');
+    gradientTop.addColorStop(1, "rgba(34, 211, 238, 0)");
     ctx.fillStyle = gradientTop;
     ctx.fillRect(x, 0, barWidth - 1, barHeight);
 
     // Bottom bar
     const gradientBottom = ctx.createLinearGradient(x, height, x, height - barHeight);
     gradientBottom.addColorStop(0, `rgba(34, 211, 238, ${0.12 * shimmer * normalizedValue})`);
-    gradientBottom.addColorStop(1, 'rgba(34, 211, 238, 0)');
+    gradientBottom.addColorStop(1, "rgba(34, 211, 238, 0)");
     ctx.fillStyle = gradientBottom;
     ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
   }
@@ -275,7 +282,7 @@ function drawIdleWave(ctx: CanvasRenderingContext2D, width: number, height: numb
   const time = Date.now() / 1000;
 
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(34, 211, 238, 0.3)';
+  ctx.strokeStyle = "rgba(34, 211, 238, 0.3)";
   ctx.lineWidth = 1.5;
 
   for (let x = 0; x < width; x++) {
@@ -329,7 +336,7 @@ function drawAudioWave(
   ctx.beginPath();
   ctx.strokeStyle = `rgba(34, 211, 238, ${0.7 + glowIntensity * 0.3})`;
   ctx.lineWidth = 2;
-  ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+  ctx.shadowColor = "rgba(34, 211, 238, 0.8)";
   ctx.shadowBlur = 8 + bassEnergy * 8;
 
   drawWavePath(ctx, width, height, waveform, centerY, rms, time, bassEnergy);

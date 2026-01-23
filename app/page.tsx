@@ -11,10 +11,11 @@ export default function Home() {
       <div className="fixed inset-0 flex items-end justify-between gap-0.5 px-2 pointer-events-none opacity-30">
         {Array.from({ length: 240 }).map((_, i) => {
           // More complex deterministic height pattern with multiple sine/cosine waves
-          const height = 30 + 
-            Math.sin(i * 0.3) * 25 + 
-            Math.cos(i * 0.7) * 20 + 
-            Math.sin(i * 1.2) * 15 + 
+          const height =
+            30 +
+            Math.sin(i * 0.3) * 25 +
+            Math.cos(i * 0.7) * 20 +
+            Math.sin(i * 1.2) * 15 +
             Math.cos(i * 0.5) * 10;
           // Add variation for animation pattern
           const pattern = i % 4;
@@ -22,10 +23,12 @@ export default function Home() {
             <div
               key={i}
               className={`waveform-bar waveform-pattern-${pattern} flex-1 bg-gradient-to-t from-cyan-500/60 via-cyan-400/40 to-transparent rounded-t`}
-              style={{
-                height: `${Math.max(20, Math.min(100, height))}%`,
-                "--index": i.toString(),
-              } as React.CSSProperties & { "--index": string }}
+              style={
+                {
+                  height: `${Math.max(20, Math.min(100, height))}%`,
+                  "--index": i.toString(),
+                } as React.CSSProperties & { "--index": string }
+              }
             />
           );
         })}

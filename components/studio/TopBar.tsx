@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { PlayerState } from '@/lib/audio/runtime';
-import { PRESETS, type Preset } from '@/lib/audio/presets';
-import { WaveformVisualizer } from './WaveformVisualizer';
+import { useState, useRef, useEffect } from "react";
+import { PlayerState } from "@/lib/audio/runtime";
+import { PRESETS, type Preset } from "@/lib/audio/presets";
+import { WaveformVisualizer } from "./WaveformVisualizer";
 
 interface TopBarProps {
   playerState: PlayerState;
@@ -22,8 +22,8 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
         setShowPresets(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSelectPreset = (preset: Preset) => {
@@ -33,16 +33,16 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
 
   const getStateColor = () => {
     switch (playerState) {
-      case 'playing':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50';
-      case 'ready':
-        return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50';
-      case 'loading':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/50';
-      case 'error':
-        return 'bg-rose-500/20 text-rose-400 border-rose-500/50';
+      case "playing":
+        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/50";
+      case "ready":
+        return "bg-cyan-500/20 text-cyan-400 border-cyan-500/50";
+      case "loading":
+        return "bg-amber-500/20 text-amber-400 border-amber-500/50";
+      case "error":
+        return "bg-rose-500/20 text-rose-400 border-rose-500/50";
       default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/50';
+        return "bg-slate-500/20 text-slate-400 border-slate-500/50";
     }
   };
 
@@ -68,7 +68,9 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
               </h1>
             </div>
 
-            <div className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${getStateColor()}`}>
+            <div
+              className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${getStateColor()}`}
+            >
               {getStateLabel()}
             </div>
           </div>
@@ -82,12 +84,32 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
                   className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
                   aria-label="Demo Songs"
                 >
-                  <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  <svg
+                    className="w-5 h-5 sm:w-4 sm:h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                    />
                   </svg>
                   <span className="hidden sm:inline">Demo Songs</span>
-                  <svg className={`w-4 h-4 hidden sm:block transition-transform ${showPresets ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <svg
+                    className={`w-4 h-4 hidden sm:block transition-transform ${showPresets ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
@@ -107,10 +129,14 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium text-cyan-100">{preset.name}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">{preset.bpm} BPM</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                              {preset.bpm} BPM
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium text-cyan-500">{preset.genre}</span>
+                            <span className="text-xs font-medium text-cyan-500">
+                              {preset.genre}
+                            </span>
                           </div>
                           <p className="text-xs text-slate-400">{preset.description}</p>
                         </button>
@@ -126,8 +152,18 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
               className="px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
               aria-label="Help"
             >
-              <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 sm:hidden"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span className="hidden sm:inline">Help</span>
             </button>
@@ -142,15 +178,17 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
             <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800">
               <h2 className="text-xl font-bold text-cyan-300">How to Use LoField Music Lab</h2>
             </div>
-            
+
             <div className="p-6 space-y-6 max-h-96 overflow-y-auto">
               <div>
                 <h3 className="text-lg font-semibold text-cyan-400 mb-2">Getting Started</h3>
                 <ol className="list-decimal list-inside space-y-2 text-slate-300 text-sm">
-                  <li>Click "Init Audio" to initialize the audio engine</li>
-                  <li>Type your prompt in the chat (e.g., "make a lofi beat at 90bpm")</li>
+                  <li>Click &ldquo;Init Audio&rdquo; to initialize the audio engine</li>
+                  <li>
+                    Type your prompt in the chat (e.g., &ldquo;make a lofi beat at 90bpm&rdquo;)
+                  </li>
                   <li>The AI will generate Tone.js code for you</li>
-                  <li>Click "Play" to hear your beat</li>
+                  <li>Click &ldquo;Play&rdquo; to hear your beat</li>
                   <li>Modify the code or chat again to iterate</li>
                 </ol>
               </div>
@@ -158,10 +196,18 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
               <div>
                 <h3 className="text-lg font-semibold text-cyan-400 mb-2">Example Prompts</h3>
                 <ul className="space-y-2 text-slate-300 text-sm">
-                  <li className="pl-4 border-l-2 border-cyan-500/30">"Create a minimal techno beat at 128 bpm"</li>
-                  <li className="pl-4 border-l-2 border-cyan-500/30">"Make a relaxed lofi beat with piano"</li>
-                  <li className="pl-4 border-l-2 border-cyan-500/30">"Add a hi-hat pattern to the current beat"</li>
-                  <li className="pl-4 border-l-2 border-cyan-500/30">"Slow down the tempo to 85 bpm"</li>
+                  <li className="pl-4 border-l-2 border-cyan-500/30">
+                    &ldquo;Create a minimal techno beat at 128 bpm&rdquo;
+                  </li>
+                  <li className="pl-4 border-l-2 border-cyan-500/30">
+                    &ldquo;Make a relaxed lofi beat with piano&rdquo;
+                  </li>
+                  <li className="pl-4 border-l-2 border-cyan-500/30">
+                    &ldquo;Add a hi-hat pattern to the current beat&rdquo;
+                  </li>
+                  <li className="pl-4 border-l-2 border-cyan-500/30">
+                    &ldquo;Slow down the tempo to 85 bpm&rdquo;
+                  </li>
                 </ul>
               </div>
 
