@@ -4,7 +4,7 @@
  */
 
 export interface ValidationError {
-  type: "no_code_block" | "multiple_code_blocks" | "missing_tone";
+  type: "no_code_block" | "multiple_code_blocks" | "missing_tone" | "syntax_error";
   message: string;
 }
 
@@ -59,6 +59,28 @@ function hasToneUsage(code: string): boolean {
 }
 
 /**
+ * Validate that code is syntactically valid JavaScript
+ * Uses Function constructor to parse without executing
+ *
+ * @param code - JavaScript code to validate
+ * @returns Object with valid boolean and optional error message
+ */
+export function validateJavaScriptSyntax(code: string): {
+  valid: boolean;
+  error?: string;
+} {
+  try {
+    // Use Function constructor to parse the code without executing it
+    // This catches syntax errors like missing brackets, invalid tokens, etc.
+    new Function(code);
+    return { valid: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { valid: false, error: message };
+  }
+}
+
+/**
  * Validate raw Tone.js code (without code block markers)
  * Used when validating code directly from the editor
  *
@@ -66,6 +88,17 @@ function hasToneUsage(code: string): boolean {
  */
 export function validateRawToneCode(code: string): ValidationResult {
   const errors: ValidationError[] = [];
+
+  // Check for JavaScript syntax errors first
+  const syntaxCheck = validateJavaScriptSyntax(code);
+  if (!syntaxCheck.valid) {
+    errors.push({
+      type: "syntax_error",
+      message: `JavaScript syntax error: ${syntaxCheck.error}`,
+    });
+    // Return early on syntax errors - other validations won't be meaningful
+    return { valid: false, code, errors };
+  }
 
   // Check for Tone.js usage
   if (!hasToneUsage(code)) {
@@ -109,6 +142,17 @@ export function validateToneCode(text: string): ValidationResult {
   }
 
   const code = parsed.codeBlocks[0];
+
+  // Check for JavaScript syntax errors
+  const syntaxCheck = validateJavaScriptSyntax(code);
+  if (!syntaxCheck.valid) {
+    errors.push({
+      type: "syntax_error",
+      message: `JavaScript syntax error: ${syntaxCheck.error}`,
+    });
+    // Return early on syntax errors - other validations won't be meaningful
+    return { valid: false, code, errors };
+  }
 
   // Check for Tone.js usage
   if (!hasToneUsage(code)) {
