@@ -205,25 +205,123 @@ export default function StrudelPage() {
   return (
     <>
       <Script
-        src="https://unpkg.com/@strudel/web@1.0.1"
+        id="strudel-script"
+        src="https://unpkg.com/@strudel/web@latest"
+        strategy="afterInteractive"
         onLoad={() => {
-          // Wait for Strudel library to actually expose its globals
-          // The script may load before the library initializes its globals
+          // Wait for Strudel library to expose its globals
+          // The @strudel/web package should expose initStrudel and hush on window
           let attempts = 0;
-          const maxAttempts = 50; // 5 seconds max (50 * 100ms)
+          const maxAttempts = 200; // 20 seconds max (200 * 100ms)
+          
           const checkStrudelReady = () => {
-            if (typeof window !== 'undefined' && typeof window.initStrudel !== 'undefined') {
+            if (typeof window === 'undefined') {
+              if (attempts < maxAttempts) {
+                attempts++;
+                setTimeout(checkStrudelReady, 100);
+              }
+              return;
+            }
+
+            const win = window as any;
+
+            // Check if initStrudel is available (direct global)
+            if (typeof win.initStrudel === 'function') {
+              // Also ensure hush exists
+              if (typeof win.hush !== 'function') {
+                win.hush = () => {}; // Provide a no-op if missing
+              }
               setStrudelLoaded(true);
-            } else if (attempts < maxAttempts) {
+              return;
+            }
+
+            // The library might expose it differently - check common patterns
+            // Pattern 1: Namespaced under strudel object
+            if (win.strudel) {
+              if (typeof win.strudel.init === 'function') {
+                win.initStrudel = win.strudel.init.bind(win.strudel);
+                win.hush = win.strudel.hush?.bind(win.strudel) || (() => {});
+                setStrudelLoaded(true);
+                return;
+              }
+              if (typeof win.strudel.initStrudel === 'function') {
+                win.initStrudel = win.strudel.initStrudel;
+                win.hush = win.strudel.hush || (() => {});
+                setStrudelLoaded(true);
+                return;
+              }
+            }
+
+            // Pattern 2: Check if Strudel code can be evaluated directly
+            // Some versions might not need initStrudel - code might work directly
+            if (attempts === 50) {
+              // After 5 seconds, try to see if we can evaluate Strudel code directly
+              try {
+                // Test if basic Strudel functions are available
+                const testEval = new Function('return typeof setcps !== "undefined" || typeof s !== "undefined"');
+                if (testEval()) {
+                  // Strudel is available but might not need initStrudel
+                  // Create a no-op initStrudel for compatibility
+                  win.initStrudel = () => {
+                    console.log('Strudel already initialized or does not require explicit init');
+                  };
+                  win.hush = win.hush || (() => {
+                    // Try to find hush function
+                    if (typeof win.hush === 'function') return win.hush;
+                    // Try to stop any playing patterns
+                    try {
+                      const hushEval = new Function('if (typeof hush === "function") hush();');
+                      hushEval();
+                    } catch (e) {
+                      // Ignore
+                    }
+                  });
+                  setStrudelLoaded(true);
+                  return;
+                }
+              } catch (e) {
+                // Continue checking
+              }
+            }
+
+            // Continue polling
+            if (attempts < maxAttempts) {
               attempts++;
               setTimeout(checkStrudelReady, 100);
             } else {
-              setError('Strudel library loaded but initStrudel not available');
+              // Final attempt: Log everything for debugging
+              const allKeys = Object.keys(win);
+              const relevantKeys = allKeys.filter(k => 
+                k.toLowerCase().includes('strudel') || 
+                k.toLowerCase().includes('init') ||
+                k === 'hush' ||
+                k.startsWith('$')
+              );
+              
+              console.error('=== Strudel Loading Debug Info ===');
+              console.error('Relevant window keys:', relevantKeys);
+              console.error('Total window keys:', allKeys.length);
+              console.error('Script src:', 'https://unpkg.com/@strudel/web@latest');
+              console.error('Attempts made:', attempts);
+              
+              // Check if script actually loaded
+              const script = document.getElementById('strudel-script');
+              console.error('Script element:', script ? 'found' : 'not found');
+              if (script) {
+                console.error('Script src attribute:', (script as HTMLScriptElement).src);
+              }
+              
+              setError(`Strudel library loaded but initStrudel function not found after ${maxAttempts} attempts. Please check the browser console for debugging information. The library may have changed its API.`);
             }
           };
-          checkStrudelReady();
+          
+          // Start checking after a longer delay to allow script execution and module initialization
+          setTimeout(checkStrudelReady, 500);
         }}
-        onError={() => setError('Failed to load Strudel library')}
+        onError={(e) => {
+          console.error('Failed to load Strudel library:', e);
+          setError('Failed to load Strudel library. Please check your internet connection and try refreshing the page.');
+        }}
       />
       
       <div className="flex flex-col h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
