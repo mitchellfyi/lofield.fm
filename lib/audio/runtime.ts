@@ -4,6 +4,8 @@
  */
 
 import * as Tone from 'tone';
+import { getVisualizationBridge } from './visualizationBridge';
+import { wrapCodeForVisualization } from './codeTransformer';
 
 export type PlayerState = 'idle' | 'loading' | 'ready' | 'playing' | 'error';
 
@@ -171,6 +173,14 @@ class AudioRuntime {
     // Stop any currently playing code and clean up
     this.stop();
 
+    // Start visualization bridge
+    const vizBridge = getVisualizationBridge();
+    vizBridge.reset();
+    vizBridge.start();
+
+    // Transform code to inject visualization triggers
+    const instrumentedCode = wrapCodeForVisualization(code);
+
     try {
       this.state = 'playing';
       this.playCallCount++;
@@ -188,8 +198,8 @@ class AudioRuntime {
             // If it's a constructor (starts with capital letter), wrap it to track instances
             if (typeof value === 'function' && /^[A-Z]/.test(prop)) {
               return new Proxy(value, {
-                construct(constructorTarget, args) {
-                  const instance = new (constructorTarget as new (...args: unknown[]) => unknown)(...args);
+                construct(constructorTarget, args): object {
+                  const instance = new (constructorTarget as new (...args: unknown[]) => object)(...args);
                   // Track anything with a dispose method
                   if (instance && typeof (instance as { dispose?: () => void }).dispose === 'function') {
                     disposables.push(instance as { dispose: () => void });
@@ -208,7 +218,7 @@ class AudioRuntime {
       // Build the play function - user code gets the tracked Tone object
       const playFunction = new Function(
         'Tone',
-        code
+        instrumentedCode
       );
 
       // Execute the code with tracked Tone
@@ -258,7 +268,11 @@ class AudioRuntime {
   stop(): void {
     try {
       this.stopCallCount++;
-      
+
+      // Stop visualization bridge
+      const vizBridge = getVisualizationBridge();
+      vizBridge.stop();
+
       // Call user's cleanup function if it exists
       if (typeof window !== 'undefined' && window.__toneCleanup) {
         try {

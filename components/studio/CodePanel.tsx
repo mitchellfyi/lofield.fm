@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
+import { useState, useEffect, useRef } from 'react';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from '@codemirror/view';
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
+import { useActiveLines } from '@/lib/audio/useVisualization';
+import {
+  activeLinesField,
+  activeLinesPlugin,
+  visualizationTheme,
+  setActiveLines,
+} from '@/lib/codemirror/visualizationExtension';
 
 interface CodePanelProps {
   code: string;
@@ -96,6 +103,18 @@ const customTheme = EditorView.theme({
 
 export function CodePanel({ code, onChange, validationErrors, defaultCode, liveMode = true, onLiveModeChange }: CodePanelProps) {
   const [copied, setCopied] = useState(false);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const activeLines = useActiveLines();
+
+  // Sync active lines from visualization bridge to CodeMirror
+  useEffect(() => {
+    const view = editorRef.current?.view;
+    if (view) {
+      view.dispatch({
+        effects: setActiveLines.of(activeLines),
+      });
+    }
+  }, [activeLines]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code);
@@ -146,13 +165,18 @@ export function CodePanel({ code, onChange, validationErrors, defaultCode, liveM
       <div className="flex-1 relative bg-slate-900 min-h-0 overflow-hidden">
         <div className="absolute inset-0 overflow-auto">
           <CodeMirror
+            ref={editorRef}
             value={code}
             onChange={onChange}
             extensions={[
               javascript({ jsx: false }),
               customTheme,
               syntaxHighlight,
-              EditorView.lineWrapping
+              EditorView.lineWrapping,
+              // Visualization extensions for line highlighting
+              activeLinesField,
+              activeLinesPlugin,
+              visualizationTheme,
             ]}
             basicSetup={{
               lineNumbers: true,

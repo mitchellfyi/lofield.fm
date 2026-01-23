@@ -1,6 +1,7 @@
 'use client';
 
 import { PlayerState } from '@/lib/audio/runtime';
+import { TimelineBar } from './TimelineBar';
 
 interface PlayerControlsProps {
   playerState: PlayerState;
@@ -66,13 +67,8 @@ export function PlayerControls({
         </button>
       </div>
 
-      {/* Tempo Display (placeholder for now) */}
-      <div className="px-4 py-2 rounded-lg bg-slate-900/50 border border-cyan-500/20 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Tempo</span>
-          <span className="text-sm font-mono text-slate-300">— BPM</span>
-        </div>
-      </div>
+      {/* Timeline Visualization */}
+      <TimelineBar />
     </div>
   );
 }
