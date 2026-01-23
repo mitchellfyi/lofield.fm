@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const pop: Preset = {
-  id: 'pop',
-  name: 'Sunlight',
-  genre: 'Pop',
+  id: "pop",
+  name: "Sunlight",
+  genre: "Pop",
   bpm: 118,
-  description: 'Radio-ready pop with acoustic guitar, bright piano, and polished drums',
+  description: "Radio-ready pop with acoustic guitar, bright piano, and polished drums",
   code: `// ═══════════════════════════════════════════════════════════
 // Sunlight - 32-bar Pop Production
 // Sections: A(intro) B(verse) C(chorus) D(bridge)
@@ -301,5 +301,5 @@ const leadPat = new Tone.Sequence((t, n) => {
   "G4", null, null, null, "D4", null, "G4", null, "B4", null, "D5", null, "G5", null, null, null
 ], "8n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

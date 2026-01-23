@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `003-003-export-options` |
-| Status | `todo` |
-| Priority | `003` Medium |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                    |
+| ----------- | ------------------------ |
+| ID          | `003-003-export-options` |
+| Status      | `todo`                   |
+| Priority    | `003` Medium             |
+| Created     | `2026-01-23 12:00`       |
+| Started     |                          |
+| Completed   |                          |
+| Blocked By  |                          |
+| Blocks      |                          |
+| Assigned To |                          |
+| Assigned At |                          |
 
 ---
 

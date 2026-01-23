@@ -35,6 +35,7 @@ You are planning the implementation for task {{TASK_ID}}.
 ## Output
 
 Update the task file's Plan section with detailed implementation steps:
+
 ```
 ### Implementation Plan (Generated {{TIMESTAMP}})
 

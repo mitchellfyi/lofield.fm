@@ -6,14 +6,8 @@
  * - Visual feedback synchronized with audio playback
  */
 
-import {
-  EditorView,
-  Decoration,
-  DecorationSet,
-  ViewPlugin,
-  ViewUpdate,
-} from '@codemirror/view';
-import { StateField, StateEffect, RangeSetBuilder } from '@codemirror/state';
+import { EditorView, Decoration, DecorationSet, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import { StateField, StateEffect, RangeSetBuilder } from "@codemirror/state";
 
 // ─────────────────────────────────────────────────────────────
 // State Effect to update active lines from outside CodeMirror
@@ -45,7 +39,7 @@ export const activeLinesField = StateField.define<Set<number>>({
 // ─────────────────────────────────────────────────────────────
 
 const activeLineDecoration = Decoration.line({
-  class: 'cm-active-trigger-line',
+  class: "cm-active-trigger-line",
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -98,15 +92,15 @@ export const activeLinesPlugin = ViewPlugin.fromClass(
 // ─────────────────────────────────────────────────────────────
 
 export const visualizationTheme = EditorView.theme({
-  '.cm-active-trigger-line': {
-    backgroundColor: 'rgba(34, 211, 238, 0.15)', // cyan-500/15
-    borderLeft: '2px solid rgba(34, 211, 238, 0.6)',
-    marginLeft: '-2px',
-    transition: 'background-color 100ms ease-out, border-color 100ms ease-out',
+  ".cm-active-trigger-line": {
+    backgroundColor: "rgba(34, 211, 238, 0.15)", // cyan-500/15
+    borderLeft: "2px solid rgba(34, 211, 238, 0.6)",
+    marginLeft: "-2px",
+    transition: "background-color 100ms ease-out, border-color 100ms ease-out",
   },
   // When combined with cursor line
-  '.cm-active-trigger-line.cm-activeLine': {
-    backgroundColor: 'rgba(34, 211, 238, 0.25)', // cyan-500/25
+  ".cm-active-trigger-line.cm-activeLine": {
+    backgroundColor: "rgba(34, 211, 238, 0.25)", // cyan-500/25
   },
 });
 
@@ -114,8 +108,4 @@ export const visualizationTheme = EditorView.theme({
 // Combined extension for easy import
 // ─────────────────────────────────────────────────────────────
 
-export const visualizationExtension = [
-  activeLinesField,
-  activeLinesPlugin,
-  visualizationTheme,
-];
+export const visualizationExtension = [activeLinesField, activeLinesPlugin, visualizationTheme];

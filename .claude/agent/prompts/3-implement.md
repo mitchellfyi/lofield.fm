@@ -34,6 +34,7 @@ You are implementing task {{TASK_ID}} according to the plan.
 ## Output
 
 For each step completed, add to Work Log:
+
 ```
 ### {{TIMESTAMP}} - Implementation Progress
 

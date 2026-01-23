@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const ambientChill: Preset = {
-  id: 'ambient-chill',
-  name: 'Floating',
-  genre: 'Ambient',
+  id: "ambient-chill",
+  name: "Floating",
+  genre: "Ambient",
   bpm: 70,
-  description: 'Ethereal soundscapes with gentle pulses',
+  description: "Ethereal soundscapes with gentle pulses",
   code: `// ═══════════════════════════════════════════════════════════
 // Floating - 32-bar Ambient Soundscape
 // Sections: A(sparse) B(build) C(full) D(fade)
@@ -250,5 +250,5 @@ const arpPat = new Tone.Sequence((t, n) => {
   null, null, null, null, "G3", null, "B3", null, "D4", null, "G4", null, "F#4", null, "D4", null
 ], "8n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

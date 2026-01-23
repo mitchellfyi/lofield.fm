@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const darkTechno: Preset = {
-  id: 'dark-techno',
-  name: 'Warehouse',
-  genre: 'Dark Techno',
+  id: "dark-techno",
+  name: "Warehouse",
+  genre: "Dark Techno",
   bpm: 132,
-  description: 'Hypnotic dark techno with industrial textures',
+  description: "Hypnotic dark techno with industrial textures",
   code: `// ═══════════════════════════════════════════════════════════
 // Warehouse - 32-bar Dark Techno
 // Sections: A(intro) B(build) C(peak) D(breakdown)
@@ -259,5 +259,5 @@ const noisePat = new Tone.Sequence((t, v) => {
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
 ], "2n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

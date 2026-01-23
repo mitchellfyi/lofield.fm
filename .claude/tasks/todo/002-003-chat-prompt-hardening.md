@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `002-003-chat-prompt-hardening` |
-| Status | `todo` |
-| Priority | `002` High |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                           |
+| ----------- | ------------------------------- |
+| ID          | `002-003-chat-prompt-hardening` |
+| Status      | `todo`                          |
+| Priority    | `002` High                      |
+| Created     | `2026-01-23 12:00`              |
+| Started     |                                 |
+| Completed   |                                 |
+| Blocked By  |                                 |
+| Blocks      |                                 |
+| Assigned To |                                 |
+| Assigned At |                                 |
 
 ---
 

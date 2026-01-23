@@ -1,7 +1,7 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from "fs";
+import { join } from "path";
 
-const PROMPTS_DIR = join(process.cwd(), 'prompts');
+const PROMPTS_DIR = join(process.cwd(), "prompts");
 
 /**
  * Load a prompt from a markdown file
@@ -10,21 +10,21 @@ const PROMPTS_DIR = join(process.cwd(), 'prompts');
  */
 export function loadPrompt(filename: string): string {
   const filePath = join(PROMPTS_DIR, filename);
-  return readFileSync(filePath, 'utf-8').trim();
+  return readFileSync(filePath, "utf-8").trim();
 }
 
 /**
  * Load the system prompt
  */
 export function loadSystemPrompt(): string {
-  return loadPrompt('system-prompt.md');
+  return loadPrompt("system-prompt.md");
 }
 
 /**
  * Load the retry prompt template
  */
 export function loadRetryPromptTemplate(): string {
-  return loadPrompt('retry-prompt.md');
+  return loadPrompt("retry-prompt.md");
 }
 
 /**
@@ -34,6 +34,6 @@ export function loadRetryPromptTemplate(): string {
  */
 export function buildRetryPrompt(errors: string[]): string {
   const template = loadRetryPromptTemplate();
-  const errorMessages = errors.map(e => `- ${e}`).join('\n');
-  return template.replace('{{ERRORS}}', errorMessages);
+  const errorMessages = errors.map((e) => `- ${e}`).join("\n");
+  return template.replace("{{ERRORS}}", errorMessages);
 }

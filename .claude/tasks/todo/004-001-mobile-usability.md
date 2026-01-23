@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `004-001-mobile-usability` |
-| Status | `todo` |
-| Priority | `004` Low |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                      |
+| ----------- | -------------------------- |
+| ID          | `004-001-mobile-usability` |
+| Status      | `todo`                     |
+| Priority    | `004` Low                  |
+| Created     | `2026-01-23 12:00`         |
+| Started     |                            |
+| Completed   |                            |
+| Blocked By  |                            |
+| Blocks      |                            |
+| Assigned To |                            |
+| Assigned At |                            |
 
 ---
 

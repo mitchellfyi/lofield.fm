@@ -1,18 +1,18 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // Mock Tone.js before importing the bridge
-vi.mock('tone', () => ({
+vi.mock("tone", () => ({
   Transport: {
-    state: 'stopped',
-    position: '0:0:0',
+    state: "stopped",
+    position: "0:0:0",
     seconds: 0,
     bpm: { value: 120 },
   },
 }));
 
-import { getVisualizationBridge } from '../visualizationBridge';
+import { getVisualizationBridge } from "../visualizationBridge";
 
-describe('VisualizationBridge', () => {
+describe("VisualizationBridge", () => {
   let bridge: ReturnType<typeof getVisualizationBridge>;
 
   beforeEach(() => {
@@ -25,16 +25,16 @@ describe('VisualizationBridge', () => {
     bridge.reset();
   });
 
-  describe('singleton', () => {
-    it('should return the same instance', () => {
+  describe("singleton", () => {
+    it("should return the same instance", () => {
       const bridge1 = getVisualizationBridge();
       const bridge2 = getVisualizationBridge();
       expect(bridge1).toBe(bridge2);
     });
   });
 
-  describe('transport state', () => {
-    it('should have default transport state', () => {
+  describe("transport state", () => {
+    it("should have default transport state", () => {
       const state = bridge.getTransportSnapshot();
       expect(state.bpm).toBe(120);
       expect(state.playing).toBe(false);
@@ -43,18 +43,18 @@ describe('VisualizationBridge', () => {
     });
   });
 
-  describe('trigger events', () => {
-    it('should emit trigger events', () => {
-      bridge.emitTrigger(42, 'C4', 'note');
+  describe("trigger events", () => {
+    it("should emit trigger events", () => {
+      bridge.emitTrigger(42, "C4", "note");
 
       const activeLines = bridge.getActiveLinesSnapshot();
       expect(activeLines.has(42)).toBe(true);
     });
 
-    it('should track multiple active lines', () => {
-      bridge.emitTrigger(10, 'C4', 'note');
-      bridge.emitTrigger(20, 'E4', 'note');
-      bridge.emitTrigger(30, 'G4', 'note');
+    it("should track multiple active lines", () => {
+      bridge.emitTrigger(10, "C4", "note");
+      bridge.emitTrigger(20, "E4", "note");
+      bridge.emitTrigger(30, "G4", "note");
 
       const activeLines = bridge.getActiveLinesSnapshot();
       expect(activeLines.has(10)).toBe(true);
@@ -63,18 +63,18 @@ describe('VisualizationBridge', () => {
       expect(activeLines.size).toBe(3);
     });
 
-    it('should notify trigger listeners when trigger is emitted', () => {
+    it("should notify trigger listeners when trigger is emitted", () => {
       const listener = vi.fn();
       const unsubscribe = bridge.subscribeTriggers(listener);
 
-      bridge.emitTrigger(42, 'C4', 'note');
+      bridge.emitTrigger(42, "C4", "note");
 
       expect(listener).toHaveBeenCalled();
       unsubscribe();
     });
 
-    it('should clear active lines on reset', () => {
-      bridge.emitTrigger(42, 'C4', 'note');
+    it("should clear active lines on reset", () => {
+      bridge.emitTrigger(42, "C4", "note");
       expect(bridge.getActiveLinesSnapshot().has(42)).toBe(true);
 
       bridge.reset();
@@ -83,29 +83,29 @@ describe('VisualizationBridge', () => {
     });
   });
 
-  describe('subscriptions', () => {
-    it('should allow subscribing to transport state', () => {
+  describe("subscriptions", () => {
+    it("should allow subscribing to transport state", () => {
       const listener = vi.fn();
       const unsubscribe = bridge.subscribeTransport(listener);
 
-      expect(typeof unsubscribe).toBe('function');
+      expect(typeof unsubscribe).toBe("function");
       unsubscribe();
     });
 
-    it('should allow subscribing to triggers', () => {
+    it("should allow subscribing to triggers", () => {
       const listener = vi.fn();
       const unsubscribe = bridge.subscribeTriggers(listener);
 
-      expect(typeof unsubscribe).toBe('function');
+      expect(typeof unsubscribe).toBe("function");
       unsubscribe();
     });
 
-    it('should unsubscribe correctly', () => {
+    it("should unsubscribe correctly", () => {
       const listener = vi.fn();
       const unsubscribe = bridge.subscribeTriggers(listener);
 
       unsubscribe();
-      bridge.emitTrigger(42, 'C4', 'note');
+      bridge.emitTrigger(42, "C4", "note");
 
       // Should only be called once (from before unsubscribe)
       // Actually it shouldn't be called at all since we unsubscribed before emitting
@@ -114,16 +114,16 @@ describe('VisualizationBridge', () => {
   });
 
   // Skip window tests in Node.js (no window object)
-  describe.skipIf(typeof globalThis.window === 'undefined')('global trigger function', () => {
-    it('should expose window.__vizTrigger', () => {
-      expect(typeof window.__vizTrigger).toBe('function');
+  describe.skipIf(typeof globalThis.window === "undefined")("global trigger function", () => {
+    it("should expose window.__vizTrigger", () => {
+      expect(typeof window.__vizTrigger).toBe("function");
     });
 
-    it('should emit trigger when window.__vizTrigger is called', () => {
+    it("should emit trigger when window.__vizTrigger is called", () => {
       const listener = vi.fn();
       bridge.subscribeTriggers(listener);
 
-      window.__vizTrigger?.(99, 'D4', 'note');
+      window.__vizTrigger?.(99, "D4", "note");
 
       const activeLines = bridge.getActiveLinesSnapshot();
       expect(activeLines.has(99)).toBe(true);

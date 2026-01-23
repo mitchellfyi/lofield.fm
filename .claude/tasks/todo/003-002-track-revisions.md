@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `003-002-track-revisions` |
-| Status | `todo` |
-| Priority | `003` Medium |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | `003-001-save-tracks-db` |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                     |
+| ----------- | ------------------------- |
+| ID          | `003-002-track-revisions` |
+| Status      | `todo`                    |
+| Priority    | `003` Medium              |
+| Created     | `2026-01-23 12:00`        |
+| Started     |                           |
+| Completed   |                           |
+| Blocked By  | `003-001-save-tracks-db`  |
+| Blocks      |                           |
+| Assigned To |                           |
+| Assigned At |                           |
 
 ---
 

@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `003-009-session-cost-controls` |
-| Status | `todo` |
-| Priority | `003` Medium |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | `002-004-supabase-auth-setup` |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                           |
+| ----------- | ------------------------------- |
+| ID          | `003-009-session-cost-controls` |
+| Status      | `todo`                          |
+| Priority    | `003` Medium                    |
+| Created     | `2026-01-23 12:00`              |
+| Started     |                                 |
+| Completed   |                                 |
+| Blocked By  | `002-004-supabase-auth-setup`   |
+| Blocks      |                                 |
+| Assigned To |                                 |
+| Assigned At |                                 |
 
 ---
 

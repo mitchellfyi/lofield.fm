@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `002-005-api-key-management` |
-| Status | `todo` |
-| Priority | `002` High |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | `002-004-supabase-auth-setup` |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                         |
+| ----------- | ----------------------------- |
+| ID          | `002-005-api-key-management`  |
+| Status      | `todo`                        |
+| Priority    | `002` High                    |
+| Created     | `2026-01-23 12:00`            |
+| Started     |                               |
+| Completed   |                               |
+| Blocked By  | `002-004-supabase-auth-setup` |
+| Blocks      |                               |
+| Assigned To |                               |
+| Assigned At |                               |
 
 ---
 

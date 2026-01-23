@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const deepHouse: Preset = {
-  id: 'deep-house',
-  name: 'Sunset Drive',
-  genre: 'Deep House',
+  id: "deep-house",
+  name: "Sunset Drive",
+  genre: "Deep House",
   bpm: 122,
-  description: 'Groovy four-on-floor with warm pads and funky bass',
+  description: "Groovy four-on-floor with warm pads and funky bass",
   code: `// ═══════════════════════════════════════════════════════════
 // Sunset Drive - 32-bar Deep House arrangement
 // Sections: A(intro) B(build) C(drop) D(breakdown)
@@ -295,5 +295,5 @@ const arpPat = new Tone.Sequence((t, n) => {
   "Ab4", "C5", "Eb5", "C5", "Ab4", "C5", "Eb5", "C5", "Ab4", "C5", "Eb5", "C5", "G5", "Eb5", "C5", "Ab4"
 ], "16n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

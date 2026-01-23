@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const rock: Preset = {
-  id: 'rock',
-  name: 'Overdrive',
-  genre: 'Rock',
+  id: "rock",
+  name: "Overdrive",
+  genre: "Rock",
   bpm: 128,
-  description: 'Distorted power chords with tight punchy drums and lead guitar fills',
+  description: "Distorted power chords with tight punchy drums and lead guitar fills",
   code: `// ═══════════════════════════════════════════════════════════
 // Overdrive - 32-bar Rock Production
 // Sections: A(intro) B(verse) C(chorus) D(breakdown)
@@ -285,5 +285,5 @@ const padPat = new Tone.Sequence((t, c) => {
   ["B2", "F#3"], null, null, null, null, null, null, null
 ], "2n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

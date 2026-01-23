@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const lofiChill: Preset = {
-  id: 'lofi-chill',
-  name: 'Midnight Lofi',
-  genre: 'Lofi Hip-Hop',
+  id: "lofi-chill",
+  name: "Midnight Lofi",
+  genre: "Lofi Hip-Hop",
   bpm: 82,
-  description: 'Chill jazzy beats with Rhodes and vinyl warmth',
+  description: "Chill jazzy beats with Rhodes and vinyl warmth",
   code: `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
 // Sections: A(intro) B(build) C(full) D(breakdown)
@@ -222,5 +222,5 @@ const padPat = new Tone.Sequence((t, c) => {
   ["G4", "D5"], null, null, null, ["G4", "B4", "D5"], null, null, null
 ], "2n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `003-001-save-tracks-db` |
-| Status | `todo` |
-| Priority | `003` Medium |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | `002-004-supabase-auth-setup` |
-| Blocks | `003-002-track-revisions`, `003-004-shareable-links` |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                                                |
+| ----------- | ---------------------------------------------------- |
+| ID          | `003-001-save-tracks-db`                             |
+| Status      | `todo`                                               |
+| Priority    | `003` Medium                                         |
+| Created     | `2026-01-23 12:00`                                   |
+| Started     |                                                      |
+| Completed   |                                                      |
+| Blocked By  | `002-004-supabase-auth-setup`                        |
+| Blocks      | `003-002-track-revisions`, `003-004-shareable-links` |
+| Assigned To |                                                      |
+| Assigned At |                                                      |
 
 ---
 

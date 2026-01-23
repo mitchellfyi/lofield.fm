@@ -38,6 +38,7 @@ You are verifying that task {{TASK_ID}} was managed correctly through all phases
 
 6. **Commit Task Files**
    After finalizing task state, commit ALL task-related changes:
+
    ```bash
    # Regenerate taskboard
    .claude/scripts/taskboard.sh
@@ -46,11 +47,13 @@ You are verifying that task {{TASK_ID}} was managed correctly through all phases
    git add .claude/tasks/ TASKBOARD.md
    git commit -m "chore: Complete task {{TASK_ID}} [{{TASK_ID}}]" || true
    ```
+
    This ensures task progress is tracked in git history.
 
 ## Output
 
 Update task Work Log:
+
 ```
 ### {{TIMESTAMP}} - Verification Complete
 

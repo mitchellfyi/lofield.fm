@@ -1,22 +1,19 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI } from "@ai-sdk/openai";
 
 // Explicitly configure OpenAI with API key from environment
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-import { streamText, type ModelMessage } from 'ai';
-import { validateToneCode } from '@/lib/audio/llmContract';
-import { loadSystemPrompt, buildRetryPrompt } from '@/lib/prompts/loader';
+import { streamText, type ModelMessage } from "ai";
+import { validateToneCode } from "@/lib/audio/llmContract";
+import { loadSystemPrompt, buildRetryPrompt } from "@/lib/prompts/loader";
 
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
 
 const MAX_RETRIES = 2;
 
-async function generateWithValidation(
-  messages: ModelMessage[], 
-  retryCount = 0
-): Promise<Response> {
-  const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+async function generateWithValidation(messages: ModelMessage[], retryCount = 0): Promise<Response> {
+  const modelName = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const systemPrompt = loadSystemPrompt();
   const result = streamText({
     model: openai(modelName),
@@ -29,7 +26,7 @@ async function generateWithValidation(
   // (usually < 1KB), this is acceptable. The streaming experience is preserved for the
   // client, and validation happens after the stream completes.
   const reader = result.textStream.getReader();
-  let fullText = '';
+  let fullText = "";
   const chunks: string[] = [];
 
   // Read the entire stream
@@ -45,14 +42,14 @@ async function generateWithValidation(
 
   if (!validation.valid && retryCount < MAX_RETRIES) {
     // Build retry prompt with validation errors
-    const errorMessages = validation.errors.map(e => e.message);
+    const errorMessages = validation.errors.map((e) => e.message);
     const retryPrompt = buildRetryPrompt(errorMessages);
-    
+
     // Add the failed attempt and retry prompt to messages
     const newMessages: ModelMessage[] = [
       ...messages,
-      { role: 'assistant', content: fullText },
-      { role: 'user', content: retryPrompt }
+      { role: "assistant", content: fullText },
+      { role: "user", content: retryPrompt },
     ];
 
     // Retry recursively
@@ -66,15 +63,15 @@ async function generateWithValidation(
         controller.enqueue(new TextEncoder().encode(chunk));
       }
       controller.close();
-    }
+    },
   });
 
   return new Response(stream, {
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Validation-Status': validation.valid ? 'valid' : 'invalid',
-      'X-Retry-Count': retryCount.toString()
-    }
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Validation-Status": validation.valid ? "valid" : "invalid",
+      "X-Retry-Count": retryCount.toString(),
+    },
   });
 }
 
@@ -96,21 +93,22 @@ export async function POST(req: Request) {
 
       // Try to extract from parts array (UIMessage format)
       if (!content && Array.isArray(msg.parts)) {
-        const textParts = msg.parts.filter((p: Record<string, unknown>) => p.type === 'text');
-        content = textParts.map((p: Record<string, unknown>) => p.text).join('\n');
+        const textParts = msg.parts.filter((p: Record<string, unknown>) => p.type === "text");
+        content = textParts.map((p: Record<string, unknown>) => p.text).join("\n");
       }
 
       return {
-        role: msg.role as 'user' | 'assistant',
-        content: content as string
+        role: msg.role as "user" | "assistant",
+        content: content as string,
       };
     })
-    .filter((msg: { role: string; content: string }) =>
-      typeof msg.content === 'string' && msg.content.trim() !== ''
+    .filter(
+      (msg: { role: string; content: string }) =>
+        typeof msg.content === "string" && msg.content.trim() !== ""
     ) as ModelMessage[];
 
   if (contextMessages.length === 0) {
-    return new Response('No valid messages provided', { status: 400 });
+    return new Response("No valid messages provided", { status: 400 });
   }
 
   return generateWithValidation(contextMessages);

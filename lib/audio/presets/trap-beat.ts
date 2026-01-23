@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const trapBeat: Preset = {
-  id: 'trap-beat',
-  name: 'Midnight Trap',
-  genre: 'Trap',
+  id: "trap-beat",
+  name: "Midnight Trap",
+  genre: "Trap",
   bpm: 140,
-  description: 'Hard-hitting 808s with rapid hi-hats',
+  description: "Hard-hitting 808s with rapid hi-hats",
   code: `// ═══════════════════════════════════════════════════════════
 // Midnight Trap - 32-bar arrangement
 // Sections: A(intro) B(build) C(drop) D(outro)
@@ -256,5 +256,5 @@ const arpPat = new Tone.Sequence((t, n) => {
   "A3", "C4", "E4", "A4", "E4", "C4", "A3", "E4", "A3", "C4", "E4", "A4", "C5", "A4", "E4", "C4"
 ], "16n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

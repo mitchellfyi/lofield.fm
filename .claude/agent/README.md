@@ -64,14 +64,14 @@ Tasks are markdown files with this structure:
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `001-001-task-name` |
-| Status | `todo` |
-| Priority | `002` High |
-| Created | `2024-01-15` |
-| Blocked By | |
-| Blocks | |
+| Field      | Value               |
+| ---------- | ------------------- |
+| ID         | `001-001-task-name` |
+| Status     | `todo`              |
+| Priority   | `002` High          |
+| Created    | `2024-01-15`        |
+| Blocked By |                     |
+| Blocks     |                     |
 
 ---
 
@@ -109,13 +109,13 @@ Tasks are markdown files with this structure:
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_MODEL` | `opus` | Model to use (opus, sonnet) |
-| `AGENT_DRY_RUN` | `0` | Preview without executing |
-| `AGENT_PROGRESS` | `1` | Show progress updates |
-| `AGENT_QUIET` | `0` | Disable all output |
-| `AGENT_NAME` | `agent-$$` | Agent identifier (for parallel runs) |
+| Variable         | Default    | Description                          |
+| ---------------- | ---------- | ------------------------------------ |
+| `CLAUDE_MODEL`   | `opus`     | Model to use (opus, sonnet)          |
+| `AGENT_DRY_RUN`  | `0`        | Preview without executing            |
+| `AGENT_PROGRESS` | `1`        | Show progress updates                |
+| `AGENT_QUIET`    | `0`        | Disable all output                   |
+| `AGENT_NAME`     | `agent-$$` | Agent identifier (for parallel runs) |
 
 ## Parallel Execution
 
@@ -165,28 +165,31 @@ If the primary model hits rate limits, the agent automatically falls back to son
 
 Each phase has a timeout to prevent hanging:
 
-| Phase | Timeout |
-|-------|---------|
-| TRIAGE | 120s |
-| PLAN | 300s |
-| IMPLEMENT | 600s |
-| TEST | 600s |
-| DOCS | 300s |
-| REVIEW | 600s |
-| VERIFY | 180s |
+| Phase     | Timeout |
+| --------- | ------- |
+| TRIAGE    | 120s    |
+| PLAN      | 300s    |
+| IMPLEMENT | 600s    |
+| TEST      | 600s    |
+| DOCS      | 300s    |
+| REVIEW    | 600s    |
+| VERIFY    | 180s    |
 
 ## Troubleshooting
 
 **Task stuck in doing/**
+
 - Check logs in `.claude/logs/`
 - Manually move back to `todo/` to retry
 - Or move to `done/` if work is complete
 
 **Rate limits**
+
 - Agent auto-falls back to sonnet
 - Wait and retry, or reduce parallel agents
 
 **Lock conflicts**
+
 - Check `.claude/locks/` for stale locks
 - Remove lock files if agents have exited
 

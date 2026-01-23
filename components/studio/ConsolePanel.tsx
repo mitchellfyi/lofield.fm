@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { RuntimeEvent } from '@/lib/audio/runtime';
+import { useState } from "react";
+import { RuntimeEvent } from "@/lib/audio/runtime";
 
 interface ConsolePanelProps {
   events: RuntimeEvent[];
@@ -17,30 +17,37 @@ export function ConsolePanel({ events, error }: ConsolePanelProps) {
 
   const getEventIcon = (type: string) => {
     switch (type) {
-      case 'init': return '🎵';
-      case 'play': return '▶️';
-      case 'stop': return '⏹️';
-      case 'eval_ok': return '✓';
-      case 'eval_fail': return '✗';
-      case 'error': return '⚠️';
-      default: return '•';
+      case "init":
+        return "🎵";
+      case "play":
+        return "▶️";
+      case "stop":
+        return "⏹️";
+      case "eval_ok":
+        return "✓";
+      case "eval_fail":
+        return "✗";
+      case "error":
+        return "⚠️";
+      default:
+        return "•";
     }
   };
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'error':
-      case 'eval_fail':
-        return 'text-rose-400';
-      case 'eval_ok':
-        return 'text-emerald-400';
-      case 'init':
-      case 'play':
-        return 'text-cyan-400';
-      case 'stop':
-        return 'text-amber-400';
+      case "error":
+      case "eval_fail":
+        return "text-rose-400";
+      case "eval_ok":
+        return "text-emerald-400";
+      case "init":
+      case "play":
+        return "text-cyan-400";
+      case "stop":
+        return "text-amber-400";
       default:
-        return 'text-slate-400';
+        return "text-slate-400";
     }
   };
 
@@ -57,22 +64,27 @@ export function ConsolePanel({ events, error }: ConsolePanelProps) {
               Event Log ({events.slice(-10).length} recent)
             </div>
             <svg
-              className={`w-3 h-3 text-cyan-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              className={`w-3 h-3 text-cyan-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
           {isExpanded && (
             <div className="p-3 space-y-1.5 max-h-40 overflow-y-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
               {events.slice(-10).map((event, idx) => {
-                const time = new Date(event.timestamp).toLocaleTimeString('en-US', {
+                const time = new Date(event.timestamp).toLocaleTimeString("en-US", {
                   hour12: false,
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
                 });
                 const icon = getEventIcon(event.type);
                 const color = getEventColor(event.type);
@@ -82,9 +94,7 @@ export function ConsolePanel({ events, error }: ConsolePanelProps) {
                     <div className="flex items-start gap-2">
                       <span className="text-slate-600 text-[10px] mt-0.5">[{time}]</span>
                       <span className="text-xs mt-0.5">{icon}</span>
-                      <span className={`flex-1 ${color}`}>
-                        {event.message}
-                      </span>
+                      <span className={`flex-1 ${color}`}>{event.message}</span>
                     </div>
                     {event.error && (
                       <div className="ml-20 text-rose-300/80 text-[10px] mt-0.5 pl-2 border-l-2 border-rose-500/30">
@@ -109,8 +119,16 @@ export function ConsolePanel({ events, error }: ConsolePanelProps) {
           </div>
           <div className="p-3">
             <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <svg
+                className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
               <span className="text-sm text-rose-200 leading-relaxed">{error}</span>
             </div>

@@ -26,14 +26,17 @@ You are synchronizing documentation for task {{TASK_ID}}.
    - Update Links section with related files
 
 5. **Check Model Annotations**
+
    ```bash
    bundle exec annotaterb models
    ```
+
    - Keep model annotations in sync with schema
 
 ## Output
 
 Update task Work Log:
+
 ```
 ### {{TIMESTAMP}} - Documentation Sync
 

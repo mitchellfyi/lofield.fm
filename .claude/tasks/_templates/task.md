@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `PPP-SSS-slug` |
-| Status | `todo` / `doing` / `done` |
-| Priority | `001` Critical / `002` High / `003` Medium / `004` Low |
-| Created | `YYYY-MM-DD HH:MM` |
-| Started | `YYYY-MM-DD HH:MM` |
-| Completed | `YYYY-MM-DD HH:MM` |
-| Blocked By | (task IDs that must complete first) |
-| Blocks | (task IDs waiting on this) |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                                                  |
+| ----------- | ------------------------------------------------------ |
+| ID          | `PPP-SSS-slug`                                         |
+| Status      | `todo` / `doing` / `done`                              |
+| Priority    | `001` Critical / `002` High / `003` Medium / `004` Low |
+| Created     | `YYYY-MM-DD HH:MM`                                     |
+| Started     | `YYYY-MM-DD HH:MM`                                     |
+| Completed   | `YYYY-MM-DD HH:MM`                                     |
+| Blocked By  | (task IDs that must complete first)                    |
+| Blocks      | (task IDs waiting on this)                             |
+| Assigned To |                                                        |
+| Assigned At |                                                        |
 
 ---
 

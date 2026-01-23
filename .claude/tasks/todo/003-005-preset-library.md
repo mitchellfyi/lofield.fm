@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `003-005-preset-library` |
-| Status | `todo` |
-| Priority | `003` Medium |
-| Created | `2026-01-23 12:00` |
-| Started | |
-| Completed | |
-| Blocked By | |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                    |
+| ----------- | ------------------------ |
+| ID          | `003-005-preset-library` |
+| Status      | `todo`                   |
+| Priority    | `003` Medium             |
+| Created     | `2026-01-23 12:00`       |
+| Started     |                          |
+| Completed   |                          |
+| Blocked By  |                          |
+| Blocks      |                          |
+| Assigned To |                          |
+| Assigned At |                          |
 
 ---
 
@@ -88,6 +88,7 @@ New users need inspiration and starting points. A preset library with genre temp
 ## Notes
 
 Preset ideas:
+
 - Lofi chill hop
 - Ambient drone
 - 4-on-floor house

@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const trance: Preset = {
-  id: 'trance',
-  name: 'Euphoria',
-  genre: 'Trance',
+  id: "trance",
+  name: "Euphoria",
+  genre: "Trance",
   bpm: 138,
-  description: 'Supersaw lead, massive reverb, sidechained pads, and euphoric builds',
+  description: "Supersaw lead, massive reverb, sidechained pads, and euphoric builds",
   code: `// ═══════════════════════════════════════════════════════════
 // Euphoria - 32-bar Trance Production
 // Sections: A(intro) B(build) C(drop) D(breakdown)
@@ -348,5 +348,5 @@ const riserPat = new Tone.Sequence((t, v) => {
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
 ], "2n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

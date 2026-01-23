@@ -23,7 +23,7 @@ export interface TransformResult {
  *   new Tone.Sequence((t, v) => v && synth.triggerAttackRelease("C1", "8n", t, v), [...], "8n")
  */
 export function transformCode(source: string): TransformResult {
-  const lines = source.split('\n');
+  const lines = source.split("\n");
   const transformedLines: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -32,7 +32,7 @@ export function transformCode(source: string): TransformResult {
     transformedLines.push(transformLine(line, lineNumber));
   }
 
-  return { code: transformedLines.join('\n') };
+  return { code: transformedLines.join("\n") };
 }
 
 /**
@@ -47,14 +47,11 @@ function transformLine(line: string, lineNumber: number): string {
 
   if (blockBodyMatch) {
     const [fullMatch, prefix, , params] = blockBodyMatch;
-    const paramList = params.split(',').map(p => p.trim());
-    const noteParam = paramList.length > 1 ? paramList[1] : 'null';
+    const paramList = params.split(",").map((p) => p.trim());
+    const noteParam = paramList.length > 1 ? paramList[1] : "null";
     const triggerCall = `window.__vizTrigger?.(${lineNumber}, ${noteParam}, "note"); `;
 
-    return line.replace(
-      fullMatch,
-      `${prefix}${params}) => { ${triggerCall}`
-    );
+    return line.replace(fullMatch, `${prefix}${params}) => { ${triggerCall}`);
   }
 
   // Pattern 2: Expression-body arrow functions in Sequence/Pattern/Loop
@@ -75,14 +72,14 @@ function transformLine(line: string, lineNumber: number): string {
       const expression = afterArrow.slice(0, expressionEnd);
       const rest = afterArrow.slice(expressionEnd);
 
-      const paramList = params.split(',').map(p => p.trim());
-      const noteParam = paramList.length > 1 ? paramList[1] : 'null';
+      const paramList = params.split(",").map((p) => p.trim());
+      const noteParam = paramList.length > 1 ? paramList[1] : "null";
       const triggerCall = `window.__vizTrigger?.(${lineNumber}, ${noteParam}, "note"); `;
 
       // Convert expression body to block body with trigger
       const before = line.slice(0, matchIndex);
       // rest starts with comma if it was found, or is empty if expression went to end of line
-      const closeBrace = rest.startsWith(',') ? ' }' : ' };';
+      const closeBrace = rest.startsWith(",") ? " }" : " };";
       const transformed = `${prefix}${params}) => { ${triggerCall}${expression.trim()};${closeBrace}${rest}`;
       return before + transformed;
     }
@@ -99,14 +96,14 @@ function findExpressionEnd(str: string): number {
   let parenDepth = 0;
   let bracketDepth = 0;
   let inString = false;
-  let stringChar = '';
+  let stringChar = "";
 
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
-    const prevChar = i > 0 ? str[i - 1] : '';
+    const prevChar = i > 0 ? str[i - 1] : "";
 
     // Handle string literals
-    if ((char === '"' || char === "'" || char === '`') && prevChar !== '\\') {
+    if ((char === '"' || char === "'" || char === "`") && prevChar !== "\\") {
       if (!inString) {
         inString = true;
         stringChar = char;
@@ -119,14 +116,14 @@ function findExpressionEnd(str: string): number {
     if (inString) continue;
 
     // Track nesting
-    if (char === '(') parenDepth++;
-    else if (char === ')') parenDepth--;
-    else if (char === '[') bracketDepth++;
-    else if (char === ']') bracketDepth--;
+    if (char === "(") parenDepth++;
+    else if (char === ")") parenDepth--;
+    else if (char === "[") bracketDepth++;
+    else if (char === "]") bracketDepth--;
 
     // Look for comma at depth 0 (the array argument separator)
     // This is the end of the expression body
-    if (parenDepth === 0 && bracketDepth === 0 && char === ',') {
+    if (parenDepth === 0 && bracketDepth === 0 && char === ",") {
       return i;
     }
   }

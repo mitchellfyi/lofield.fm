@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRef, useEffect } from 'react';
-import type { UIMessage } from '@ai-sdk/react';
+import { useRef, useEffect } from "react";
+import type { UIMessage } from "@ai-sdk/react";
 
 interface ChatPanelProps {
   messages: UIMessage[];
@@ -11,39 +11,43 @@ interface ChatPanelProps {
   isLoading: boolean;
 }
 
-export function ChatPanel({ 
-  messages, 
-  inputValue, 
-  onInputChange, 
-  onSubmit, 
-  isLoading 
+export function ChatPanel({
+  messages,
+  inputValue,
+  onInputChange,
+  onSubmit,
+  isLoading,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 sm:px-4 h-12 sm:h-16 flex flex-col justify-center border-b border-cyan-500/20 bg-slate-900/50">
-        <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">AI Chat</h2>
-        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 hidden sm:block">Generate and modify beats with AI</p>
+        <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">
+          AI Chat
+        </h2>
+        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 hidden sm:block">
+          Generate and modify beats with AI
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
         {messages.map((message) => {
-          const textParts = message.parts.filter(part => part.type === 'text');
-          let content = textParts.map(part => ('text' in part ? part.text : '')).join('\n');
-          const isUser = message.role === 'user';
+          const textParts = message.parts.filter((part) => part.type === "text");
+          let content = textParts.map((part) => ("text" in part ? part.text : "")).join("\n");
+          const isUser = message.role === "user";
 
           // Skip system messages
-          if (message.role === 'system') {
+          if (message.role === "system") {
             return null;
           }
 
           // For user messages, extract just the request (hide code context)
-          if (isUser && content.includes('Request:')) {
+          if (isUser && content.includes("Request:")) {
             const requestMatch = content.match(/Request:\s*([\s\S]*?)$/);
             if (requestMatch) {
               content = requestMatch[1].trim();
@@ -59,15 +63,12 @@ export function ChatPanel({
           }
 
           return (
-            <div
-              key={message.id}
-              className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
-            >
+            <div key={message.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[85%] rounded-lg backdrop-blur-sm ${
                   isUser
-                    ? 'bg-gradient-to-br from-cyan-600/80 to-cyan-500/80 border border-cyan-400/30 shadow-lg shadow-cyan-500/10'
-                    : 'bg-slate-800/80 border border-slate-600/50'
+                    ? "bg-gradient-to-br from-cyan-600/80 to-cyan-500/80 border border-cyan-400/30 shadow-lg shadow-cyan-500/10"
+                    : "bg-slate-800/80 border border-slate-600/50"
                 }`}
               >
                 <div className="px-3 py-1.5 border-b border-white/10">
@@ -80,9 +81,11 @@ export function ChatPanel({
                   </div>
                 </div>
                 <div className="px-3 py-2.5">
-                  <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                    isUser ? 'text-white' : 'text-slate-200'
-                  }`}>
+                  <div
+                    className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                      isUser ? "text-white" : "text-slate-200"
+                    }`}
+                  >
                     {content}
                   </div>
                 </div>
@@ -116,7 +119,10 @@ export function ChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={onSubmit} className="px-3 sm:px-4 py-3 sm:py-4 border-t border-cyan-500/20 bg-slate-900/50">
+      <form
+        onSubmit={onSubmit}
+        className="px-3 sm:px-4 py-3 sm:py-4 border-t border-cyan-500/20 bg-slate-900/50"
+      >
         <div className="flex gap-2">
           <input
             type="text"
@@ -133,7 +139,12 @@ export function ChatPanel({
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
               </svg>
               Send
             </span>

@@ -7,30 +7,30 @@
  * - React subscriptions via useSyncExternalStore pattern
  */
 
-import * as Tone from 'tone';
+import * as Tone from "tone";
 
 // Audio analysis data
 export interface AudioAnalysisData {
-  fft: Float32Array;        // Frequency data (dB values, typically -100 to 0)
-  waveform: Float32Array;   // Time domain data (-1 to 1)
-  rms: number;              // Root mean square (overall volume level 0-1)
+  fft: Float32Array; // Frequency data (dB values, typically -100 to 0)
+  waveform: Float32Array; // Time domain data (-1 to 1)
+  rms: number; // Root mean square (overall volume level 0-1)
 }
 
 export interface TransportState {
-  position: string;      // "0:0:0" format (bar:beat:sixteenth)
-  seconds: number;       // Absolute time in seconds
+  position: string; // "0:0:0" format (bar:beat:sixteenth)
+  seconds: number; // Absolute time in seconds
   bpm: number;
   playing: boolean;
-  bar: number;           // Current bar (1-indexed for display)
-  beat: number;          // Current beat within bar (1-4)
-  progress: number;      // 0-1 progress within current bar
+  bar: number; // Current bar (1-indexed for display)
+  beat: number; // Current beat within bar (1-4)
+  progress: number; // 0-1 progress within current bar
 }
 
 export interface TriggerEvent {
-  line: number;          // Source code line (1-indexed)
-  time: number;          // Performance.now() timestamp when triggered
-  note?: string;         // Note name if applicable
-  type: 'note' | 'chord' | 'rest' | 'effect';
+  line: number; // Source code line (1-indexed)
+  time: number; // Performance.now() timestamp when triggered
+  note?: string; // Note name if applicable
+  type: "note" | "chord" | "rest" | "effect";
 }
 
 declare global {
@@ -40,7 +40,7 @@ declare global {
 }
 
 const DEFAULT_TRANSPORT_STATE: TransportState = {
-  position: '0:0:0',
+  position: "0:0:0",
   seconds: 0,
   bpm: 120,
   playing: false,
@@ -89,14 +89,14 @@ class VisualizationBridge {
    * Initialize audio analysers connected to master output
    */
   private initAnalysers(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Create FFT analyser for frequency data (64 bins for performance)
-    this.fftAnalyser = new Tone.Analyser('fft', 64);
+    this.fftAnalyser = new Tone.Analyser("fft", 64);
     this.fftAnalyser.smoothing = 0.8;
 
     // Create waveform analyser for time domain data
-    this.waveformAnalyser = new Tone.Analyser('waveform', 256);
+    this.waveformAnalyser = new Tone.Analyser("waveform", 256);
 
     // Connect to master output
     Tone.getDestination().connect(this.fftAnalyser);
@@ -114,10 +114,10 @@ class VisualizationBridge {
    * Expose global trigger function for instrumented code
    */
   private exposeGlobalTrigger(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     window.__vizTrigger = (line: number, note?: string | null, type?: string) => {
-      this.emitTrigger(line, note ?? undefined, (type as TriggerEvent['type']) ?? 'note');
+      this.emitTrigger(line, note ?? undefined, (type as TriggerEvent["type"]) ?? "note");
     };
   }
 
@@ -166,7 +166,7 @@ class VisualizationBridge {
       this.lastRafTime = now;
 
       // Update transport state if playing
-      if (Tone.Transport.state === 'started') {
+      if (Tone.Transport.state === "started") {
         const newState = this.readTransportState();
         if (this.hasTransportChanged(newState)) {
           this.transportState = newState;
@@ -217,7 +217,7 @@ class VisualizationBridge {
     const bpm = Tone.Transport.bpm.value;
 
     // Parse position "bars:beats:sixteenths"
-    const parts = position.split(':').map(Number);
+    const parts = position.split(":").map(Number);
     const bar = (parts[0] ?? 0) + 1; // 1-indexed
     const beat = (parts[1] ?? 0) + 1; // 1-indexed
     const sixteenths = parts[2] ?? 0;
@@ -252,7 +252,7 @@ class VisualizationBridge {
   /**
    * Emit a trigger event (called by instrumented code)
    */
-  emitTrigger(line: number, note?: string, type: TriggerEvent['type'] = 'note'): void {
+  emitTrigger(line: number, note?: string, type: TriggerEvent["type"] = "note"): void {
     const event: TriggerEvent = {
       line,
       time: performance.now(),
@@ -279,9 +279,7 @@ class VisualizationBridge {
 
     // Rebuild active lines from recent triggers
     this.activeLines = new Set(
-      this.triggerEvents
-        .filter(e => e.time >= cutoff)
-        .map(e => e.line)
+      this.triggerEvents.filter((e) => e.time >= cutoff).map((e) => e.line)
     );
 
     // Only notify if active lines changed
@@ -295,15 +293,15 @@ class VisualizationBridge {
   // ─────────────────────────────────────────────────────────────
 
   private notifyTransportListeners(): void {
-    this.transportListeners.forEach(listener => listener());
+    this.transportListeners.forEach((listener) => listener());
   }
 
   private notifyTriggerListeners(): void {
-    this.triggerListeners.forEach(listener => listener());
+    this.triggerListeners.forEach((listener) => listener());
   }
 
   private notifyAnalysisListeners(): void {
-    this.analysisListeners.forEach(listener => listener());
+    this.analysisListeners.forEach((listener) => listener());
   }
 
   /**

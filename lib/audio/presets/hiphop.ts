@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const hiphop: Preset = {
-  id: 'hiphop',
-  name: 'Gold Chains',
-  genre: 'Hip-Hop',
+  id: "hiphop",
+  name: "Gold Chains",
+  genre: "Hip-Hop",
   bpm: 95,
-  description: 'Classic boom-bap with layered drums, soulful piano, and deep sub bass',
+  description: "Classic boom-bap with layered drums, soulful piano, and deep sub bass",
   code: `// ═══════════════════════════════════════════════════════════
 // Gold Chains - 32-bar Hip-Hop Production
 // Sections: A(intro) B(verse) C(chorus) D(bridge)
@@ -317,5 +317,5 @@ const padPat = new Tone.Sequence((t, c) => {
   ["D4", "F4", "A4"], null, null, null, null, null, null, null
 ], "2n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

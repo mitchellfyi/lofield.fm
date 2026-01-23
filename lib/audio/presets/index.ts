@@ -4,18 +4,18 @@
  * Features: humanized velocity, section variation, master processing
  */
 
-export { type Preset } from './types';
+export { type Preset } from "./types";
 
-import { lofiChill } from './lofi-chill';
-import { deepHouse } from './deep-house';
-import { darkTechno } from './dark-techno';
-import { ambientChill } from './ambient-chill';
-import { rnbSoul } from './rnb-soul';
-import { trapBeat } from './trap-beat';
-import { pop } from './pop';
-import { rock } from './rock';
-import { hiphop } from './hiphop';
-import { trance } from './trance';
+import { lofiChill } from "./lofi-chill";
+import { deepHouse } from "./deep-house";
+import { darkTechno } from "./dark-techno";
+import { ambientChill } from "./ambient-chill";
+import { rnbSoul } from "./rnb-soul";
+import { trapBeat } from "./trap-beat";
+import { pop } from "./pop";
+import { rock } from "./rock";
+import { hiphop } from "./hiphop";
+import { trance } from "./trance";
 
 export const PRESETS = [
   lofiChill,
@@ -31,5 +31,5 @@ export const PRESETS = [
 ];
 
 export function getPresetById(id: string) {
-  return PRESETS.find(p => p.id === id);
+  return PRESETS.find((p) => p.id === id);
 }

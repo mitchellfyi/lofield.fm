@@ -3,15 +3,15 @@
  * Manages initialization, playback state, and provides a reliable API
  */
 
-import * as Tone from 'tone';
-import { getVisualizationBridge } from './visualizationBridge';
-import { wrapCodeForVisualization } from './codeTransformer';
+import * as Tone from "tone";
+import { getVisualizationBridge } from "./visualizationBridge";
+import { wrapCodeForVisualization } from "./codeTransformer";
 
-export type PlayerState = 'idle' | 'loading' | 'ready' | 'playing' | 'error';
+export type PlayerState = "idle" | "loading" | "ready" | "playing" | "error";
 
 export interface RuntimeEvent {
   timestamp: number;
-  type: 'init' | 'play' | 'stop' | 'eval_ok' | 'eval_fail' | 'error';
+  type: "init" | "play" | "stop" | "eval_ok" | "eval_fail" | "error";
   message: string;
   error?: string;
 }
@@ -32,7 +32,7 @@ declare global {
 
 class AudioRuntime {
   private static instance: AudioRuntime | null = null;
-  private state: PlayerState = 'idle';
+  private state: PlayerState = "idle";
   private initialized = false;
   private events: RuntimeEvent[] = [];
   private maxEvents = 10;
@@ -58,8 +58,8 @@ class AudioRuntime {
    * Only exposed when NEXT_PUBLIC_E2E === "1"
    */
   private exposeTestAPI(): void {
-    if (typeof window === 'undefined') return;
-    if (process.env.NEXT_PUBLIC_E2E !== '1') return;
+    if (typeof window === "undefined") return;
+    if (process.env.NEXT_PUBLIC_E2E !== "1") return;
 
     window.__audioTest = {
       getState: () => this.getState(),
@@ -79,10 +79,10 @@ class AudioRuntime {
   }
 
   private notifyListeners() {
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach((listener) => listener());
   }
 
-  private addEvent(event: Omit<RuntimeEvent, 'timestamp'>) {
+  private addEvent(event: Omit<RuntimeEvent, "timestamp">) {
     const newEvent: RuntimeEvent = {
       ...event,
       timestamp: Date.now(),
@@ -121,13 +121,13 @@ class AudioRuntime {
   async init(): Promise<void> {
     if (this.initialized) {
       this.addEvent({
-        type: 'init',
-        message: 'Already initialized',
+        type: "init",
+        message: "Already initialized",
       });
       return;
     }
 
-    this.state = 'loading';
+    this.state = "loading";
     this.notifyListeners();
 
     try {
@@ -135,18 +135,18 @@ class AudioRuntime {
       await Tone.start();
       this.initCallCount++;
       this.initialized = true;
-      this.state = 'ready';
+      this.state = "ready";
       this.addEvent({
-        type: 'init',
-        message: 'Audio initialized successfully',
+        type: "init",
+        message: "Audio initialized successfully",
       });
       this.notifyListeners();
     } catch (err) {
-      this.state = 'error';
+      this.state = "error";
       const errorMsg = err instanceof Error ? err.message : String(err);
       this.addEvent({
-        type: 'error',
-        message: 'Failed to initialize audio',
+        type: "error",
+        message: "Failed to initialize audio",
         error: errorMsg,
       });
       this.notifyListeners();
@@ -174,7 +174,7 @@ class AudioRuntime {
     }
 
     const transport = Tone.getTransport();
-    const wasPlaying = transport.state === 'started';
+    const wasPlaying = transport.state === "started";
 
     // For live updates: save old cleanup function to call AFTER new code evaluates
     // This creates overlap (new sounds start before old stop) instead of a gap
@@ -196,7 +196,7 @@ class AudioRuntime {
     const instrumentedCode = wrapCodeForVisualization(code);
 
     try {
-      this.state = 'playing';
+      this.state = "playing";
       this.playCallCount++;
       this.notifyListeners();
 
@@ -210,30 +210,32 @@ class AudioRuntime {
             const value = (target as Record<string, unknown>)[prop];
 
             // If it's a constructor (starts with capital letter), wrap it to track instances
-            if (typeof value === 'function' && /^[A-Z]/.test(prop)) {
+            if (typeof value === "function" && /^[A-Z]/.test(prop)) {
               return new Proxy(value, {
                 construct(constructorTarget, args): object {
-                  const instance = new (constructorTarget as new (...args: unknown[]) => object)(...args);
+                  const instance = new (constructorTarget as new (...args: unknown[]) => object)(
+                    ...args
+                  );
                   // Track anything with a dispose method
-                  if (instance && typeof (instance as { dispose?: () => void }).dispose === 'function') {
+                  if (
+                    instance &&
+                    typeof (instance as { dispose?: () => void }).dispose === "function"
+                  ) {
                     disposables.push(instance as { dispose: () => void });
                   }
                   return instance;
-                }
+                },
               });
             }
             return value;
-          }
+          },
         });
       };
 
       const trackedTone = createTrackedTone();
 
       // Build the play function - user code gets the tracked Tone object
-      const playFunction = new Function(
-        'Tone',
-        instrumentedCode
-      );
+      const playFunction = new Function("Tone", instrumentedCode);
 
       // Execute the code with tracked Tone
       playFunction(trackedTone);
@@ -244,7 +246,7 @@ class AudioRuntime {
           try {
             obj.dispose();
           } catch (e) {
-            console.warn('Error disposing Tone object:', e);
+            console.warn("Error disposing Tone object:", e);
           }
         }
         disposables.length = 0;
@@ -256,16 +258,16 @@ class AudioRuntime {
         try {
           oldCleanup();
         } catch (e) {
-          console.warn('Error in old cleanup:', e);
+          console.warn("Error in old cleanup:", e);
         }
       }
 
       // Wait for effects (especially Reverb) to be ready
       // For live updates, don't wait - let it catch up
       if (!keepPosition) {
-        const reverbs = disposables.filter(obj => obj instanceof Tone.Reverb) as Tone.Reverb[];
+        const reverbs = disposables.filter((obj) => obj instanceof Tone.Reverb) as Tone.Reverb[];
         if (reverbs.length > 0) {
-          await Promise.all(reverbs.map(r => r.ready));
+          await Promise.all(reverbs.map((r) => r.ready));
         }
       }
 
@@ -275,7 +277,7 @@ class AudioRuntime {
       // Configure transport for 32-bar loop (4 sections x 8 bars)
       transport.loop = true;
       transport.loopStart = 0;
-      transport.loopEnd = '32:0:0'; // 32 bars
+      transport.loopEnd = "32:0:0"; // 32 bars
 
       // For non-live updates, reset position
       if (!keepPosition) {
@@ -284,21 +286,21 @@ class AudioRuntime {
 
       // Start transport if needed
       if (!keepPosition || wasPlaying) {
-        if (transport.state !== 'started') {
+        if (transport.state !== "started") {
           transport.start();
         }
       }
 
       this.addEvent({
-        type: 'eval_ok',
-        message: `Code evaluated (${disposables.length} objects tracked)${keepPosition ? ' [live]' : ''}`,
+        type: "eval_ok",
+        message: `Code evaluated (${disposables.length} objects tracked)${keepPosition ? " [live]" : ""}`,
       });
     } catch (err) {
-      this.state = 'error';
+      this.state = "error";
       const errorMsg = err instanceof Error ? err.message : String(err);
       this.addEvent({
-        type: 'eval_fail',
-        message: 'Code evaluation failed',
+        type: "eval_fail",
+        message: "Code evaluation failed",
         error: errorMsg,
       });
       this.notifyListeners();
@@ -310,12 +312,12 @@ class AudioRuntime {
    * Clean up code without stopping transport
    */
   private cleanupCode(): void {
-    if (typeof window !== 'undefined' && window.__toneCleanup) {
+    if (typeof window !== "undefined" && window.__toneCleanup) {
       try {
         window.__toneCleanup();
         window.__toneCleanup = undefined;
       } catch (e) {
-        console.warn('Error in cleanup function:', e);
+        console.warn("Error in cleanup function:", e);
       }
     }
   }
@@ -331,11 +333,11 @@ class AudioRuntime {
       transport.position = `${bar}:0:0`;
 
       this.addEvent({
-        type: 'play',
+        type: "play",
         message: `Seeked to bar ${bar + 1}`,
       });
     } catch (err) {
-      console.warn('Error seeking:', err);
+      console.warn("Error seeking:", err);
     }
   }
 
@@ -358,15 +360,15 @@ class AudioRuntime {
       transport.stop();
       transport.position = 0; // Reset position
 
-      this.state = this.initialized ? 'ready' : 'idle';
+      this.state = this.initialized ? "ready" : "idle";
       this.addEvent({
-        type: 'stop',
-        message: 'Stopped',
+        type: "stop",
+        message: "Stopped",
       });
       this.notifyListeners();
     } catch (err) {
       // Ignore stop errors, but log them
-      console.warn('Error stopping playback:', err);
+      console.warn("Error stopping playback:", err);
     }
   }
 
@@ -375,7 +377,7 @@ class AudioRuntime {
    */
   reset(): void {
     this.stop();
-    this.state = 'idle';
+    this.state = "idle";
     this.initialized = false;
     this.events = [];
     this.initCallCount = 0;

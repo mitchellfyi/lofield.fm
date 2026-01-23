@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useTransportState } from '@/lib/audio/useVisualization';
-import { getAudioRuntime } from '@/lib/audio/runtime';
+import { useTransportState } from "@/lib/audio/useVisualization";
+import { getAudioRuntime } from "@/lib/audio/runtime";
 
 interface TimelineBarProps {
   barsPerRow?: number;
@@ -19,7 +19,7 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
   };
 
   // Current bar position (0-indexed for calculations)
-  const currentBar = ((transport.bar - 1) % totalBars);
+  const currentBar = (transport.bar - 1) % totalBars;
   const currentRow = Math.floor(currentBar / barsPerRow);
   const currentBarInRow = currentBar % barsPerRow;
 
@@ -28,7 +28,7 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
   const playheadPosition = ((currentBarInRow + progressInBar) / barsPerRow) * 100;
 
   // Section labels
-  const sectionLabels = ['A', 'B', 'C', 'D'];
+  const sectionLabels = ["A", "B", "C", "D"];
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -36,16 +36,24 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">BPM</span>
-            <span className="text-xs sm:text-sm font-mono text-white tabular-nums">{transport.bpm}</span>
+            <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
+              BPM
+            </span>
+            <span className="text-xs sm:text-sm font-mono text-white tabular-nums">
+              {transport.bpm}
+            </span>
           </div>
           <div className="hidden sm:flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Loop</span>
+            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              Loop
+            </span>
             <span className="text-xs font-mono text-slate-400 tabular-nums">{totalBars} bars</span>
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">BAR</span>
+          <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
+            BAR
+          </span>
           <span className="text-xs sm:text-sm font-mono text-white tabular-nums">
             {transport.bar}/{totalBars}
           </span>
@@ -64,7 +72,7 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
               <div
                 className={`
                   w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center rounded text-[10px] font-bold
-                  ${isCurrentRow ? 'bg-cyan-500 text-white' : isPastRow ? 'bg-slate-700 text-slate-400' : 'bg-slate-800 text-slate-500'}
+                  ${isCurrentRow ? "bg-cyan-500 text-white" : isPastRow ? "bg-slate-700 text-slate-400" : "bg-slate-800 text-slate-500"}
                   transition-colors duration-150
                 `}
               >
@@ -86,15 +94,15 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
                         onClick={() => handleBarClick(absoluteBar)}
                         className={`
                           flex-1 flex items-center justify-center border-r border-slate-700/30 last:border-r-0 cursor-pointer
-                          ${isDownbeat ? 'bg-cyan-500/5' : ''}
-                          ${isCurrentBarCell ? 'bg-cyan-500/30' : isPastBar ? 'bg-slate-700/30' : ''}
+                          ${isDownbeat ? "bg-cyan-500/5" : ""}
+                          ${isCurrentBarCell ? "bg-cyan-500/30" : isPastBar ? "bg-slate-700/30" : ""}
                           hover:bg-cyan-500/20 active:bg-cyan-500/30 transition-colors duration-75
                         `}
                       >
                         <span
                           className={`
                             text-[8px] sm:text-[9px] font-mono pointer-events-none select-none
-                            ${isCurrentBarCell ? 'text-cyan-300 font-bold' : isPastBar ? 'text-slate-600' : 'text-slate-500'}
+                            ${isCurrentBarCell ? "text-cyan-300 font-bold" : isPastBar ? "text-slate-600" : "text-slate-500"}
                           `}
                         >
                           {absoluteBar + 1}
@@ -109,11 +117,14 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
                   <>
                     <div
                       className="absolute top-0 bottom-0 w-0.5 bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)] z-10 pointer-events-none"
-                      style={{ left: `${playheadPosition}%`, transition: 'left 16ms linear' }}
+                      style={{ left: `${playheadPosition}%`, transition: "left 16ms linear" }}
                     />
                     <div
                       className="absolute top-0 bottom-0 w-6 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent pointer-events-none"
-                      style={{ left: `calc(${playheadPosition}% - 0.75rem)`, transition: 'left 16ms linear' }}
+                      style={{
+                        left: `calc(${playheadPosition}% - 0.75rem)`,
+                        transition: "left 16ms linear",
+                      }}
                     />
                   </>
                 )}

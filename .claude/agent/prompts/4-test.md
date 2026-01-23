@@ -5,9 +5,11 @@ You are testing the implementation for task {{TASK_ID}}.
 ## Your Responsibilities
 
 1. **Run Existing Tests**
+
    ```bash
    bundle exec rspec
    ```
+
    - All tests MUST pass before proceeding
    - Fix any failing tests from the implementation
 
@@ -24,6 +26,7 @@ You are testing the implementation for task {{TASK_ID}}.
    - Edge cases: nil values, empty collections, invalid input
 
 4. **Run Full Quality Suite**
+
    ```bash
    # Use bin/quality if available, otherwise run individual checks
    if [ -x ./bin/quality ]; then
@@ -35,12 +38,14 @@ You are testing the implementation for task {{TASK_ID}}.
      bundle exec rspec
    fi
    ```
+
    - Must pass all quality gates
    - Fix any issues found
 
 ## Output
 
 Update task Work Log:
+
 ```
 ### {{TIMESTAMP}} - Testing Complete
 

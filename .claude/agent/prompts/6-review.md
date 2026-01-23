@@ -20,9 +20,11 @@ You are performing final review for task {{TASK_ID}}.
    - [ ] Related features still work
 
 3. **Final Quality Gate**
+
    ```bash
    ./bin/quality
    ```
+
    - Must pass ALL checks
 
 4. **Create Follow-up Tasks** (if needed)
@@ -47,6 +49,7 @@ You are performing final review for task {{TASK_ID}}.
 ## Output
 
 Update task Work Log:
+
 ```
 ### {{TIMESTAMP}} - Review Complete
 

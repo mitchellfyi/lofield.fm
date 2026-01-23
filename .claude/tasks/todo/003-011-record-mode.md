@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field | Value |
-|-------|-------|
-| ID | `003-011-record-mode` |
-| Status | `todo` |
-| Priority | `003` Medium |
-| Created | `2026-01-23 12:30` |
-| Started | |
-| Completed | |
-| Blocked By | `003-001-save-tracks-db`, `003-006-tweaks-ux` |
-| Blocks | |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                                         |
+| ----------- | --------------------------------------------- |
+| ID          | `003-011-record-mode`                         |
+| Status      | `todo`                                        |
+| Priority    | `003` Medium                                  |
+| Created     | `2026-01-23 12:30`                            |
+| Started     |                                               |
+| Completed   |                                               |
+| Blocked By  | `003-001-save-tracks-db`, `003-006-tweaks-ux` |
+| Blocks      |                                               |
+| Assigned To |                                               |
+| Assigned At |                                               |
 
 ---
 

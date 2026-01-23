@@ -7,6 +7,7 @@
 ## Core Purpose
 
 Democratize music creation by combining:
+
 - **Conversational AI** - Natural language interface for music generation
 - **Strudel Live Coding** - Powerful pattern-based music engine
 - **Instant Feedback** - Hear changes immediately as you iterate
@@ -21,18 +22,23 @@ Democratize music creation by combining:
 ## Product Principles
 
 ### 1. Immediate Gratification
+
 Users should hear music within 30 seconds of landing. No signup walls, no tutorials—just play.
 
 ### 2. Conversational First
+
 Chat is the primary interface. Code is visible for learning but optional to touch.
 
 ### 3. Safe Experimentation
+
 Undo is always available. Nothing is lost. Break things freely.
 
 ### 4. Progressive Disclosure
+
 Start simple, reveal power over time. Beginners see chat + play. Power users get multi-track, presets, exports.
 
 ### 5. Shareable Creations
+
 Every beat deserves an audience. One-click sharing, embeddable players, social previews.
 
 ## Success Metrics
@@ -61,33 +67,39 @@ Every beat deserves an audience. One-click sharing, embeddable players, social p
 ## Roadmap Priorities
 
 ### Phase 1: Foundation ✅
+
 - [x] Basic chat → Strudel code generation
 - [x] Play/stop controls
 - [x] Code editor for manual tweaks
 
 ### Phase 2: Reliability
+
 - [ ] Quality gates and CI
 - [ ] Structured AI output with validation
 - [ ] User API key management
 - [ ] Authentication (Supabase)
 
 ### Phase 3: Persistence
+
 - [ ] Save tracks to database
 - [ ] Version history and revert
 - [ ] User profiles
 
 ### Phase 4: Sharing & Discovery
+
 - [ ] Shareable public links
 - [ ] Preset/template library
 - [ ] Export options (audio, code)
 
 ### Phase 5: Power Features
+
 - [ ] Multi-track support
 - [ ] Real-time parameter tweaks
 - [ ] Undo/redo system
 - [ ] Mobile experience
 
 ### Phase 6: Production Readiness
+
 - [ ] Rate limiting and quotas
 - [ ] Observability and error tracking
 - [ ] Cost controls

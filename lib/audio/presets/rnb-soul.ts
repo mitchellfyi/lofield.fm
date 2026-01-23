@@ -1,11 +1,11 @@
-import { Preset } from './types';
+import { Preset } from "./types";
 
 export const rnbSoul: Preset = {
-  id: 'rnb-soul',
-  name: 'Velvet',
-  genre: 'R&B / Neo-Soul',
+  id: "rnb-soul",
+  name: "Velvet",
+  genre: "R&B / Neo-Soul",
   bpm: 75,
-  description: 'Smooth R&B with silky chords and laid-back groove',
+  description: "Smooth R&B with silky chords and laid-back groove",
   code: `// ═══════════════════════════════════════════════════════════
 // Velvet - 32-bar R&B / Neo-Soul
 // Sections: A(intro) B(verse) C(chorus) D(outro)
@@ -293,5 +293,5 @@ const stringPat = new Tone.Sequence((t, c) => {
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null
 ], "4n").start(0);
 
-Tone.Transport.start();`
+Tone.Transport.start();`,
 };

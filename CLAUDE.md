@@ -127,45 +127,46 @@ cat package.json 2>/dev/null | grep -E '"(test|lint|format)"'
 ### This Repository's Tools
 
 **Primary Quality Command (ALWAYS USE THIS):**
+
 ```bash
 ./bin/quality  # Runs ALL 12 quality gates - MANDATORY before commit
 ```
 
 #### Quality & Testing Tools
 
-| Category | Tool | Command |
-|----------|------|---------|
-| **Quality (All)** | Full Suite | `./bin/quality` |
-| Ruby Style | RuboCop | `bundle exec rubocop` |
-| Ruby Style Fix | RuboCop | `bundle exec rubocop -A` |
-| ERB Style | ERB Lint | `bundle exec erb_lint --lint-all` |
-| Security | Brakeman | `bundle exec brakeman -q` |
-| Security | Bundle Audit | `bundle exec bundle-audit check --update` |
-| Tests | RSpec | `bundle exec rspec` |
-| Tests (Fast) | RSpec (no slow) | `bundle exec rspec --exclude-pattern 'spec/{performance,system}/**/*'` |
-| JS Lint | ESLint | `npm run lint` |
-| JS Format | Prettier | `npm run format:check` |
-| i18n | i18n-tasks | `bundle exec i18n-tasks health` |
-| Model Annotations | Annotaterb | `bundle exec annotaterb models` |
+| Category          | Tool            | Command                                                                |
+| ----------------- | --------------- | ---------------------------------------------------------------------- |
+| **Quality (All)** | Full Suite      | `./bin/quality`                                                        |
+| Ruby Style        | RuboCop         | `bundle exec rubocop`                                                  |
+| Ruby Style Fix    | RuboCop         | `bundle exec rubocop -A`                                               |
+| ERB Style         | ERB Lint        | `bundle exec erb_lint --lint-all`                                      |
+| Security          | Brakeman        | `bundle exec brakeman -q`                                              |
+| Security          | Bundle Audit    | `bundle exec bundle-audit check --update`                              |
+| Tests             | RSpec           | `bundle exec rspec`                                                    |
+| Tests (Fast)      | RSpec (no slow) | `bundle exec rspec --exclude-pattern 'spec/{performance,system}/**/*'` |
+| JS Lint           | ESLint          | `npm run lint`                                                         |
+| JS Format         | Prettier        | `npm run format:check`                                                 |
+| i18n              | i18n-tasks      | `bundle exec i18n-tasks health`                                        |
+| Model Annotations | Annotaterb      | `bundle exec annotaterb models`                                        |
 
 #### Development Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `./bin/setup` | Setup development environment |
-| `./bin/dev` | Start development server with Guard |
-| `./bin/quality` | **MANDATORY** - Run ALL quality checks |
-| `bundle exec guard` | Real-time quality monitoring |
-| `./script/dev/setup-quality-automation` | Setup autonomous quality system |
-| `./script/dev/pre-push-quality` | Extended pre-push validation |
-| `./script/dev/quality-dashboard` | Live quality metrics and status |
-| `./script/dev/quality-check-file` | File-specific quality checks |
-| `./script/dev/i18n-check-file` | i18n compliance for templates |
-| `./script/dev/route-test-check` | Route testing validation |
-| `./script/dev/migration-check` | Migration safety analysis |
-| `./script/dev/i18n` | Manage i18n translations |
-| `./script/dev/migrations` | Database migration safety tools |
-| `./script/dev/anti-pattern-detection` | Detect code anti-patterns |
+| Script                                  | Purpose                                |
+| --------------------------------------- | -------------------------------------- |
+| `./bin/setup`                           | Setup development environment          |
+| `./bin/dev`                             | Start development server with Guard    |
+| `./bin/quality`                         | **MANDATORY** - Run ALL quality checks |
+| `bundle exec guard`                     | Real-time quality monitoring           |
+| `./script/dev/setup-quality-automation` | Setup autonomous quality system        |
+| `./script/dev/pre-push-quality`         | Extended pre-push validation           |
+| `./script/dev/quality-dashboard`        | Live quality metrics and status        |
+| `./script/dev/quality-check-file`       | File-specific quality checks           |
+| `./script/dev/i18n-check-file`          | i18n compliance for templates          |
+| `./script/dev/route-test-check`         | Route testing validation               |
+| `./script/dev/migration-check`          | Migration safety analysis              |
+| `./script/dev/i18n`                     | Manage i18n translations               |
+| `./script/dev/migrations`               | Database migration safety tools        |
+| `./script/dev/anti-pattern-detection`   | Detect code anti-patterns              |
 
 #### The 12 Autonomous Quality Gates
 
@@ -232,10 +233,12 @@ Examples:
 ### Task Assignment (Parallel Support)
 
 Each task has assignment metadata:
+
 - **Assigned To**: Agent ID currently working on the task
 - **Assigned At**: Timestamp when assignment started (refreshed every hour)
 
 Rules for parallel operation:
+
 1. Only pick up tasks where `Assigned To` is empty
 2. Set `Assigned To` to your agent ID when starting
 3. Clear `Assigned To` when completing or abandoning
@@ -259,6 +262,7 @@ mv .claude/tasks/doing/003-001-example.md .claude/tasks/done/
 Located at `.claude/tasks/_templates/task.md`
 
 Required sections:
+
 - **Title**: Clear, actionable description
 - **Context**: Why this task exists
 - **Acceptance Criteria**: Definition of done (checkboxes)
@@ -275,6 +279,7 @@ Required sections:
 ### When to Run
 
 Run quality checks after every "major change":
+
 - Adding/modifying a file with significant logic
 - Changing database schema
 - Adding new dependencies
@@ -309,6 +314,7 @@ bundle exec rspec --exclude-pattern 'spec/{performance,system}/**/*'
 ### Quality Failure Protocol
 
 If a quality check fails:
+
 1. **STOP** - do not continue with more changes
 2. **FIX** - address the failure immediately
 3. **RE-RUN** - verify the fix resolves the issue
@@ -345,6 +351,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `refactor`: Code restructure without behavior change
@@ -354,6 +361,7 @@ Types:
 - `chore`: Maintenance, dependencies
 
 Example:
+
 ```
 feat: add user authentication system
 
@@ -404,6 +412,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ### Scope Explosion
 
 If a task grows beyond original estimate:
+
 1. Complete the minimum viable version
 2. Create follow-up tasks for additional scope
 3. Commit what's done
@@ -421,6 +430,7 @@ If a task grows beyond original estimate:
 ### Environment Issues
 
 If local environment breaks:
+
 1. Log the issue
 2. Try: `bin/setup` if available
 3. Check: Ruby version, Node version, database
@@ -474,81 +484,81 @@ AGENT_NAME="worker-2" ./bin/agent 5 &
 
 Each task goes through 7 distinct phases, each with a fresh Claude session and focused prompt:
 
-| Phase | Timeout | Purpose |
-|-------|---------|---------|
-| 1. TRIAGE | 2min | Validate task, check dependencies, verify readiness |
-| 2. PLAN | 5min | Gap analysis, detailed implementation planning |
-| 3. IMPLEMENT | 30min | Execute the plan, write code |
-| 4. TEST | 10min | Run tests, add missing coverage |
-| 5. DOCS | 5min | Sync documentation, update annotations |
-| 6. REVIEW | 5min | Code review, consistency check, create follow-ups |
-| 7. VERIFY | 2min | Verify task management done correctly |
+| Phase        | Timeout | Purpose                                             |
+| ------------ | ------- | --------------------------------------------------- |
+| 1. TRIAGE    | 2min    | Validate task, check dependencies, verify readiness |
+| 2. PLAN      | 5min    | Gap analysis, detailed implementation planning      |
+| 3. IMPLEMENT | 30min   | Execute the plan, write code                        |
+| 4. TEST      | 10min   | Run tests, add missing coverage                     |
+| 5. DOCS      | 5min    | Sync documentation, update annotations              |
+| 6. REVIEW    | 5min    | Code review, consistency check, create follow-ups   |
+| 7. VERIFY    | 2min    | Verify task management done correctly               |
 
 **Environment Variables:**
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_MODEL` | `opus` | Model to use (opus, sonnet, haiku) - falls back to sonnet on limits |
-| `AGENT_DRY_RUN` | `0` | Set to 1 to preview without executing |
-| `AGENT_VERBOSE` | `0` | Set to 1 for more output |
-| `AGENT_QUIET` | `0` | Set to 1 to disable streaming output (streaming is ON by default) |
-| `AGENT_MAX_RETRIES` | `2` | Max retry attempts per phase |
-| `AGENT_RETRY_DELAY` | `5` | Base delay between retries (exponential backoff) |
-| `AGENT_NO_RESUME` | `0` | Set to 1 to skip resuming interrupted sessions |
-| `AGENT_NAME` | `worker-N` | Agent name (auto-generates worker-1, worker-2, etc.) |
-| `AGENT_LOCK_TIMEOUT` | `10800` | Stale lock timeout in seconds (3 hours) |
-| `AGENT_HEARTBEAT` | `3600` | Heartbeat interval in seconds (1 hour) - refreshes assignment |
-| `AGENT_NO_FALLBACK` | `0` | Set to 1 to disable model fallback on rate limits |
+| Variable             | Default    | Description                                                         |
+| -------------------- | ---------- | ------------------------------------------------------------------- |
+| `CLAUDE_MODEL`       | `opus`     | Model to use (opus, sonnet, haiku) - falls back to sonnet on limits |
+| `AGENT_DRY_RUN`      | `0`        | Set to 1 to preview without executing                               |
+| `AGENT_VERBOSE`      | `0`        | Set to 1 for more output                                            |
+| `AGENT_QUIET`        | `0`        | Set to 1 to disable streaming output (streaming is ON by default)   |
+| `AGENT_MAX_RETRIES`  | `2`        | Max retry attempts per phase                                        |
+| `AGENT_RETRY_DELAY`  | `5`        | Base delay between retries (exponential backoff)                    |
+| `AGENT_NO_RESUME`    | `0`        | Set to 1 to skip resuming interrupted sessions                      |
+| `AGENT_NAME`         | `worker-N` | Agent name (auto-generates worker-1, worker-2, etc.)                |
+| `AGENT_LOCK_TIMEOUT` | `10800`    | Stale lock timeout in seconds (3 hours)                             |
+| `AGENT_HEARTBEAT`    | `3600`     | Heartbeat interval in seconds (1 hour) - refreshes assignment       |
+| `AGENT_NO_FALLBACK`  | `0`        | Set to 1 to disable model fallback on rate limits                   |
 
 **Phase Skip Flags** (set to 1 to skip):
 
-| Variable | Description |
-|----------|-------------|
-| `SKIP_TRIAGE` | Skip task validation phase |
-| `SKIP_PLAN` | Skip planning phase |
-| `SKIP_IMPLEMENT` | Skip implementation phase |
-| `SKIP_TEST` | Skip testing phase |
-| `SKIP_DOCS` | Skip documentation sync phase |
-| `SKIP_REVIEW` | Skip code review phase |
-| `SKIP_VERIFY` | Skip task verification phase |
+| Variable         | Description                   |
+| ---------------- | ----------------------------- |
+| `SKIP_TRIAGE`    | Skip task validation phase    |
+| `SKIP_PLAN`      | Skip planning phase           |
+| `SKIP_IMPLEMENT` | Skip implementation phase     |
+| `SKIP_TEST`      | Skip testing phase            |
+| `SKIP_DOCS`      | Skip documentation sync phase |
+| `SKIP_REVIEW`    | Skip code review phase        |
+| `SKIP_VERIFY`    | Skip task verification phase  |
 
 **Phase Timeout Overrides** (in seconds):
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TIMEOUT_TRIAGE` | 120 | Triage phase timeout (2min) |
-| `TIMEOUT_PLAN` | 300 | Planning phase timeout (5min) |
-| `TIMEOUT_IMPLEMENT` | 1800 | Implementation phase timeout (30min) |
-| `TIMEOUT_TEST` | 600 | Testing phase timeout (10min) |
-| `TIMEOUT_DOCS` | 300 | Documentation phase timeout (5min) |
-| `TIMEOUT_REVIEW` | 300 | Review phase timeout (5min) |
-| `TIMEOUT_VERIFY` | 120 | Verification phase timeout (2min) |
+| Variable            | Default | Description                          |
+| ------------------- | ------- | ------------------------------------ |
+| `TIMEOUT_TRIAGE`    | 120     | Triage phase timeout (2min)          |
+| `TIMEOUT_PLAN`      | 300     | Planning phase timeout (5min)        |
+| `TIMEOUT_IMPLEMENT` | 1800    | Implementation phase timeout (30min) |
+| `TIMEOUT_TEST`      | 600     | Testing phase timeout (10min)        |
+| `TIMEOUT_DOCS`      | 300     | Documentation phase timeout (5min)   |
+| `TIMEOUT_REVIEW`    | 300     | Review phase timeout (5min)          |
+| `TIMEOUT_VERIFY`    | 120     | Verification phase timeout (2min)    |
 
 **Self-Healing Features:**
 
-| Feature | Description |
-|---------|-------------|
-| **Phase Isolation** | Each phase runs in fresh Claude session (clean context) |
-| **Auto-Retry** | Retries failed phases with exponential backoff |
-| **Model Fallback** | Automatically switches from opus to sonnet on rate limits |
-| **Session Persistence** | Saves state to `.claude/state/` for crash recovery |
-| **Auto-Resume** | Detects interrupted sessions and resumes from last iteration |
-| **Health Checks** | Validates environment before each run (CLI, dirs, disk space) |
-| **Circuit Breaker** | Pauses 30s after 3 consecutive failures to avoid hammering |
-| **Error Detection** | Recognizes rate limits, timeouts, server errors for smart retry |
-| **Graceful Cleanup** | Regenerates taskboard on exit (normal or interrupted) |
+| Feature                 | Description                                                     |
+| ----------------------- | --------------------------------------------------------------- |
+| **Phase Isolation**     | Each phase runs in fresh Claude session (clean context)         |
+| **Auto-Retry**          | Retries failed phases with exponential backoff                  |
+| **Model Fallback**      | Automatically switches from opus to sonnet on rate limits       |
+| **Session Persistence** | Saves state to `.claude/state/` for crash recovery              |
+| **Auto-Resume**         | Detects interrupted sessions and resumes from last iteration    |
+| **Health Checks**       | Validates environment before each run (CLI, dirs, disk space)   |
+| **Circuit Breaker**     | Pauses 30s after 3 consecutive failures to avoid hammering      |
+| **Error Detection**     | Recognizes rate limits, timeouts, server errors for smart retry |
+| **Graceful Cleanup**    | Regenerates taskboard on exit (normal or interrupted)           |
 
 **Parallel Operation Features:**
 
-| Feature | Description |
-|---------|-------------|
-| **Lock Files** | Tasks are locked via `.claude/locks/<task-id>.lock` |
-| **Atomic Acquisition** | Lock acquisition uses atomic mkdir for race safety |
-| **Stale Detection** | Detects dead processes and expired locks (>3 hours) |
-| **Task Assignment** | Updates task metadata with agent ID and timestamp |
-| **Heartbeat** | Refreshes assignment every hour to prevent stale detection |
-| **Auto-Cleanup** | Releases all locks on exit (normal, interrupt, or crash) |
-| **Conflict Prevention** | Agents skip tasks locked by others |
+| Feature                 | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| **Lock Files**          | Tasks are locked via `.claude/locks/<task-id>.lock`        |
+| **Atomic Acquisition**  | Lock acquisition uses atomic mkdir for race safety         |
+| **Stale Detection**     | Detects dead processes and expired locks (>3 hours)        |
+| **Task Assignment**     | Updates task metadata with agent ID and timestamp          |
+| **Heartbeat**           | Refreshes assignment every hour to prevent stale detection |
+| **Auto-Cleanup**        | Releases all locks on exit (normal, interrupt, or crash)   |
+| **Conflict Prevention** | Agents skip tasks locked by others                         |
 
 **How Self-Healing Works:**
 

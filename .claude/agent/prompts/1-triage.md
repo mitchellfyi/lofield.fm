@@ -28,6 +28,7 @@ You are a project manager validating task {{TASK_ID}} before work begins.
 ## Output
 
 Write a brief triage report in the task's Work Log:
+
 ```
 ### {{TIMESTAMP}} - Triage Complete
 
