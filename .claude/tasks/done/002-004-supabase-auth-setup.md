@@ -12,8 +12,8 @@
 | Completed   | `2026-01-23 21:20`                                     |
 | Blocked By  |                                                        |
 | Blocks      | `002-005-api-key-management`, `003-001-save-tracks-db` |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                                                        |
+| Assigned At |                                                        |
 
 ---
 
@@ -449,9 +449,11 @@ Status field: matches (done)
 Acceptance criteria: 14/14 checked
 
 Issues found:
+
 - none
 
 Actions taken:
+
 - Verified task file correctly located in done/
 - Verified all 14 acceptance criteria marked complete
 - Verified tests pass (133 passed, 2 skipped)
