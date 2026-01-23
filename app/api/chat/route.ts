@@ -1,13 +1,10 @@
-import { createOpenAI } from "@ai-sdk/openai";
-
-// Explicitly configure OpenAI with API key from environment
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import { streamText, type ModelMessage } from "ai";
 import { validateToneCode } from "@/lib/audio/llmContract";
 import { loadSystemPrompt, buildRetryPrompt } from "@/lib/prompts/loader";
 import { isValidModel, DEFAULT_MODEL } from "@/lib/models";
+import { createClient } from "@/lib/supabase/server";
+import { getApiKey } from "@/lib/api-keys";
 
 export const runtime = "nodejs";
 
@@ -16,6 +13,7 @@ const MAX_RETRIES = 3;
 async function generateWithValidation(
   messages: ModelMessage[],
   modelName: string,
+  openai: OpenAIProvider,
   retryCount = 0
 ): Promise<Response> {
   const systemPrompt = loadSystemPrompt();
@@ -57,7 +55,7 @@ async function generateWithValidation(
     ];
 
     // Retry recursively
-    return generateWithValidation(newMessages, modelName, retryCount + 1);
+    return generateWithValidation(newMessages, modelName, openai, retryCount + 1);
   }
 
   // Return the response (either valid or max retries reached)
@@ -85,6 +83,35 @@ async function generateWithValidation(
 }
 
 export async function POST(req: Request) {
+  // Get user session
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  // Get user's API key
+  let apiKey = await getApiKey(user.id);
+
+  // In development, fall back to env var if no user key
+  if (!apiKey && process.env.NODE_ENV === "development") {
+    apiKey = process.env.OPENAI_API_KEY ?? null;
+  }
+
+  // In production, require user's key
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: "API key required. Please add your OpenAI API key in Settings." }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Create OpenAI client with user's key
+  const openai = createOpenAI({ apiKey });
+
   const body = await req.json();
   const { messages, model: requestedModel } = body;
 
@@ -123,5 +150,5 @@ export async function POST(req: Request) {
     return new Response("No valid messages provided", { status: 400 });
   }
 
-  return generateWithValidation(contextMessages, modelName);
+  return generateWithValidation(contextMessages, modelName, openai);
 }
