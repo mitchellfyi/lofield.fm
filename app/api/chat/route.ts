@@ -11,7 +11,7 @@ import { isValidModel, DEFAULT_MODEL } from "@/lib/models";
 
 export const runtime = "nodejs";
 
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 3;
 
 async function generateWithValidation(
   messages: ModelMessage[],
@@ -70,11 +70,16 @@ async function generateWithValidation(
     },
   });
 
+  // Build error type string for UI feedback
+  const errorTypes = validation.errors.map((e) => e.type).join(",");
+
   return new Response(stream, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "X-Validation-Status": validation.valid ? "valid" : "invalid",
       "X-Retry-Count": retryCount.toString(),
+      "X-Max-Retries": MAX_RETRIES.toString(),
+      "X-Validation-Errors": errorTypes || "",
     },
   });
 }
