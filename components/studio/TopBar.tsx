@@ -5,6 +5,7 @@ import { PlayerState } from "@/lib/audio/runtime";
 import { PRESETS, type Preset } from "@/lib/audio/presets";
 import { WaveformVisualizer } from "./WaveformVisualizer";
 import { ModelSelector } from "./ModelSelector";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 interface TopBarProps {
   playerState: PlayerState;
@@ -175,6 +176,9 @@ export function TopBar({ playerState, onLoadPreset, selectedModel, onModelChange
               </svg>
               <span className="hidden sm:inline">Help</span>
             </button>
+
+            {/* User Menu */}
+            <UserMenu />
           </div>
         </div>
       </div>
