@@ -1,0 +1,11 @@
+# Agent runtime state (crash recovery, sessions)
+state/
+
+# Lock files (parallel agent coordination)
+locks/
+
+# Run logs (timestamped agent execution logs)
+logs/
+
+# Local settings (user-specific config)
+settings.local.json
