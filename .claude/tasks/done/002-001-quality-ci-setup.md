@@ -5,15 +5,15 @@
 | Field       | Value                      |
 | ----------- | -------------------------- |
 | ID          | `002-001-quality-ci-setup` |
-| Status      | `doing`                    |
+| Status      | `done`                     |
 | Priority    | `002` High                 |
 | Created     | `2026-01-23 12:00`         |
 | Started     | `2026-01-23 19:53`         |
-| Completed   |                            |
+| Completed   | `2026-01-23 20:12`         |
 | Blocked By  |                            |
 | Blocks      |                            |
-| Assigned To | `worker-1`                 |
-| Assigned At | `2026-01-23 19:53`         |
+| Assigned To |                            |
+| Assigned At |                            |
 
 ---
 
@@ -30,19 +30,19 @@ The project currently only has a basic `eslint` script. For maintainability and 
 
 ## Acceptance Criteria
 
-- [ ] Add Prettier with consistent config (`.prettierrc`)
-- [ ] Configure ESLint with TypeScript-aware rules
-- [ ] Add `npm run lint` - runs ESLint
-- [ ] Add `npm run format` - runs Prettier fix
-- [ ] Add `npm run format:check` - checks Prettier (CI-safe)
-- [ ] Add `npm run typecheck` - runs `tsc --noEmit`
-- [ ] Add `npm run quality` - runs all checks in sequence
-- [ ] Create GitHub Actions workflow (`.github/workflows/ci.yml`)
-- [ ] CI runs on push and PR to main
-- [ ] All checks pass on current codebase
-- [ ] Tests written and passing
-- [ ] Quality gates pass
-- [ ] Changes committed with task reference
+- [x] Add Prettier with consistent config (`.prettierrc`)
+- [x] Configure ESLint with TypeScript-aware rules
+- [x] Add `npm run lint` - runs ESLint
+- [x] Add `npm run format` - runs Prettier fix
+- [x] Add `npm run format:check` - checks Prettier (CI-safe)
+- [x] Add `npm run typecheck` - runs `tsc --noEmit`
+- [x] Add `npm run quality` - runs all checks in sequence
+- [x] Create GitHub Actions workflow (`.github/workflows/ci.yml`)
+- [x] CI runs on push and PR to main
+- [x] All checks pass on current codebase
+- [x] Tests written and passing
+- [x] Quality gates pass
+- [x] Changes committed with task reference
 
 ---
 
@@ -274,6 +274,53 @@ $ npm run quality
 - Prettier: All matched files use Prettier code style!
 ```
 
+### 2026-01-23 20:10 - Documentation Sync
+
+Docs updated:
+
+- Task file Links section expanded with categorized file listing
+- Notes section updated with project context (Next.js/TS, not Rails)
+
+Annotations:
+
+- N/A - This is a Node.js/Next.js project, not Rails (no models to annotate)
+
+Consistency checks:
+
+- [x] Code matches docs (scripts in package.json match CLAUDE.md references)
+- [x] No broken links (no external markdown links in changed files)
+- [x] Schema annotations current (N/A for Node.js project)
+- [x] CI workflow names descriptive and accurate
+- [x] README.md does not require updates (quality scripts are internal tooling)
+
+### 2026-01-23 20:12 - Review Complete
+
+**Code Review Checklist:**
+
+| Check                            | Status | Notes                                          |
+| -------------------------------- | ------ | ---------------------------------------------- |
+| Code follows project conventions | ✅     | Uses standard npm scripts, GitHub Actions      |
+| No code smells or anti-patterns  | ✅     | Clean, minimal configuration                   |
+| Error handling appropriate       | ✅     | CI will fail on errors as expected             |
+| No security vulnerabilities      | ✅     | No executable code, just config files          |
+| No N+1 queries                   | ✅     | N/A (no database operations)                   |
+| Proper transactions              | ✅     | N/A (no database operations)                   |
+
+**Consistency:**
+
+- All criteria met: yes
+- Test coverage adequate: yes (37 unit tests + manual integration tests)
+- Docs in sync: yes
+
+**Follow-up tasks created:**
+
+- None needed - task is complete and self-contained
+- Pre-commit hooks (husky + lint-staged) noted in Notes section for future consideration
+
+**Final status: COMPLETE**
+
+All 13 acceptance criteria verified and checked. Task moved to done/.
+
 ---
 
 ## Testing Evidence
@@ -306,10 +353,28 @@ $ npm test
 
 - Consider adding husky + lint-staged for pre-commit hooks in a follow-up task
 - May need to adjust Prettier/ESLint rules based on team preferences
+- This is a Next.js/TypeScript project - `annotaterb models` (Rails) does not apply
 
 ---
 
 ## Links
 
-- File: `package.json`
-- File: `eslint.config.mjs`
+### Files Created
+
+- `.prettierrc` - Prettier configuration
+- `.prettierignore` - Prettier ignore rules
+- `.github/workflows/ci.yml` - GitHub Actions quality workflow
+
+### Files Modified
+
+- `package.json` - Added scripts: `lint:fix`, `format`, `format:check`, `typecheck`, `quality`
+- `eslint.config.mjs` - Added `eslint-config-prettier` to avoid Prettier conflicts
+
+### Files Fixed (ESLint errors resolved)
+
+- `app/page.tsx` - Deterministic animation pattern
+- `app/studio/page.tsx` - Function hoisting fix
+- `components/studio/TopBar.tsx` - HTML entity escaping
+- `components/studio/WaveformVisualizer.tsx` - React hooks optimization
+- `e2e/studio.spec.ts` - Type annotations
+- `lib/audio/useVisualization.ts` - Ref cleanup pattern

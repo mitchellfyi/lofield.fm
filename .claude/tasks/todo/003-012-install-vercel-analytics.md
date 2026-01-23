@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field       | Value                                                  |
-| ----------- | ------------------------------------------------------ |
-| ID          | `003-012-install-vercel-analytics`                     |
-| Status      | `todo`                                                 |
-| Priority    | `003` Medium                                           |
-| Created     | `2025-01-27 00:00`                                     |
-| Started     |                                                         |
-| Completed   |                                                         |
-| Blocked By  |                                                         |
-| Blocks      |                                                         |
-| Assigned To |                                                        |
-| Assigned At |                                                        |
+| Field       | Value                              |
+| ----------- | ---------------------------------- |
+| ID          | `003-012-install-vercel-analytics` |
+| Status      | `todo`                             |
+| Priority    | `003` Medium                       |
+| Created     | `2025-01-27 00:00`                 |
+| Started     |                                    |
+| Completed   |                                    |
+| Blocked By  |                                    |
+| Blocks      |                                    |
+| Assigned To |                                    |
+| Assigned At |                                    |
 
 ---
 
