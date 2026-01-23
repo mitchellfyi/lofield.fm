@@ -236,9 +236,23 @@ class AudioRuntime {
         disposables.length = 0;
       };
 
-      // Auto-start the Transport if not already running
-      if (Tone.Transport.state !== 'started') {
-        Tone.Transport.start();
+      // Wait for effects (especially Reverb) to be ready before starting
+      // Reverb needs time to generate its impulse response
+      const reverbs = disposables.filter(obj => obj instanceof Tone.Reverb) as Tone.Reverb[];
+      if (reverbs.length > 0) {
+        await Promise.all(reverbs.map(r => r.ready));
+      }
+
+      // Ensure audio context is running
+      await Tone.getContext().resume();
+
+      // Reset transport position to 0 right before starting
+      // This ensures sequences starting at position 0 will play from the beginning
+      Tone.getTransport().position = 0;
+
+      // Start transport immediately - no offset needed since we've waited for everything
+      if (Tone.getTransport().state !== 'started') {
+        Tone.getTransport().start();
       }
 
       this.addEvent({
@@ -283,10 +297,11 @@ class AudioRuntime {
         }
       }
       
-      // Stop Tone.js Transport
-      Tone.Transport.stop();
-      Tone.Transport.cancel(0); // Cancel all scheduled events
-      Tone.Transport.position = 0; // Reset position
+      // Stop Tone.js Transport (use getTransport() to avoid deprecation)
+      const transport = Tone.getTransport();
+      transport.stop();
+      transport.cancel(0); // Cancel all scheduled events
+      transport.position = 0; // Reset position
       
       this.state = this.initialized ? 'ready' : 'idle';
       this.addEvent({

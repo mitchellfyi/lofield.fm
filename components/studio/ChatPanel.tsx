@@ -34,12 +34,28 @@ export function ChatPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
         {messages.map((message) => {
           const textParts = message.parts.filter(part => part.type === 'text');
-          const content = textParts.map(part => ('text' in part ? part.text : '')).join('\n');
+          let content = textParts.map(part => ('text' in part ? part.text : '')).join('\n');
           const isUser = message.role === 'user';
 
           // Skip system messages
           if (message.role === 'system') {
             return null;
+          }
+
+          // For user messages, extract just the request (hide code context)
+          if (isUser && content.includes('Request:')) {
+            const requestMatch = content.match(/Request:\s*([\s\S]*?)$/);
+            if (requestMatch) {
+              content = requestMatch[1].trim();
+            }
+          }
+
+          // For assistant messages, extract just the Notes (hide code block)
+          if (!isUser) {
+            const notesMatch = content.match(/Notes?:\s*([\s\S]*?)(?=Code:|```|$)/i);
+            if (notesMatch) {
+              content = notesMatch[1].trim();
+            }
           }
 
           return (

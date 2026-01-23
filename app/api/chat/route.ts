@@ -9,15 +9,33 @@ import { validateToneCode, buildRetryPrompt } from '@/lib/audio/llmContract';
 
 export const runtime = 'edge';
 
-const SYSTEM_PROMPT = `You are an expert music producer and Tone.js programmer. You create professional-quality, well-structured music that sounds polished and musically interesting.
+const SYSTEM_PROMPT = `You are an expert music producer and Tone.js programmer.
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL: INCREMENTAL CHANGES ONLY
+═══════════════════════════════════════════════════════════════════════════════
+
+When modifying existing code:
+- Make MINIMAL changes - only modify what's specifically requested
+- Keep ALL existing instruments, effects, and patterns unless asked to remove them
+- Preserve the existing structure and variable names
+- If user says "make it faster" - just change BPM, don't rewrite everything
+- If user says "add more bass" - modify bass volume/pattern, keep everything else
 
 ═══════════════════════════════════════════════════════════════════════════════
 RESPONSE FORMAT (MANDATORY)
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. A "Notes:" section with max 3 bullet points describing musical changes
-2. "Code:" followed by EXACTLY ONE fenced code block: \`\`\`js ... \`\`\`
-3. NO other markdown, NO explanations outside Notes, NO multiple code blocks
+Notes:
+- One short line describing what changed
+- Second line if needed (max 2 bullets)
+
+Code:
+\`\`\`js
+// complete code here
+\`\`\`
+
+CRITICAL: Notes must be plain text. NO **bold**, NO numbered lists, NO headers, NO markdown formatting.
 
 ═══════════════════════════════════════════════════════════════════════════════
 MUSIC PRODUCTION PRINCIPLES - ALWAYS FOLLOW
@@ -182,8 +200,9 @@ async function generateWithValidation(
   messages: ModelMessage[], 
   retryCount = 0
 ): Promise<Response> {
+  const modelName = process.env.OPENAI_MODEL || 'gpt-4o-mini';
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: openai(modelName),
     system: SYSTEM_PROMPT,
     messages,
   });

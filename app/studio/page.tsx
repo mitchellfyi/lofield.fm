@@ -181,6 +181,7 @@ export default function StudioPage() {
   const lastProcessedMessageRef = useRef<string>('');
   const runtimeRef = useRef(getAudioRuntime());
   const liveUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPlayedCodeRef = useRef<string>('');
 
   const { messages, sendMessage, status: chatStatus } = useChat({
     transport: new TextStreamChatTransport({ api: '/api/chat' }),
@@ -205,6 +206,12 @@ export default function StudioPage() {
       return;
     }
 
+    // Skip if code hasn't actually changed from what's currently playing
+    // This prevents the restart-on-first-play bug
+    if (code === lastPlayedCodeRef.current) {
+      return;
+    }
+
     // Clear any pending update
     if (liveUpdateTimeoutRef.current) {
       clearTimeout(liveUpdateTimeoutRef.current);
@@ -216,7 +223,7 @@ export default function StudioPage() {
       if (!validateCode(code)) {
         return;
       }
-      
+
       const validation = validateRawToneCode(code);
       if (!validation.valid) {
         // Don't show errors during live typing - just skip invalid code
@@ -225,6 +232,7 @@ export default function StudioPage() {
 
       // Re-play the updated code
       const runtime = runtimeRef.current;
+      lastPlayedCodeRef.current = code;
       runtime.play(code).catch((err) => {
         // Silently handle errors during live coding to avoid disrupting flow
         console.warn('Live update error:', err);
@@ -275,6 +283,7 @@ export default function StudioPage() {
 
     try {
       const runtime = runtimeRef.current;
+      lastPlayedCodeRef.current = codeToPlay; // Track what we're playing
       await runtime.play(codeToPlay);
       setError('');
       setValidationErrors([]);
@@ -351,8 +360,16 @@ export default function StudioPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
-    
-    sendMessage({ text: inputValue });
+
+    // Include current code as context for the AI to make incremental changes
+    const messageWithContext = `Current code:
+\`\`\`js
+${code}
+\`\`\`
+
+Request: ${inputValue}`;
+
+    sendMessage({ text: messageWithContext });
     setInputValue('');
   };
 
