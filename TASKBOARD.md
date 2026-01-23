@@ -4,21 +4,15 @@
 
 ## Summary
 
-| Status   | Count |
-| -------- | ----- |
-| Todo     | 16    |
-| Doing    | 0     |
-| Done     | 4     |
+| Status | Count |
+| ------ | ----- |
+| Todo   | 15    |
+| Doing  | 0     |
+| Done   | 5     |
 
 ---
 
-## Todo (16)
-
-### Priority 002 - High (1)
-
-| ID        | Task                                                                                            | Blocked By |
-| --------- | ----------------------------------------------------------------------------------------------- | ---------- |
-| `002-005` | [User API Key Management with Required Modal](.claude/tasks/todo/002-005-api-key-management.md) | `002-004`  |
+## Todo (15)
 
 ### Priority 003 - Medium (13)
 
@@ -39,11 +33,11 @@
 
 ### Priority 004 - Low (3)
 
-| ID        | Task                                                                                       | Blocked By |
-| --------- | ------------------------------------------------------------------------------------------ | ---------- |
-| `004-001` | [Mobile Usability Pass](.claude/tasks/todo/004-001-mobile-usability.md)                    | -          |
-| `004-001` | [Model Cost Display](.claude/tasks/todo/004-001-model-cost-display.md)                     | -          |
-| `004-002` | [Model-Specific Prompts](.claude/tasks/todo/004-002-model-specific-prompts.md)             | -          |
+| ID        | Task                                                                           | Blocked By |
+| --------- | ------------------------------------------------------------------------------ | ---------- |
+| `004-001` | [Mobile Usability Pass](.claude/tasks/todo/004-001-mobile-usability.md)        | -          |
+| `004-001` | [Model Cost Display](.claude/tasks/todo/004-001-model-cost-display.md)         | -          |
+| `004-002` | [Model-Specific Prompts](.claude/tasks/todo/004-002-model-specific-prompts.md) | -          |
 
 ---
 
@@ -53,7 +47,7 @@ _No tasks in progress._
 
 ---
 
-## Done (4)
+## Done (5)
 
 | ID        | Task                                                                                                               | Completed        |
 | --------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- |
@@ -61,6 +55,7 @@ _No tasks in progress._
 | `002-002` | [Add AI Model Selection with gpt-4o-mini Default](.claude/tasks/done/002-002-ai-model-selection.md)                | 2026-01-23 20:52 |
 | `002-003` | [Chat Prompt Hardening with Schema Validation and Retry Loop](.claude/tasks/done/002-003-chat-prompt-hardening.md) | 2026-01-23 21:12 |
 | `002-004` | [Implement Supabase Backend and Authentication](.claude/tasks/done/002-004-supabase-auth-setup.md)                 | 2026-01-23 21:20 |
+| `002-005` | [User API Key Management with Required Modal](.claude/tasks/done/002-005-api-key-management.md)                    | 2026-01-23 21:47 |
 
 ---
 
@@ -68,7 +63,7 @@ _No tasks in progress._
 
 ```
 002-004 (Supabase Auth) [DONE]
-├── 002-005 (API Key Management) [UNBLOCKED]
+├── 002-005 (API Key Management) [DONE]
 ├── 003-001 (Save Tracks) [UNBLOCKED]
 │   ├── 003-002 (Track Revisions)
 │   ├── 003-004 (Shareable Links)
@@ -85,20 +80,19 @@ _No tasks in progress._
 
 Tasks ready to start (no blockers):
 
-1. **002-005** - API Key Management (unlocked by 002-004)
-2. **003-001** - Save Tracks (unlocked by 002-004)
-3. **003-003** - Export Options
-4. **003-005** - Preset Library
-5. **003-006** - Tweaks UX
-6. **003-007** - Multi-Track Support
-7. **003-008** - Undo/Redo
-8. **003-009** - Cost Controls (unlocked by 002-004)
-9. **003-010** - Observability
-10. **003-012** - Install Vercel Analytics
-11. **004-001** - Mobile Usability
-12. **004-001** - Model Cost Display
-13. **004-002** - Model-Specific Prompts
+1. **003-001** - Save Tracks (unlocked by 002-004)
+2. **003-003** - Export Options
+3. **003-005** - Preset Library
+4. **003-006** - Tweaks UX
+5. **003-007** - Multi-Track Support
+6. **003-008** - Undo/Redo
+7. **003-009** - Cost Controls (unlocked by 002-004)
+8. **003-010** - Observability
+9. **003-012** - Install Vercel Analytics
+10. **004-001** - Mobile Usability
+11. **004-001** - Model Cost Display
+12. **004-002** - Model-Specific Prompts
 
 ---
 
-_Last updated: 2026-01-23 21:20_
+_Last updated: 2026-01-23 21:47_
