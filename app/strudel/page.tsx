@@ -2,8 +2,9 @@
 
 import { useChat } from '@ai-sdk/react';
 import { TextStreamChatTransport } from 'ai';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Script from 'next/script';
+import { validateStrudelCode, extractCodeBlocks } from '@/lib/strudel/llmContract';
 
 const DEFAULT_CODE = `setcps(85/60/4)
 stack(
@@ -34,14 +35,93 @@ export default function StrudelPage() {
   const [strudelLoaded, setStrudelLoaded] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastProcessedMessageRef = useRef<string>('');
 
   const { messages, sendMessage, status: chatStatus } = useChat({
     transport: new TextStreamChatTransport({ api: '/api/chat' }),
   });
 
   const isLoading = chatStatus === 'submitted' || chatStatus === 'streaming';
+
+  const validateCode = (code: string): boolean => {
+    for (const token of DANGEROUS_TOKENS) {
+      if (code.includes(token)) {
+        setError(`Code contains dangerous token: ${token}`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const playCode = useCallback((codeToPlay: string) => {
+    if (!strudelLoaded) {
+      setError('Strudel not loaded yet. Please wait.');
+      return;
+    }
+    if (!isAudioInitialized) {
+      setError('Please click "Init Audio" first.');
+      return;
+    }
+
+    if (!validateCode(codeToPlay)) {
+      return;
+    }
+
+    // Validate Strudel code before playing
+    const validation = validateStrudelCode(codeToPlay);
+    if (!validation.valid) {
+      setError(`Code validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
+      setValidationErrors(validation.errors.map(e => e.message));
+      return;
+    }
+
+    try {
+      // @ts-expect-error - Strudel global
+      window.hush?.();
+      
+      // Evaluate code using Function constructor
+      const fn = new Function(codeToPlay);
+      fn();
+      
+      setIsPlaying(true);
+      setStatus('Playing...');
+      setError('');
+      setValidationErrors([]);
+    } catch (err) {
+      setError(`Failed to play: ${err}`);
+      setIsPlaying(false);
+    }
+  }, [strudelLoaded, isAudioInitialized, setError, setValidationErrors, setIsPlaying, setStatus]);
+
+  const processAssistantMessage = useCallback((fullText: string) => {
+    // Use shared validator
+    const validation = validateStrudelCode(fullText);
+    
+    if (validation.valid && validation.code) {
+      const newCode = validation.code;
+      setCode(newCode);
+      setValidationErrors([]);
+      
+      // Auto-restart if playing
+      if (isPlaying && strudelLoaded && isAudioInitialized) {
+        playCode(newCode);
+      }
+    } else if (validation.code) {
+      // Code extracted but has validation errors
+      setCode(validation.code);
+      setValidationErrors(validation.errors.map(e => e.message));
+    } else {
+      // Fallback: try to extract any code block
+      const blocks = extractCodeBlocks(fullText);
+      if (blocks.length > 0) {
+        setCode(blocks[0]);
+        setValidationErrors(['Code may not be valid Strudel - check for tempo and playback']);
+      }
+    }
+  }, [isPlaying, strudelLoaded, isAudioInitialized, playCode, setCode, setValidationErrors]);
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -57,19 +137,17 @@ export default function StrudelPage() {
         const textParts = lastMessage.parts.filter(part => part.type === 'text');
         const fullText = textParts.map(part => part.text).join('\n');
         
-        const codeMatch = fullText.match(/```(?:js|javascript)?\n([\s\S]*?)```/);
-        if (codeMatch && codeMatch[1]) {
-          const newCode = codeMatch[1].trim();
-          setCode(newCode);
-          
-          // Auto-restart if playing
-          if (isPlaying && strudelLoaded && isAudioInitialized) {
-            playCode(newCode);
-          }
+        // Skip if already processed
+        if (lastProcessedMessageRef.current === fullText) {
+          return;
         }
+        lastProcessedMessageRef.current = fullText;
+        
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        processAssistantMessage(fullText);
       }
     }
-  }, [messages, isPlaying, strudelLoaded, isAudioInitialized]);
+  }, [messages, processAssistantMessage]);
 
   const initAudio = () => {
     if (!strudelLoaded) {
@@ -77,7 +155,7 @@ export default function StrudelPage() {
       return;
     }
     try {
-      // @ts-ignore - Strudel global
+      // @ts-expect-error - Strudel global
       window.initStrudel?.();
       setIsAudioInitialized(true);
       setStatus('Audio initialized!');
@@ -87,54 +165,13 @@ export default function StrudelPage() {
     }
   };
 
-  const validateCode = (code: string): boolean => {
-    for (const token of DANGEROUS_TOKENS) {
-      if (code.includes(token)) {
-        setError(`Code contains dangerous token: ${token}`);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const playCode = (codeToPlay: string) => {
-    if (!strudelLoaded) {
-      setError('Strudel not loaded yet. Please wait.');
-      return;
-    }
-    if (!isAudioInitialized) {
-      setError('Please click "Init Audio" first.');
-      return;
-    }
-
-    if (!validateCode(codeToPlay)) {
-      return;
-    }
-
-    try {
-      // @ts-ignore - Strudel global
-      window.hush?.();
-      
-      // Evaluate code using Function constructor
-      const fn = new Function(codeToPlay);
-      fn();
-      
-      setIsPlaying(true);
-      setStatus('Playing...');
-      setError('');
-    } catch (err) {
-      setError(`Failed to play: ${err}`);
-      setIsPlaying(false);
-    }
-  };
-
   const stop = () => {
     if (!strudelLoaded) {
       setError('Strudel not loaded yet.');
       return;
     }
     try {
-      // @ts-ignore - Strudel global
+      // @ts-expect-error - Strudel global
       window.hush?.();
       setIsPlaying(false);
       setStatus('Stopped');
@@ -269,6 +306,18 @@ export default function StrudelPage() {
             {status && (
               <div className="p-3 bg-zinc-800 rounded-lg text-sm text-zinc-300">
                 {status}
+              </div>
+            )}
+
+            {/* Validation Warnings */}
+            {validationErrors.length > 0 && (
+              <div className="p-3 bg-yellow-900/50 border border-yellow-700 rounded-lg text-sm text-yellow-200">
+                <div className="font-semibold mb-1">⚠️ Validation Issues:</div>
+                <ul className="list-disc list-inside space-y-1">
+                  {validationErrors.map((error, idx) => (
+                    <li key={idx}>{error}</li>
+                  ))}
+                </ul>
               </div>
             )}
 
