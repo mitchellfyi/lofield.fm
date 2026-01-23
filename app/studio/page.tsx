@@ -290,6 +290,7 @@ export default function StudioPage() {
   const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [chatStatusMessage, setChatStatusMessage] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [liveMode, setLiveMode] = useState(true); // Live coding mode - auto-update on edit
   const [selectedModel, setSelectedModel] = useModelSelection();
@@ -472,6 +473,7 @@ export default function StudioPage() {
             const validation = validateToneCode(fullText);
             if (validation.valid) {
               setValidationErrors([]);
+              setChatStatusMessage(""); // Clear any previous status
               // Auto-restart if playing
               const runtime = runtimeRef.current;
               if (runtime.getState() === "playing" && audioLoaded) {
@@ -486,11 +488,12 @@ export default function StudioPage() {
               if (lastPlayedCodeRef.current) {
                 // Revert to last working code in editor
                 // This is intentional - recovering from failed AI generation
-                 
                 setCode(lastPlayedCodeRef.current);
                 setError("Code generation failed. Reverted to last working version.");
+                setChatStatusMessage("Code fix failed, using previous version");
               } else {
                 setError(`Code validation failed: ${errorMsgs.join(", ")}`);
+                setChatStatusMessage("Code validation failed");
               }
             }
           }
@@ -561,6 +564,7 @@ Request: ${inputValue}`;
                 onInputChange={setInputValue}
                 onSubmit={handleSubmit}
                 isLoading={isLoading}
+                statusMessage={chatStatusMessage}
               />
             </div>
 
@@ -609,6 +613,7 @@ Request: ${inputValue}`;
               defaultCode={DEFAULT_CODE}
               liveMode={liveMode}
               onLiveModeChange={setLiveMode}
+              chatStatusMessage={chatStatusMessage}
             />
           </div>
         </div>
@@ -634,6 +639,7 @@ interface MobileTabsProps {
   defaultCode: string;
   liveMode: boolean;
   onLiveModeChange: (enabled: boolean) => void;
+  chatStatusMessage: string;
 }
 
 function MobileTabs({
@@ -652,6 +658,7 @@ function MobileTabs({
   defaultCode,
   liveMode,
   onLiveModeChange,
+  chatStatusMessage,
 }: MobileTabsProps) {
   const [activeTab, setActiveTab] = useState<"chat" | "code">("chat");
   const [showSequencer, setShowSequencer] = useState(true);
@@ -693,6 +700,7 @@ function MobileTabs({
             onInputChange={setInputValue}
             onSubmit={handleSubmit}
             isLoading={isLoading}
+            statusMessage={chatStatusMessage}
           />
         )}
 

@@ -9,6 +9,8 @@ interface ChatPanelProps {
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
+  /** Optional status message to show below loading indicator (e.g., "Code fix failed, using previous version") */
+  statusMessage?: string;
 }
 
 export function ChatPanel({
@@ -17,6 +19,7 @@ export function ChatPanel({
   onInputChange,
   onSubmit,
   isLoading,
+  statusMessage,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -109,7 +112,33 @@ export function ChatPanel({
                     <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse delay-75" />
                     <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse delay-150" />
                   </div>
-                  <span className="text-sm text-slate-300">Processing...</span>
+                  <span className="text-sm text-slate-300">Generating code...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status message for validation failures or other states */}
+        {statusMessage && !isLoading && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-lg backdrop-blur-sm bg-amber-900/50 border border-amber-500/30">
+              <div className="px-3 py-2.5">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-amber-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  <span className="text-sm text-amber-200">{statusMessage}</span>
                 </div>
               </div>
             </div>
