@@ -154,6 +154,13 @@ class AudioRuntime {
 
   /**
    * Play Tone.js code
+   * 
+   * The runtime automatically:
+   * - Tracks all created Tone.js objects (synths, effects, sequences, etc.)
+   * - Starts the Transport after code evaluation
+   * - Disposes all tracked objects on stop
+   * 
+   * User code just needs to define instruments and sequences - no cleanup needed!
    */
   async play(code: string): Promise<void> {
     if (!this.initialized) {
@@ -169,29 +176,64 @@ class AudioRuntime {
       this.playCallCount++;
       this.notifyListeners();
 
-      // The user code should return a cleanup function that disposes synths/sequences
-      // We wrap the code to capture any cleanup function it returns
+      // Array to track all disposable Tone.js objects
+      const disposables: Array<{ dispose: () => void }> = [];
+
+      // Create a proxy that auto-tracks all new Tone.js object instantiations
+      const createTrackedTone = () => {
+        return new Proxy(Tone, {
+          get(target, prop: string) {
+            const value = (target as Record<string, unknown>)[prop];
+            
+            // If it's a constructor (starts with capital letter), wrap it to track instances
+            if (typeof value === 'function' && /^[A-Z]/.test(prop)) {
+              return new Proxy(value, {
+                construct(constructorTarget, args) {
+                  const instance = new (constructorTarget as new (...args: unknown[]) => unknown)(...args);
+                  // Track anything with a dispose method
+                  if (instance && typeof (instance as { dispose?: () => void }).dispose === 'function') {
+                    disposables.push(instance as { dispose: () => void });
+                  }
+                  return instance;
+                }
+              });
+            }
+            return value;
+          }
+        });
+      };
+
+      const trackedTone = createTrackedTone();
+
+      // Build the play function - user code gets the tracked Tone object
       const playFunction = new Function(
         'Tone',
-        `
-        // Clear any previous cleanup
-        if (window.__toneCleanup) {
-          try { window.__toneCleanup(); } catch(e) {}
-          window.__toneCleanup = undefined;
-        }
-        
-        // User code can store cleanup function in window.__toneCleanup
-        // or return it from this block
-        ${code}
-        `
+        code
       );
 
-      // Execute the code with Tone available
-      playFunction(Tone);
+      // Execute the code with tracked Tone
+      playFunction(trackedTone);
+
+      // Store cleanup function for this session
+      window.__toneCleanup = () => {
+        for (const obj of disposables) {
+          try {
+            obj.dispose();
+          } catch (e) {
+            console.warn('Error disposing Tone object:', e);
+          }
+        }
+        disposables.length = 0;
+      };
+
+      // Auto-start the Transport if not already running
+      if (Tone.Transport.state !== 'started') {
+        Tone.Transport.start();
+      }
 
       this.addEvent({
         type: 'eval_ok',
-        message: 'Code evaluated successfully',
+        message: `Code evaluated (${disposables.length} objects tracked)`,
       });
       this.addEvent({
         type: 'play',

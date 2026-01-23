@@ -1,14 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PlayerState } from '@/lib/audio/runtime';
+import { PRESETS, type Preset } from '@/lib/audio/presets';
 
 interface TopBarProps {
   playerState: PlayerState;
+  onLoadPreset?: (code: string) => void;
 }
 
-export function TopBar({ playerState }: TopBarProps) {
+export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowPresets(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectPreset = (preset: Preset) => {
+    onLoadPreset?.(preset.code);
+    setShowPresets(false);
+  };
 
   const getStateColor = () => {
     switch (playerState) {
@@ -31,7 +51,7 @@ export function TopBar({ playerState }: TopBarProps) {
 
   return (
     <>
-      <div className="border-b border-cyan-950/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-sm">
+      <div className="border-b border-cyan-950/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-sm relative z-30">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -46,12 +66,60 @@ export function TopBar({ playerState }: TopBarProps) {
             </div>
           </div>
 
-          <button
-            onClick={() => setShowHelp(true)}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
-          >
-            Help
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Demo Songs Dropdown */}
+            {onLoadPreset && (
+              <div className="relative z-50" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowPresets(!showPresets)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                  Demo Songs
+                  <svg className={`w-4 h-4 transition-transform ${showPresets ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showPresets && (
+                  <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 border border-cyan-500/30 rounded-xl shadow-2xl shadow-cyan-500/10 backdrop-blur-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-3 border-b border-cyan-500/20 bg-slate-800/50">
+                      <h3 className="text-sm font-semibold text-cyan-400">Choose a Demo</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Load a preset to get started</p>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {PRESETS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          onClick={() => handleSelectPreset(preset)}
+                          className="w-full px-4 py-3 text-left hover:bg-cyan-500/10 transition-colors border-b border-slate-800 last:border-b-0"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-cyan-100">{preset.name}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">{preset.bpm} BPM</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium text-cyan-500">{preset.genre}</span>
+                          </div>
+                          <p className="text-xs text-slate-400">{preset.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowHelp(true)}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+            >
+              Help
+            </button>
+          </div>
         </div>
       </div>
 

@@ -13,113 +13,139 @@ import { ConsolePanel } from '@/components/studio/ConsolePanel';
 import type { UIMessage } from '@ai-sdk/react';
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
-// Trancey Lofi - Dreamy downtempo with hypnotic arpeggios
+// Midnight Lofi - Chill beats to code/relax to
 // ═══════════════════════════════════════════════════════════
 
-// Set tempo - slow and dreamy
-Tone.Transport.bpm.value = 78;
-Tone.Transport.swing = 0.02;
+// Tempo & Feel
+Tone.Transport.bpm.value = 82;
+Tone.Transport.swing = 0.08;
 
 // ─────────────────────────────────────────────────────────────
-// Effects chain
+// Effects Chain - Warm and spacious
 // ─────────────────────────────────────────────────────────────
-const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).toDestination();
-const delay = new Tone.FeedbackDelay("8n.", 0.4).connect(reverb);
-const filter = new Tone.Filter(800, "lowpass").connect(delay);
-const chorus = new Tone.Chorus(4, 2.5, 0.5).connect(filter).start();
+const masterReverb = new Tone.Reverb({ decay: 3.5, wet: 0.3 }).toDestination();
+const tapeDelay = new Tone.FeedbackDelay("8n.", 0.38).connect(masterReverb);
+tapeDelay.wet.value = 0.25;
+const warmFilter = new Tone.Filter(2200, "lowpass").connect(tapeDelay);
+const chorus = new Tone.Chorus(3, 2.5, 0.4).connect(warmFilter).start();
+const vinylFilter = new Tone.Filter(4000, "lowpass").toDestination();
 
 // ─────────────────────────────────────────────────────────────
-// Drums - dusty lofi kit
+// Drums - Dusty, laid-back kit
 // ─────────────────────────────────────────────────────────────
 const kick = new Tone.MembraneSynth({
-  pitchDecay: 0.05,
-  octaves: 4,
+  pitchDecay: 0.08, octaves: 5,
   oscillator: { type: "sine" },
-  envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.4 }
+  envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.5 }
 }).toDestination();
-kick.volume.value = -6;
+kick.volume.value = -5;
 
 const snare = new Tone.NoiseSynth({
   noise: { type: "brown" },
-  envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 }
+  envelope: { attack: 0.002, decay: 0.18, sustain: 0, release: 0.15 }
+}).connect(masterReverb);
+snare.volume.value = -9;
+
+const rim = new Tone.NoiseSynth({
+  noise: { type: "pink" },
+  envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.02 }
 }).toDestination();
-snare.volume.value = -12;
+rim.volume.value = -14;
 
-const hat = new Tone.MetalSynth({
-  frequency: 300,
-  envelope: { attack: 0.001, decay: 0.05, release: 0.01 },
-  harmonicity: 5.1,
-  modulationIndex: 32,
-  resonance: 4000,
-  octaves: 1.5
-}).toDestination();
-hat.volume.value = -20;
+const hihatClosed = new Tone.MetalSynth({
+  frequency: 350, envelope: { attack: 0.001, decay: 0.04, release: 0.01 },
+  harmonicity: 5.1, modulationIndex: 28, resonance: 3500, octaves: 1.2
+}).connect(vinylFilter);
+hihatClosed.volume.value = -19;
 
-// Drum patterns
-const kickSeq = new Tone.Sequence((time, vel) => {
-  if (vel) kick.triggerAttackRelease("C1", "8n", time, vel);
-}, [0.9, null, null, 0.5, 0.9, null, 0.3, null], "8n").start(0);
+const hihatOpen = new Tone.MetalSynth({
+  frequency: 320, envelope: { attack: 0.001, decay: 0.12, release: 0.05 },
+  harmonicity: 5.1, modulationIndex: 28, resonance: 3200, octaves: 1.3
+}).connect(vinylFilter);
+hihatOpen.volume.value = -21;
 
-const snareSeq = new Tone.Sequence((time, vel) => {
-  if (vel) snare.triggerAttackRelease("8n", time, vel);
-}, [null, null, 0.8, null, null, null, 0.7, 0.3], "8n").start(0);
+// Drum Patterns - Groove with velocity dynamics
+const kickPat = new Tone.Sequence((t, v) => v && kick.triggerAttackRelease("C1", "8n", t, v),
+  [0.95, null, null, 0.4, 0.9, null, 0.35, null, 0.85, null, null, 0.45, 0.9, null, 0.3, 0.5], "16n").start(0);
 
-const hatSeq = new Tone.Sequence((time, vel) => {
-  if (vel) hat.triggerAttackRelease("32n", time, vel);
-}, [0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.4], "8n").start(0);
+const snarePat = new Tone.Sequence((t, v) => v && snare.triggerAttackRelease("16n", t, v),
+  [null, null, null, null, 0.9, null, null, null, null, null, null, null, 0.85, null, null, 0.35], "16n").start(0);
+
+const rimPat = new Tone.Sequence((t, v) => v && rim.triggerAttackRelease("32n", t, v),
+  [null, null, 0.5, null, null, null, null, 0.4, null, null, 0.45, null, null, null, null, null], "16n").start(0);
+
+const hatPat = new Tone.Sequence((t, v) => {
+  if (v > 0.7) hihatOpen.triggerAttackRelease("32n", t, v * 0.6);
+  else if (v) hihatClosed.triggerAttackRelease("32n", t, v);
+}, [0.6, 0.25, 0.5, 0.3, 0.55, 0.2, 0.8, 0.35, 0.55, 0.25, 0.5, 0.3, 0.6, 0.2, 0.75, 0.4], "16n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Bass - deep sub bass
+// Bass - Warm sub with filter movement
 // ─────────────────────────────────────────────────────────────
 const bass = new Tone.MonoSynth({
   oscillator: { type: "triangle" },
-  envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 0.8 },
-  filterEnvelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 0.8, baseFrequency: 100, octaves: 2 }
+  envelope: { attack: 0.03, decay: 0.25, sustain: 0.5, release: 0.6 },
+  filterEnvelope: { attack: 0.04, decay: 0.15, sustain: 0.4, release: 0.5, baseFrequency: 80, octaves: 2.5 }
 }).toDestination();
-bass.volume.value = -8;
+bass.volume.value = -7;
 
-const bassSeq = new Tone.Sequence((time, note) => {
-  if (note) bass.triggerAttackRelease(note, "4n", time);
-}, ["C2", null, "C2", null, "Eb2", null, "G1", null], "4n").start(0);
+// Bass follows Dm7 - G7 - Cmaj7 - Am7 progression
+const bassPat = new Tone.Sequence((t, n) => n && bass.triggerAttackRelease(n, "8n", t, 0.85),
+  ["D2", null, "D2", "D2", null, null, "F2", null, 
+   "G2", null, "G2", "G2", null, null, "B1", null,
+   "C2", null, "C2", "E2", null, null, "G2", null,
+   "A1", null, "A1", "C2", null, null, "E2", null], "8n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Trance arpeggio - hypnotic pattern
+// Rhodes-style Electric Piano - Jazzy chords
 // ─────────────────────────────────────────────────────────────
-const arp = new Tone.PolySynth(Tone.Synth, {
+const rhodes = new Tone.PolySynth(Tone.FMSynth, {
+  harmonicity: 3, modulationIndex: 2,
   oscillator: { type: "sine" },
-  envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 0.8 }
+  envelope: { attack: 0.01, decay: 0.8, sustain: 0.3, release: 1.2 },
+  modulation: { type: "sine" },
+  modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.8 }
 }).connect(chorus);
+rhodes.volume.value = -13;
+
+// Dm7 - G7 - Cmaj7 - Am7 (2 bars each)
+const chordPat = new Tone.Sequence((t, c) => c && rhodes.triggerAttackRelease(c, "1n", t, 0.4), [
+  ["D3", "F3", "A3", "C4"], null, null, null, null, null, null, null,
+  ["G2", "B2", "D3", "F3"], null, null, null, null, null, null, null,
+  ["C3", "E3", "G3", "B3"], null, null, null, null, null, null, null,
+  ["A2", "C3", "E3", "G3"], null, null, null, null, null, null, null
+], "4n").start(0);
+
+// ─────────────────────────────────────────────────────────────
+// Dreamy Arpeggio - Hypnotic melodic movement
+// ─────────────────────────────────────────────────────────────
+const arp = new Tone.Synth({
+  oscillator: { type: "sine" },
+  envelope: { attack: 0.01, decay: 0.25, sustain: 0.15, release: 0.6 }
+}).connect(tapeDelay);
 arp.volume.value = -14;
 
-const arpNotes = ["C4", "Eb4", "G4", "Bb4", "C5", "Bb4", "G4", "Eb4"];
-const arpSeq = new Tone.Sequence((time, note) => {
-  arp.triggerAttackRelease(note, "16n", time, 0.5);
-}, arpNotes, "16n").start(0);
+// Arpeggiate through chord tones
+const arpPat = new Tone.Sequence((t, n) => n && arp.triggerAttackRelease(n, "16n", t, 0.55), [
+  "D4", "F4", "A4", "C5", "A4", "F4", "D4", "C4",  // Dm7
+  "G4", "B4", "D5", "F5", "D5", "B4", "G4", "F4",  // G7
+  "C4", "E4", "G4", "B4", "G4", "E4", "C4", "B3",  // Cmaj7
+  "A3", "C4", "E4", "G4", "E4", "C4", "A3", "G3"   // Am7
+], "16n").start(0);
 
 // ─────────────────────────────────────────────────────────────
-// Pad - warm atmospheric chords
+// Atmospheric Pad - Soft background texture
 // ─────────────────────────────────────────────────────────────
 const pad = new Tone.PolySynth(Tone.Synth, {
   oscillator: { type: "sine" },
-  envelope: { attack: 1.5, decay: 1, sustain: 0.8, release: 2 }
-}).connect(reverb);
-pad.volume.value = -18;
+  envelope: { attack: 2, decay: 1.5, sustain: 0.7, release: 3 }
+}).connect(masterReverb);
+pad.volume.value = -20;
 
-const padSeq = new Tone.Sequence((time, chord) => {
-  if (chord) pad.triggerAttackRelease(chord, "2n", time, 0.3);
-}, [["C3", "Eb3", "G3", "Bb3"], null, null, null, ["Ab2", "C3", "Eb3", "G3"], null, null, null], "2n").start(0);
-
-// ─────────────────────────────────────────────────────────────
-// Cleanup function for when code restarts
-// ─────────────────────────────────────────────────────────────
-window.__toneCleanup = () => {
-  [kickSeq, snareSeq, hatSeq, bassSeq, arpSeq, padSeq].forEach(s => s.dispose());
-  [kick, snare, hat, bass, arp, pad].forEach(s => s.dispose());
-  [reverb, delay, filter, chorus].forEach(e => e.dispose());
-};
-
-// Start the transport
-Tone.Transport.start();`;
+const padPat = new Tone.Sequence((t, c) => c && pad.triggerAttackRelease(c, "2n", t, 0.25), [
+  ["D4", "A4"], null, null, null, ["G4", "D5"], null, null, null,
+  ["C4", "G4"], null, null, null, ["A3", "E4"], null, null, null
+], "1n").start(0);`;
 
 // Dangerous tokens to reject
 const DANGEROUS_TOKENS = [
@@ -136,9 +162,7 @@ const DANGEROUS_TOKENS = [
 ];
 
 // Patterns that are allowed even if they contain blocked words
-const ALLOWED_PATTERNS = [
-  '__toneCleanup' // Cleanup function for Tone.js
-];
+const ALLOWED_PATTERNS: string[] = [];
 
 export default function StudioPage() {
   const [code, setCode] = useState(DEFAULT_CODE);
@@ -170,6 +194,46 @@ export default function StudioPage() {
     return unsubscribe;
   }, []);
 
+  // Live coding: auto-update when code changes while playing
+  useEffect(() => {
+    // Only trigger live updates when in live mode and currently playing
+    if (!liveMode || playerState !== 'playing') {
+      return;
+    }
+
+    // Clear any pending update
+    if (liveUpdateTimeoutRef.current) {
+      clearTimeout(liveUpdateTimeoutRef.current);
+    }
+
+    // Debounce the update to avoid rapid re-evaluation
+    liveUpdateTimeoutRef.current = setTimeout(() => {
+      // Validate before playing
+      if (!validateCode(code)) {
+        return;
+      }
+      
+      const validation = validateRawToneCode(code);
+      if (!validation.valid) {
+        // Don't show errors during live typing - just skip invalid code
+        return;
+      }
+
+      // Re-play the updated code
+      const runtime = runtimeRef.current;
+      runtime.play(code).catch((err) => {
+        // Silently handle errors during live coding to avoid disrupting flow
+        console.warn('Live update error:', err);
+      });
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (liveUpdateTimeoutRef.current) {
+        clearTimeout(liveUpdateTimeoutRef.current);
+      }
+    };
+  }, [code, liveMode, playerState]);
+
   const validateCode = (code: string): boolean => {
     for (const token of DANGEROUS_TOKENS) {
       if (code.includes(token)) {
@@ -178,17 +242,10 @@ export default function StudioPage() {
       }
     }
     
-    // Check for window usage - only allow __toneCleanup
+    // Check for window usage - not allowed in user code
     if (code.includes('window')) {
-      // Remove allowed patterns and check if window is still used
-      let codeWithoutAllowed = code;
-      for (const pattern of ALLOWED_PATTERNS) {
-        codeWithoutAllowed = codeWithoutAllowed.replace(new RegExp(`window\\.${pattern}`, 'g'), '');
-      }
-      if (codeWithoutAllowed.includes('window')) {
-        setError('Code contains dangerous token: window (only window.__toneCleanup is allowed)');
-        return false;
-      }
+      setError('Code contains dangerous token: window');
+      return false;
     }
     
     return true;
@@ -246,7 +303,7 @@ export default function StudioPage() {
       const blocks = extractCodeBlocks(fullText);
       if (blocks.length > 0) {
         setCode(blocks[0]);
-        setValidationErrors(['Code may not be valid Tone.js - check for Transport.start()']);
+        setValidationErrors(['Code may not be valid Tone.js']);
       }
     }
   }, [audioLoaded, playCode]);
@@ -326,7 +383,7 @@ export default function StudioPage() {
         <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
         
         {/* Top Bar */}
-        <TopBar playerState={playerState} />
+        <TopBar playerState={playerState} onLoadPreset={setCode} />
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative z-10">
@@ -345,12 +402,14 @@ export default function StudioPage() {
 
             {/* Right Panel - Code & Controls */}
             <div className="w-1/2 flex flex-col backdrop-blur-sm">
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 min-h-0">
                 <CodePanel
                   code={code}
                   onChange={setCode}
                   validationErrors={validationErrors}
                   defaultCode={DEFAULT_CODE}
+                  liveMode={liveMode}
+                  onLiveModeChange={setLiveMode}
                 />
               </div>
 
@@ -388,6 +447,8 @@ export default function StudioPage() {
               runtimeEvents={runtimeEvents}
               error={error}
               defaultCode={DEFAULT_CODE}
+              liveMode={liveMode}
+              onLiveModeChange={setLiveMode}
             />
           </div>
         </div>
@@ -414,6 +475,8 @@ interface MobileTabsProps {
   runtimeEvents: RuntimeEvent[];
   error: string;
   defaultCode: string;
+  liveMode: boolean;
+  onLiveModeChange: (enabled: boolean) => void;
 }
 
 function MobileTabs({
@@ -433,6 +496,8 @@ function MobileTabs({
   runtimeEvents,
   error,
   defaultCode,
+  liveMode,
+  onLiveModeChange,
 }: MobileTabsProps) {
   const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'console'>('chat');
 
@@ -486,12 +551,14 @@ function MobileTabs({
 
         {activeTab === 'code' && (
           <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 min-h-0">
               <CodePanel
                 code={code}
                 onChange={setCode}
                 validationErrors={validationErrors}
                 defaultCode={defaultCode}
+                liveMode={liveMode}
+                onLiveModeChange={onLiveModeChange}
               />
             </div>
             <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">

@@ -4,8 +4,7 @@ import { useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from '@codemirror/view';
-import { syntaxHighlighting } from '@codemirror/language';
-import { HighlightStyle } from '@lezer/highlight';
+import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
 interface CodePanelProps {
@@ -13,6 +12,8 @@ interface CodePanelProps {
   onChange: (code: string) => void;
   validationErrors: string[];
   defaultCode: string;
+  liveMode?: boolean;
+  onLiveModeChange?: (enabled: boolean) => void;
 }
 
 // Syntax highlighting with high contrast colors
@@ -37,21 +38,18 @@ const customTheme = EditorView.theme({
   '&': {
     backgroundColor: '#0f172a', // slate-900 - matches page background
     color: '#e2e8f0', // slate-200 - matches page foreground
-    height: '100%',
   },
   '.cm-editor': {
     backgroundColor: '#0f172a', // slate-900
-    height: '100%',
   },
   '.cm-scroller': {
     backgroundColor: '#0f172a', // slate-900
-    overflow: 'auto',
   },
   '.cm-content': {
     backgroundColor: '#0f172a', // slate-900
-    padding: '1rem',
-    fontSize: '0.875rem',
-    lineHeight: '1.75',
+    padding: '0.75rem',
+    fontSize: '0.75rem',
+    lineHeight: '1.6',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     caretColor: '#22d3ee', // cyan-400
     color: '#e2e8f0', // slate-200
@@ -96,7 +94,7 @@ const customTheme = EditorView.theme({
   },
 }, { dark: true });
 
-export function CodePanel({ code, onChange, validationErrors, defaultCode }: CodePanelProps) {
+export function CodePanel({ code, onChange, validationErrors, defaultCode, liveMode = true, onLiveModeChange }: CodePanelProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -112,7 +110,23 @@ export function CodePanel({ code, onChange, validationErrors, defaultCode }: Cod
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 h-16 border-b border-cyan-500/20 bg-slate-900/50">
-        <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Code Editor</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Code Editor</h2>
+          {onLiveModeChange && (
+            <button
+              onClick={() => onLiveModeChange(!liveMode)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 ${
+                liveMode
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                  : 'bg-slate-700/50 text-slate-400 border border-slate-600'
+              }`}
+              title={liveMode ? 'Live mode ON - code updates instantly' : 'Live mode OFF - press Play to update'}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${liveMode ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+              Live
+            </button>
+          )}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={handleRevert}
@@ -129,29 +143,30 @@ export function CodePanel({ code, onChange, validationErrors, defaultCode }: Cod
         </div>
       </div>
 
-      <div className="flex-1 relative bg-slate-900 overflow-hidden">
-        <CodeMirror
-          value={code}
-          onChange={onChange}
-          height="100%"
-          extensions={[
-            javascript({ jsx: false }),
-            customTheme,
-            syntaxHighlight,
-            EditorView.lineWrapping
-          ]}
-          basicSetup={{
-            lineNumbers: true,
-            foldGutter: true,
-            dropCursor: false,
-            allowMultipleSelections: false,
-            indentOnInput: true,
-            bracketMatching: true,
-            closeBrackets: true,
-            autocompletion: false,
-            highlightSelectionMatches: false,
-          }}
-        />
+      <div className="flex-1 relative bg-slate-900 min-h-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-auto">
+          <CodeMirror
+            value={code}
+            onChange={onChange}
+            extensions={[
+              javascript({ jsx: false }),
+              customTheme,
+              syntaxHighlight,
+              EditorView.lineWrapping
+            ]}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: true,
+              dropCursor: false,
+              allowMultipleSelections: false,
+              indentOnInput: true,
+              bracketMatching: true,
+              closeBrackets: true,
+              autocompletion: false,
+              highlightSelectionMatches: false,
+            }}
+          />
+        </div>
         {/* Scanline effect overlay */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent bg-[length:100%_4px] opacity-20" />
       </div>
