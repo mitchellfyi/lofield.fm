@@ -18,7 +18,15 @@ interface StrudelGlobals {
 }
 
 declare global {
-  interface Window extends StrudelGlobals {}
+  interface Window extends StrudelGlobals {
+    __strudelTest?: {
+      getState: () => PlayerState;
+      getLastEvents: () => RuntimeEvent[];
+      wasInitCalled: () => boolean;
+      wasPlayCalled: () => boolean;
+      wasHushCalled: () => boolean;
+    };
+  }
 }
 
 class StrudelRuntime {
@@ -28,9 +36,13 @@ class StrudelRuntime {
   private events: RuntimeEvent[] = [];
   private maxEvents = 10;
   private listeners = new Set<() => void>();
+  private initCallCount = 0;
+  private playCallCount = 0;
+  private hushCallCount = 0;
 
   private constructor() {
     // Private constructor for singleton
+    this.exposeTestAPI();
   }
 
   static getInstance(): StrudelRuntime {
@@ -38,6 +50,23 @@ class StrudelRuntime {
       StrudelRuntime.instance = new StrudelRuntime();
     }
     return StrudelRuntime.instance;
+  }
+
+  /**
+   * Expose test API for E2E testing
+   * Only exposed when NEXT_PUBLIC_E2E === "1"
+   */
+  private exposeTestAPI(): void {
+    if (typeof window === 'undefined') return;
+    if (process.env.NEXT_PUBLIC_E2E !== '1') return;
+
+    window.__strudelTest = {
+      getState: () => this.getState(),
+      getLastEvents: () => this.getEvents(),
+      wasInitCalled: () => this.initCallCount > 0,
+      wasPlayCalled: () => this.playCallCount > 0,
+      wasHushCalled: () => this.hushCallCount > 0,
+    };
   }
 
   /**
@@ -108,6 +137,7 @@ class StrudelRuntime {
 
       // Initialize Strudel
       window.initStrudel();
+      this.initCallCount++;
       this.initialized = true;
       this.state = 'ready';
       this.addEvent({
@@ -142,6 +172,7 @@ class StrudelRuntime {
 
     try {
       this.state = 'playing';
+      this.playCallCount++;
       this.notifyListeners();
 
       // Evaluate code using Function constructor
@@ -189,6 +220,7 @@ class StrudelRuntime {
     if (typeof window !== 'undefined' && window.hush) {
       try {
         window.hush();
+        this.hushCallCount++;
       } catch (err) {
         // Ignore hush errors
       }
@@ -203,6 +235,9 @@ class StrudelRuntime {
     this.state = 'idle';
     this.initialized = false;
     this.events = [];
+    this.initCallCount = 0;
+    this.playCallCount = 0;
+    this.hushCallCount = 0;
     this.notifyListeners();
   }
 }
