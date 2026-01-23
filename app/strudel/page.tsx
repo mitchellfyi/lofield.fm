@@ -5,6 +5,7 @@ import { TextStreamChatTransport } from 'ai';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Script from 'next/script';
 import { validateStrudelCode, extractCodeBlocks } from '@/lib/strudel/llmContract';
+import { getStrudelRuntime, type PlayerState, type RuntimeEvent } from '@/lib/strudel/runtime';
 
 const DEFAULT_CODE = `setcps(85/60/4)
 stack(
@@ -30,21 +31,31 @@ const DANGEROUS_TOKENS = [
 
 export default function StrudelPage() {
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isAudioInitialized, setIsAudioInitialized] = useState(false);
+  const [playerState, setPlayerState] = useState<PlayerState>('idle');
   const [strudelLoaded, setStrudelLoaded] = useState(false);
-  const [status, setStatus] = useState('');
+  const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>('');
+  const runtimeRef = useRef(getStrudelRuntime());
 
   const { messages, sendMessage, status: chatStatus } = useChat({
     transport: new TextStreamChatTransport({ api: '/api/chat' }),
   });
 
   const isLoading = chatStatus === 'submitted' || chatStatus === 'streaming';
+
+  // Subscribe to runtime state changes
+  useEffect(() => {
+    const runtime = runtimeRef.current;
+    const unsubscribe = runtime.subscribe(() => {
+      setPlayerState(runtime.getState());
+      setRuntimeEvents(runtime.getEvents());
+    });
+    return unsubscribe;
+  }, []);
 
   const validateCode = (code: string): boolean => {
     for (const token of DANGEROUS_TOKENS) {
@@ -56,13 +67,9 @@ export default function StrudelPage() {
     return true;
   };
 
-  const playCode = useCallback((codeToPlay: string) => {
+  const playCode = useCallback(async (codeToPlay: string) => {
     if (!strudelLoaded) {
       setError('Strudel not loaded yet. Please wait.');
-      return;
-    }
-    if (!isAudioInitialized) {
-      setError('Please click "Init Audio" first.');
       return;
     }
 
@@ -79,22 +86,15 @@ export default function StrudelPage() {
     }
 
     try {
-      // @ts-expect-error - Strudel global
-      window.hush?.();
-      
-      // Evaluate code using Function constructor
-      const fn = new Function(codeToPlay);
-      fn();
-      
-      setIsPlaying(true);
-      setStatus('Playing...');
+      const runtime = runtimeRef.current;
+      await runtime.play(codeToPlay);
       setError('');
       setValidationErrors([]);
     } catch (err) {
-      setError(`Failed to play: ${err}`);
-      setIsPlaying(false);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to play: ${errorMsg}`);
     }
-  }, [strudelLoaded, isAudioInitialized, setError, setValidationErrors, setIsPlaying, setStatus]);
+  }, [strudelLoaded]);
 
   const processAssistantMessage = useCallback((fullText: string) => {
     // Use shared validator
@@ -106,7 +106,8 @@ export default function StrudelPage() {
       setValidationErrors([]);
       
       // Auto-restart if playing
-      if (isPlaying && strudelLoaded && isAudioInitialized) {
+      const runtime = runtimeRef.current;
+      if (runtime.getState() === 'playing' && strudelLoaded) {
         playCode(newCode);
       }
     } else if (validation.code) {
@@ -121,7 +122,7 @@ export default function StrudelPage() {
         setValidationErrors(['Code may not be valid Strudel - check for tempo and playback']);
       }
     }
-  }, [isPlaying, strudelLoaded, isAudioInitialized, playCode, setCode, setValidationErrors]);
+  }, [strudelLoaded, playCode]);
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -152,19 +153,18 @@ export default function StrudelPage() {
     }
   }, [messages, processAssistantMessage]);
 
-  const initAudio = () => {
+  const initAudio = async () => {
     if (!strudelLoaded) {
       setError('Strudel not loaded yet. Please wait.');
       return;
     }
     try {
-      // @ts-expect-error - Strudel global
-      window.initStrudel?.();
-      setIsAudioInitialized(true);
-      setStatus('Audio initialized!');
+      const runtime = runtimeRef.current;
+      await runtime.init();
       setError('');
     } catch (err) {
-      setError(`Failed to initialize audio: ${err}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to initialize audio: ${errorMsg}`);
     }
   };
 
@@ -174,13 +174,12 @@ export default function StrudelPage() {
       return;
     }
     try {
-      // @ts-expect-error - Strudel global
-      window.hush?.();
-      setIsPlaying(false);
-      setStatus('Stopped');
+      const runtime = runtimeRef.current;
+      runtime.stop();
       setError('');
     } catch (err) {
-      setError(`Failed to stop: ${err}`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to stop: ${errorMsg}`);
     }
   };
 
@@ -198,7 +197,6 @@ export default function StrudelPage() {
         src="https://unpkg.com/@strudel/web@1.0.1"
         onLoad={() => {
           setStrudelLoaded(true);
-          setStatus('Strudel loaded. Click "Init Audio" to start.');
         }}
         onError={() => setError('Failed to load Strudel library')}
       />
@@ -281,34 +279,77 @@ export default function StrudelPage() {
 
           {/* Controls */}
           <div className="p-4 border-t border-zinc-700 space-y-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button
                 onClick={initAudio}
-                disabled={!strudelLoaded || isAudioInitialized}
+                disabled={!strudelLoaded || playerState !== 'idle'}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
               >
                 Init Audio
               </button>
               <button
                 onClick={() => playCode(code)}
-                disabled={!isAudioInitialized || isPlaying}
+                disabled={!strudelLoaded || playerState === 'loading' || playerState === 'error'}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
               >
-                Play
+                {playerState === 'playing' ? 'Restart' : 'Play'}
               </button>
               <button
                 onClick={stop}
-                disabled={!isPlaying}
+                disabled={playerState !== 'playing'}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
               >
                 Stop
               </button>
+              <div className="ml-auto text-sm">
+                <span className="text-zinc-400">State: </span>
+                <span className={`font-semibold ${
+                  playerState === 'playing' ? 'text-green-400' :
+                  playerState === 'error' ? 'text-red-400' :
+                  playerState === 'loading' ? 'text-yellow-400' :
+                  playerState === 'ready' ? 'text-blue-400' :
+                  'text-zinc-400'
+                }`}>
+                  {playerState}
+                </span>
+              </div>
             </div>
 
-            {/* Status */}
-            {status && (
-              <div className="p-3 bg-zinc-800 rounded-lg text-sm text-zinc-300">
-                {status}
+            {/* Console Panel */}
+            {runtimeEvents.length > 0 && (
+              <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3">
+                <div className="text-xs font-semibold text-zinc-400 mb-2">Console (last {runtimeEvents.length} events)</div>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {runtimeEvents.map((event, idx) => {
+                    const time = new Date(event.timestamp).toLocaleTimeString();
+                    const icon = 
+                      event.type === 'init' ? '🎵' :
+                      event.type === 'play' ? '▶️' :
+                      event.type === 'stop' ? '⏹️' :
+                      event.type === 'eval_ok' ? '✓' :
+                      event.type === 'eval_fail' ? '✗' :
+                      '⚠️';
+                    
+                    return (
+                      <div key={idx} className="text-xs font-mono">
+                        <span className="text-zinc-500">[{time}]</span>
+                        <span className="ml-2">{icon}</span>
+                        <span className={`ml-2 ${
+                          event.type === 'error' || event.type === 'eval_fail' ? 'text-red-400' :
+                          event.type === 'eval_ok' ? 'text-green-400' :
+                          'text-zinc-300'
+                        }`}>
+                          {event.message}
+                        </span>
+                        {event.error && (
+                          <div className="ml-8 text-red-300 mt-1">
+                            {event.error}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
