@@ -19,6 +19,7 @@
   }
 }
 
+/* Full-screen app container - prevents scrolling for studio interface */
 html,
 body {
   background: var(--background);
