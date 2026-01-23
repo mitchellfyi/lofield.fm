@@ -93,10 +93,7 @@ export function SignUpForm() {
         </div>
         <h2 className="text-xl font-bold text-cyan-300 mb-2">Check Your Email</h2>
         <p className="text-slate-400 mb-6">{message}</p>
-        <Link
-          href="/auth/sign-in"
-          className="text-cyan-400 hover:text-cyan-300 text-sm"
-        >
+        <Link href="/auth/sign-in" className="text-cyan-400 hover:text-cyan-300 text-sm">
           Return to sign in
         </Link>
       </div>

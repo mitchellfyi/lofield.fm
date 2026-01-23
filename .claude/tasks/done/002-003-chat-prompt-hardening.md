@@ -12,8 +12,8 @@
 | Completed   | `2026-01-23 20:58`              |
 | Blocked By  |                                 |
 | Blocks      |                                 |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                                 |
+| Assigned At |                                 |
 
 ---
 
@@ -178,14 +178,16 @@ Status field: matches (done)
 Acceptance criteria: 10/10 checked
 
 Issues found:
+
 - none
 
 Actions taken:
+
 - Verified task already in done/ folder
 - Confirmed all acceptance criteria are checked
 - Verified key implementation files exist:
   - lib/schemas/chatResponse.ts ✅
-  - lib/schemas/__tests__/chatResponse.test.ts ✅
+  - lib/schemas/**tests**/chatResponse.test.ts ✅
   - lib/audio/llmContract.ts (with validateJavaScriptSyntax) ✅
 - Verified commits include task reference (10 commits with [002-003])
 - Taskboard regenerated
