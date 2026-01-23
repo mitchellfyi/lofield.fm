@@ -52,46 +52,48 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
 
   return (
     <>
-      <div className="border-b border-cyan-950/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-sm relative z-30 overflow-hidden">
+      <div className="border-b border-cyan-950/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-sm relative z-50 overflow-visible">
         {/* Full-width background waveform visualizer */}
         <div className="absolute inset-0 z-0">
           <WaveformVisualizer className="w-full h-full" fillContainer />
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 relative z-10">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500 bg-clip-text text-transparent tracking-tight">
-                LoField Music Lab
+              <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500 bg-clip-text text-transparent tracking-tight">
+                <span className="hidden sm:inline">LoField Music Lab</span>
+                <span className="sm:hidden">LoField</span>
               </h1>
             </div>
 
-            <div className={`px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${getStateColor()}`}>
+            <div className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${getStateColor()}`}>
               {getStateLabel()}
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Demo Songs Dropdown */}
             {onLoadPreset && (
-              <div className="relative z-50" ref={dropdownRef}>
+              <div className="relative z-[100]" ref={dropdownRef}>
                 <button
                   onClick={() => setShowPresets(!showPresets)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+                  aria-label="Demo Songs"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
-                  Demo Songs
-                  <svg className={`w-4 h-4 transition-transform ${showPresets ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="hidden sm:inline">Demo Songs</span>
+                  <svg className={`w-4 h-4 hidden sm:block transition-transform ${showPresets ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {/* Dropdown Menu */}
                 {showPresets && (
-                  <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 border border-cyan-500/30 rounded-xl shadow-2xl shadow-cyan-500/10 backdrop-blur-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1rem)] bg-slate-900/95 border border-cyan-500/30 rounded-xl shadow-2xl shadow-cyan-500/10 backdrop-blur-xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-3 border-b border-cyan-500/20 bg-slate-800/50">
                       <h3 className="text-sm font-semibold text-cyan-400">Choose a Demo</h3>
                       <p className="text-xs text-slate-400 mt-0.5">Load a preset to get started</p>
@@ -101,7 +103,7 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
                         <button
                           key={preset.id}
                           onClick={() => handleSelectPreset(preset)}
-                          className="w-full px-4 py-3 text-left hover:bg-cyan-500/10 transition-colors border-b border-slate-800 last:border-b-0"
+                          className="w-full px-4 py-3 text-left hover:bg-cyan-500/10 active:bg-cyan-500/20 transition-colors border-b border-slate-800 last:border-b-0"
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium text-cyan-100">{preset.name}</span>
@@ -121,9 +123,13 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
 
             <button
               onClick={() => setShowHelp(true)}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+              className="px-2.5 sm:px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+              aria-label="Help"
             >
-              Help
+              <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="hidden sm:inline">Help</span>
             </button>
           </div>
         </div>

@@ -26,12 +26,12 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 h-16 flex flex-col justify-center border-b border-cyan-500/20 bg-slate-900/50">
-        <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Chat Interface</h2>
-        <p className="text-xs text-slate-400 mt-1">Generate and modify beats with AI</p>
+      <div className="px-3 sm:px-4 h-12 sm:h-16 flex flex-col justify-center border-b border-cyan-500/20 bg-slate-900/50">
+        <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">AI Chat</h2>
+        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 hidden sm:block">Generate and modify beats with AI</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
         {messages.map((message) => {
           const textParts = message.parts.filter(part => part.type === 'text');
           let content = textParts.map(part => ('text' in part ? part.text : '')).join('\n');
@@ -116,22 +116,29 @@ export function ChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={onSubmit} className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
+      <form onSubmit={onSubmit} className="px-3 sm:px-4 py-3 sm:py-4 border-t border-cyan-500/20 bg-slate-900/50">
         <div className="flex gap-2">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
-            placeholder="Type your prompt... (e.g., 'make a lofi beat at 90bpm')"
-            className="flex-1 px-4 py-2.5 bg-slate-950/50 text-cyan-100 placeholder-slate-500 border border-cyan-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-sm"
+            placeholder="Describe your beat..."
+            className="flex-1 px-3 sm:px-4 py-3 sm:py-2.5 bg-slate-950/50 text-cyan-100 placeholder-slate-500 border border-cyan-500/30 rounded-xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-base sm:text-sm"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim()}
-            className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-lg font-semibold text-sm transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 disabled:shadow-none border border-cyan-500/30 disabled:border-slate-600"
+            className="px-4 sm:px-6 py-3 sm:py-2.5 bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 hover:from-cyan-500 hover:via-cyan-400 hover:to-cyan-500 active:from-cyan-700 active:via-cyan-600 active:to-cyan-700 disabled:from-slate-700 disabled:via-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-xl sm:rounded-lg font-semibold text-sm transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 disabled:shadow-none border border-cyan-500/30 hover:border-cyan-500/50 disabled:border-slate-600 relative overflow-hidden group backdrop-blur-sm"
           >
-            Send
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              Send
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/30 to-cyan-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(6,182,212,0.1)_0%,_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
         </div>
       </form>

@@ -5,11 +5,13 @@ import { TextStreamChatTransport } from 'ai';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { validateToneCode, validateRawToneCode, extractStreamingCode } from '@/lib/audio/llmContract';
 import { getAudioRuntime, type PlayerState, type RuntimeEvent } from '@/lib/audio/runtime';
+import { useTransportState } from '@/lib/audio/useVisualization';
 import { TopBar } from '@/components/studio/TopBar';
 import { ChatPanel } from '@/components/studio/ChatPanel';
 import { CodePanel } from '@/components/studio/CodePanel';
 import { PlayerControls } from '@/components/studio/PlayerControls';
 import { ConsolePanel } from '@/components/studio/ConsolePanel';
+import { TimelineBar } from '@/components/studio/TimelineBar';
 import type { UIMessage } from '@ai-sdk/react';
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
@@ -336,14 +338,14 @@ export default function StudioPage() {
         return;
       }
 
-      // Re-play the updated code
+      // Re-play the updated code, keeping the current position
       const runtime = runtimeRef.current;
       lastPlayedCodeRef.current = code;
-      runtime.play(code).catch((err) => {
+      runtime.play(code, true).catch((err) => {
         // Silently handle errors during live coding to avoid disrupting flow
         console.warn('Live update error:', err);
       });
-    }, 500); // 500ms debounce
+    }, 150); // 150ms debounce - fast for responsiveness
 
     return () => {
       if (liveUpdateTimeoutRef.current) {
@@ -546,8 +548,6 @@ Request: ${inputValue}`;
               audioLoaded={audioLoaded}
               playCode={() => playCode(code)}
               stop={stop}
-              runtimeEvents={runtimeEvents}
-              error={error}
               defaultCode={DEFAULT_CODE}
               liveMode={liveMode}
               onLiveModeChange={setLiveMode}
@@ -573,8 +573,6 @@ interface MobileTabsProps {
   audioLoaded: boolean;
   playCode: () => void;
   stop: () => void;
-  runtimeEvents: RuntimeEvent[];
-  error: string;
   defaultCode: string;
   liveMode: boolean;
   onLiveModeChange: (enabled: boolean) => void;
@@ -593,16 +591,17 @@ function MobileTabs({
   audioLoaded,
   playCode,
   stop,
-  runtimeEvents,
-  error,
   defaultCode,
   liveMode,
   onLiveModeChange,
 }: MobileTabsProps) {
-  const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'console'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'code'>('chat');
+  const [showSequencer, setShowSequencer] = useState(true);
+  const isPlaying = playerState === 'playing';
+  const canPlay = audioLoaded && playerState !== 'loading' && playerState !== 'error';
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       {/* Tab Navigation */}
       <div className="flex border-b border-cyan-500/20 bg-slate-900/50">
         <button
@@ -610,7 +609,7 @@ function MobileTabs({
           className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
             activeTab === 'chat'
               ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
-              : 'text-slate-400 hover:text-cyan-300'
+              : 'text-slate-400 active:text-cyan-300'
           }`}
         >
           Chat
@@ -620,20 +619,10 @@ function MobileTabs({
           className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
             activeTab === 'code'
               ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
-              : 'text-slate-400 hover:text-cyan-300'
+              : 'text-slate-400 active:text-cyan-300'
           }`}
         >
           Code
-        </button>
-        <button
-          onClick={() => setActiveTab('console')}
-          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'console'
-              ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
-              : 'text-slate-400 hover:text-cyan-300'
-          }`}
-        >
-          Console
         </button>
       </div>
 
@@ -651,6 +640,12 @@ function MobileTabs({
 
         {activeTab === 'code' && (
           <div className="flex flex-col h-full">
+            {/* Toggleable Sequencer */}
+            {showSequencer && (
+              <div className="px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50">
+                <TimelineBar barsPerRow={8} totalRows={4} />
+              </div>
+            )}
             <div className="flex-1 min-h-0">
               <CodePanel
                 code={code}
@@ -659,25 +654,82 @@ function MobileTabs({
                 defaultCode={defaultCode}
                 liveMode={liveMode}
                 onLiveModeChange={onLiveModeChange}
+                showSequencerToggle
+                sequencerVisible={showSequencer}
+                onSequencerToggle={() => setShowSequencer(!showSequencer)}
               />
             </div>
-            <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
-              <PlayerControls
-                playerState={playerState}
-                audioLoaded={audioLoaded}
-                onPlay={playCode}
-                onStop={stop}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'console' && (
-          <div className="h-full overflow-y-auto p-4">
-            <ConsolePanel events={runtimeEvents} error={error} />
           </div>
         )}
       </div>
-    </>
+
+      {/* Persistent Mobile Player Bar */}
+      <div className="border-t border-cyan-500/20 bg-slate-900/80 backdrop-blur-sm px-3 py-3 safe-area-bottom">
+        <div className="flex items-center gap-3">
+          {/* Play/Stop Buttons */}
+          <button
+            onClick={playCode}
+            disabled={!canPlay}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+              isPlaying
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                : 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+            } disabled:opacity-50 disabled:bg-slate-700 disabled:text-slate-500 disabled:shadow-none disabled:border-slate-600`}
+          >
+            {playerState === 'loading' ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                {isPlaying ? (
+                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                ) : (
+                  <path d="M8 5v14l11-7z" />
+                )}
+              </svg>
+            )}
+            {isPlaying ? 'Restart' : 'Play'}
+          </button>
+
+          <button
+            onClick={stop}
+            disabled={!isPlaying}
+            className="px-4 py-3 rounded-xl font-bold text-sm bg-rose-600/80 text-white disabled:opacity-30 disabled:bg-slate-700 transition-all duration-200"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 6h12v12H6z" />
+            </svg>
+          </button>
+
+          {/* Mini Timeline */}
+          <MiniTimeline />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Compact timeline for mobile player bar
+function MiniTimeline() {
+  const transport = useTransportState();
+  const totalBars = 32;
+  const currentBar = (transport.bar - 1) % totalBars;
+  const section = Math.floor(currentBar / 8);
+  const sectionLabels = ['A', 'B', 'C', 'D'];
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${
+        transport.playing ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-slate-400'
+      }`}>
+        {sectionLabels[section]}
+      </div>
+      <div className="text-right">
+        <div className="text-xs font-mono text-white tabular-nums">{transport.bar}/{totalBars}</div>
+        <div className="text-[10px] text-slate-400">{transport.bpm} BPM</div>
+      </div>
+    </div>
   );
 }

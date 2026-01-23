@@ -156,26 +156,40 @@ class AudioRuntime {
 
   /**
    * Play Tone.js code
-   * 
+   *
    * The runtime automatically:
    * - Tracks all created Tone.js objects (synths, effects, sequences, etc.)
    * - Starts the Transport after code evaluation
    * - Disposes all tracked objects on stop
-   * 
+   *
    * User code just needs to define instruments and sequences - no cleanup needed!
+   *
+   * @param code - The Tone.js code to execute
+   * @param keepPosition - If true, maintains current playback position (for live updates)
    */
-  async play(code: string): Promise<void> {
+  async play(code: string, keepPosition = false): Promise<void> {
     if (!this.initialized) {
       // Auto-initialize on first play
       await this.init();
     }
 
-    // Stop any currently playing code and clean up
-    this.stop();
+    const transport = Tone.getTransport();
+    const wasPlaying = transport.state === 'started';
 
-    // Start visualization bridge
+    // For live updates: save old cleanup function to call AFTER new code evaluates
+    // This creates overlap (new sounds start before old stop) instead of a gap
+    const oldCleanup = keepPosition ? window.__toneCleanup : null;
+
+    // For non-live updates, clean up first
+    if (!keepPosition) {
+      this.cleanupCode();
+    }
+
+    // Start visualization bridge (don't reset if keeping position)
     const vizBridge = getVisualizationBridge();
-    vizBridge.reset();
+    if (!keepPosition) {
+      vizBridge.reset();
+    }
     vizBridge.start();
 
     // Transform code to inject visualization triggers
@@ -194,7 +208,7 @@ class AudioRuntime {
         return new Proxy(Tone, {
           get(target, prop: string) {
             const value = (target as Record<string, unknown>)[prop];
-            
+
             // If it's a constructor (starts with capital letter), wrap it to track instances
             if (typeof value === 'function' && /^[A-Z]/.test(prop)) {
               return new Proxy(value, {
@@ -236,35 +250,48 @@ class AudioRuntime {
         disposables.length = 0;
       };
 
-      // Wait for effects (especially Reverb) to be ready before starting
-      // Reverb needs time to generate its impulse response
-      const reverbs = disposables.filter(obj => obj instanceof Tone.Reverb) as Tone.Reverb[];
-      if (reverbs.length > 0) {
-        await Promise.all(reverbs.map(r => r.ready));
+      // For live updates: NOW dispose old objects (after new ones are created)
+      // This creates a seamless crossfade instead of a gap
+      if (oldCleanup) {
+        try {
+          oldCleanup();
+        } catch (e) {
+          console.warn('Error in old cleanup:', e);
+        }
+      }
+
+      // Wait for effects (especially Reverb) to be ready
+      // For live updates, don't wait - let it catch up
+      if (!keepPosition) {
+        const reverbs = disposables.filter(obj => obj instanceof Tone.Reverb) as Tone.Reverb[];
+        if (reverbs.length > 0) {
+          await Promise.all(reverbs.map(r => r.ready));
+        }
       }
 
       // Ensure audio context is running
       await Tone.getContext().resume();
 
       // Configure transport for 32-bar loop (4 sections x 8 bars)
-      const transport = Tone.getTransport();
-      transport.position = 0;
       transport.loop = true;
       transport.loopStart = 0;
       transport.loopEnd = '32:0:0'; // 32 bars
 
-      // Start transport immediately - no offset needed since we've waited for everything
-      if (transport.state !== 'started') {
-        transport.start();
+      // For non-live updates, reset position
+      if (!keepPosition) {
+        transport.position = 0;
+      }
+
+      // Start transport if needed
+      if (!keepPosition || wasPlaying) {
+        if (transport.state !== 'started') {
+          transport.start();
+        }
       }
 
       this.addEvent({
         type: 'eval_ok',
-        message: `Code evaluated (${disposables.length} objects tracked)`,
-      });
-      this.addEvent({
-        type: 'play',
-        message: 'Playing',
+        message: `Code evaluated (${disposables.length} objects tracked)${keepPosition ? ' [live]' : ''}`,
       });
     } catch (err) {
       this.state = 'error';
@@ -280,6 +307,39 @@ class AudioRuntime {
   }
 
   /**
+   * Clean up code without stopping transport
+   */
+  private cleanupCode(): void {
+    if (typeof window !== 'undefined' && window.__toneCleanup) {
+      try {
+        window.__toneCleanup();
+        window.__toneCleanup = undefined;
+      } catch (e) {
+        console.warn('Error in cleanup function:', e);
+      }
+    }
+  }
+
+  /**
+   * Seek to a specific bar position
+   * @param bar - The bar number to seek to (0-indexed)
+   */
+  seek(bar: number): void {
+    try {
+      const transport = Tone.getTransport();
+      // Convert bar number to Tone.js position format "bars:beats:sixteenths"
+      transport.position = `${bar}:0:0`;
+
+      this.addEvent({
+        type: 'play',
+        message: `Seeked to bar ${bar + 1}`,
+      });
+    } catch (err) {
+      console.warn('Error seeking:', err);
+    }
+  }
+
+  /**
    * Stop playback
    */
   stop(): void {
@@ -290,22 +350,14 @@ class AudioRuntime {
       const vizBridge = getVisualizationBridge();
       vizBridge.stop();
 
-      // Call user's cleanup function if it exists
-      if (typeof window !== 'undefined' && window.__toneCleanup) {
-        try {
-          window.__toneCleanup();
-          window.__toneCleanup = undefined;
-        } catch (e) {
-          console.warn('Error in cleanup function:', e);
-        }
-      }
-      
-      // Stop Tone.js Transport (use getTransport() to avoid deprecation)
+      // Clean up code
+      this.cleanupCode();
+
+      // Stop Tone.js Transport
       const transport = Tone.getTransport();
       transport.stop();
-      transport.cancel(0); // Cancel all scheduled events
       transport.position = 0; // Reset position
-      
+
       this.state = this.initialized ? 'ready' : 'idle';
       this.addEvent({
         type: 'stop',

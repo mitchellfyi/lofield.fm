@@ -21,6 +21,10 @@ interface CodePanelProps {
   defaultCode: string;
   liveMode?: boolean;
   onLiveModeChange?: (enabled: boolean) => void;
+  // Mobile-only props for sequencer toggle
+  showSequencerToggle?: boolean;
+  sequencerVisible?: boolean;
+  onSequencerToggle?: () => void;
 }
 
 // Syntax highlighting with high contrast colors
@@ -101,7 +105,17 @@ const customTheme = EditorView.theme({
   },
 }, { dark: true });
 
-export function CodePanel({ code, onChange, validationErrors, defaultCode, liveMode = true, onLiveModeChange }: CodePanelProps) {
+export function CodePanel({
+  code,
+  onChange,
+  validationErrors,
+  defaultCode,
+  liveMode = true,
+  onLiveModeChange,
+  showSequencerToggle,
+  sequencerVisible,
+  onSequencerToggle,
+}: CodePanelProps) {
   const [copied, setCopied] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const activeLines = useActiveLines();
@@ -128,13 +142,13 @@ export function CodePanel({ code, onChange, validationErrors, defaultCode, liveM
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 h-16 border-b border-cyan-500/20 bg-slate-900/50">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Code Editor</h2>
+      <div className="flex items-center justify-between px-3 sm:px-4 h-12 sm:h-16 border-b border-cyan-500/20 bg-slate-900/50">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">Code</h2>
           {onLiveModeChange && (
             <button
               onClick={() => onLiveModeChange(!liveMode)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 ${
                 liveMode
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
                   : 'bg-slate-700/50 text-slate-400 border border-slate-600'
@@ -146,16 +160,32 @@ export function CodePanel({ code, onChange, validationErrors, defaultCode, liveM
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
+          {/* Sequencer toggle - mobile only */}
+          {showSequencerToggle && (
+            <button
+              onClick={onSequencerToggle}
+              className={`px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 ${
+                sequencerVisible
+                  ? 'text-cyan-400 border border-cyan-500/50 bg-cyan-500/10'
+                  : 'text-slate-400 border border-slate-600'
+              }`}
+              title={sequencerVisible ? 'Hide sequencer' : 'Show sequencer'}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={handleRevert}
-            className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-cyan-300 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
+            className="px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
           >
             Revert
           </button>
           <button
             onClick={handleCopy}
-            className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-cyan-300 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
+            className="px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>
