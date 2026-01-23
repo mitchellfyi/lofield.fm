@@ -97,13 +97,10 @@ perc.volume.value = -12;
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.6) return;
-  // Ghost note
-  if (Math.random() > 0.94) kick.triggerAttackRelease("C1", "32n", t - 0.025, v * 0.2);
-  const humanize = (Math.random() - 0.5) * 0.012;
-  kick.triggerAttackRelease("C1", "8n", t + humanize, v);
-  kickLayer.triggerAttackRelease("C1", "16n", t + humanize, v * 0.5);
-  kickClick.triggerAttackRelease("32n", t + humanize, v * 0.3);
+  const intensity = section === 0 ? 0.6 : 1;
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
+  kickLayer.triggerAttackRelease("C1", "16n", t, v * 0.5 * intensity);
+  kickClick.triggerAttackRelease("32n", t, v * 0.3 * intensity);
 }, [
   0.95, null, null, 0.45, null, null, 0.9, null, null, 0.4, 0.95, null, null, null, 0.5, null,
   0.95, null, null, 0.5, null, null, 0.9, null, null, 0.45, 0.95, null, null, null, 0.55, 0.4,
@@ -118,12 +115,10 @@ const kickPat = new Tone.Sequence((t, v) => {
 const snarePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.5) return;
-  const humanize = (Math.random() - 0.5) * 0.01;
-  snare.triggerAttackRelease("16n", t + humanize, v);
-  snareBody.triggerAttackRelease("E3", "16n", t + humanize, v * 0.5);
-  // Layer in chorus
-  if (section === 2 && Math.random() > 0.5) snareLayer.triggerAttackRelease("16n", t + humanize + 0.01, v * 0.4);
+  const intensity = section === 3 ? 0.6 : 1;
+  snare.triggerAttackRelease("16n", t, v * intensity);
+  snareBody.triggerAttackRelease("E3", "16n", t, v * 0.5 * intensity);
+  if (section === 2) snareLayer.triggerAttackRelease("16n", t, v * 0.4);
 }, [
   null, null, null, null, 0.9, null, null, 0.35, null, null, null, null, 0.92, null, null, null,
   null, null, null, null, 0.9, null, null, 0.38, null, null, null, null, 0.92, null, null, 0.42,
@@ -139,10 +134,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.15 : section === 0 ? 0.65 : 1;
-  if (section === 0 && Math.random() > 0.7) return;
-  const humanize = (Math.random() - 0.5) * 0.008;
-  if (v > 0.78) hatO.triggerAttackRelease("32n", t + humanize, v * 0.5 * intensity);
-  else hat.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.78) hatO.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  else hat.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.5, 0.22, 0.42, 0.25, 0.5, 0.22, 0.8, 0.32, 0.5, 0.22, 0.42, 0.25, 0.5, 0.22, 0.52, 0.35,
   0.52, 0.25, 0.45, 0.28, 0.52, 0.25, 0.82, 0.35, 0.52, 0.25, 0.45, 0.28, 0.55, 0.25, 0.55, 0.38,
@@ -154,7 +147,6 @@ const rimPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.88) return;
   rim.triggerAttackRelease("32n", t, v);
 }, [
   null, null, null, null, null, null, null, 0.5, null, null, null, null, null, null, null, 0.52,
@@ -167,7 +159,6 @@ const percPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section < 2) return;
-  if (Math.random() > 0.9) return;
   perc.triggerAttackRelease(n, "16n", t, 0.6);
 }, [
   null, null, null, "G3", null, null, null, null, null, null, null, "G3", null, null, null, null,
@@ -190,10 +181,8 @@ sub.volume.value = -6;
 const subPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.5) return;
-  const humanize = (Math.random() - 0.5) * 0.01;
-  const vel = section === 2 ? 0.9 : 0.75;
-  sub.triggerAttackRelease(n, "8n", t + humanize, vel);
+  const vel = section === 2 ? 0.9 : section === 0 ? 0.55 : 0.75;
+  sub.triggerAttackRelease(n, "8n", t, vel);
 }, [
   // Gm
   "G1", null, "G1", null, null, null, "G1", null, null, null, "G1", null, null, null, "D2", null,
@@ -230,11 +219,9 @@ const pianoPat = new Tone.Sequence((t, c) => {
   if (!c) return;
   const section = getSection();
   const vel = section === 0 ? 0.32 : section === 2 ? 0.52 : 0.42;
-  const humanize = (Math.random() - 0.5) * 0.012;
-  piano.triggerAttackRelease(c, "2n", t + humanize, vel);
-  // Layer in fuller sections
-  if (section >= 1 && Math.random() > 0.6) {
-    pianoLayer.triggerAttackRelease(c, "2n", t + humanize + 0.015, vel * 0.4);
+  piano.triggerAttackRelease(c, "2n", t, vel);
+  if (section >= 1) {
+    pianoLayer.triggerAttackRelease(c, "2n", t + 0.015, vel * 0.4);
   }
 }, [
   // Gm7
@@ -292,8 +279,7 @@ const leadPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  const vel = 0.48 + Math.random() * 0.15;
-  lead.triggerAttackRelease(n, "8n", t, vel);
+  lead.triggerAttackRelease(n, "8n", t, 0.55);
 }, [
   null, null, null, null, null, null, "D5", "Bb4", "G4", null, null, null, null, null, null, null,
   null, null, null, null, "F5", null, "D5", null, "Bb4", null, "G4", null, null, null, null, null,

@@ -80,11 +80,9 @@ perc.volume.value = -20;
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.6) return;
-  // Ghost note
-  if (Math.random() > 0.96) kick.triggerAttackRelease("C1", "32n", t - 0.02, v * 0.2);
-  kick.triggerAttackRelease("C1", "4n", t, v);
-  kickLayer.triggerAttackRelease("C0", "8n", t, v * 0.5);
+  const intensity = section === 0 ? 0.6 : section === 3 ? 0.7 : 1;
+  kick.triggerAttackRelease("C1", "4n", t, v * intensity);
+  kickLayer.triggerAttackRelease("C0", "8n", t, v * 0.5 * intensity);
 }, [
   1, null, null, null, null, null, null, null, null, null, null, null, 0.8, null, null, null,
   1, null, null, null, null, null, null, null, null, null, null, 0.5, 0.85, null, null, null,
@@ -100,11 +98,10 @@ const snarePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 3) return;
-  const humanize = (Math.random() - 0.5) * 0.005;
-  snare.triggerAttackRelease("8n", t + humanize, v);
-  snareLayer.triggerAttackRelease("E3", "16n", t + humanize, v * 0.4);
+  snare.triggerAttackRelease("8n", t, v);
+  snareLayer.triggerAttackRelease("E3", "16n", t, v * 0.4);
   // Layer clap in full sections
-  if (section === 2 && Math.random() > 0.6) clap.triggerAttackRelease("16n", t + humanize + 0.01, v * 0.5);
+  if (section === 2) clap.triggerAttackRelease("16n", t + 0.01, v * 0.5);
 }, [
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, 0.5,
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, 0.5, 0.6,
@@ -121,10 +118,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.2 : section === 0 ? 0.6 : 1;
-  if (section === 0 && Math.random() > 0.7) return;
-  const humanize = (Math.random() - 0.5) * 0.004;
-  if (v > 0.8) hatO.triggerAttackRelease("32n", t + humanize, v * 0.5 * intensity);
-  else hatC.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.8) hatO.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  else hatC.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.7, 0.3, 0.5, 0.3, 0.7, 0.3, 0.6, 0.4, 0.7, 0.3, 0.5, 0.3, 0.9, 0.5, 0.6, 0.7,
   0.75, 0.35, 0.55, 0.35, 0.7, 0.35, 0.65, 0.45, 0.7, 0.4, 0.55, 0.4, 0.9, 0.55, 0.7, 0.8,
@@ -136,7 +131,6 @@ const percPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.9) return;
   perc.triggerAttackRelease("32n", t, v);
 }, [
   null, null, null, 0.4, null, null, null, null, null, null, null, 0.45, null, null, null, null,
@@ -159,15 +153,9 @@ bass808.volume.value = -4;
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.5) return;
+  const intensity = section === 0 ? 0.5 : 1;
   const vel = section === 2 ? 1 : 0.85;
-  // Occasional pitch slide
-  if (Math.random() > 0.95) {
-    bass808.triggerAttackRelease(n, "4n", t, vel);
-    bass808.frequency.rampTo(Tone.Frequency(n).transpose(12).toFrequency(), 0.08, t + 0.05);
-  } else {
-    bass808.triggerAttackRelease(n, "4n", t, vel);
-  }
+  bass808.triggerAttackRelease(n, "4n", t, vel * intensity);
 }, [
   "D1", null, null, null, null, null, null, null, null, null, null, "F1", null, null, "D1", null,
   "D1", null, null, null, null, null, null, null, null, null, "A0", null, "D1", null, null, null,
@@ -199,12 +187,11 @@ const leadPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  const vel = 0.55 + Math.random() * 0.15;
-  lead.triggerAttackRelease(n, "16n", t, vel);
+  lead.triggerAttackRelease(n, "16n", t, 0.62);
   // Layer in chorus
-  if (section === 2 && Math.random() > 0.5) {
+  if (section === 2) {
     const octaveDown = Tone.Frequency(n).transpose(-12).toNote();
-    leadLayer.triggerAttackRelease(octaveDown, "16n", t, vel * 0.4);
+    leadLayer.triggerAttackRelease(octaveDown, "16n", t, 0.25);
   }
 }, [
   null, null, null, null, null, null, null, null, "D5", null, "F5", null, "A5", null, "D5", null,
@@ -257,7 +244,6 @@ const arpPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.88) return;
   arp.triggerAttackRelease(n, "32n", t, 0.45);
 }, [
   "D4", "F4", "A4", "D5", "A4", "F4", "D4", "F4", "D4", "F4", "A4", "D5", "A4", "F4", "A4", "D5",

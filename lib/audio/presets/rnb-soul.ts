@@ -74,16 +74,13 @@ const shaker = new Tone.NoiseSynth({
 }).connect(velvetFilter);
 shaker.volume.value = -22;
 
-// Humanized kick pattern with ghost notes
+// Smooth kick pattern
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.7) return;
-  // Ghost note before main hit
-  if (Math.random() > 0.94) kick.triggerAttackRelease("C1", "32n", t - 0.03, v * 0.2);
-  const humanize = (Math.random() - 0.5) * 0.01;
-  kick.triggerAttackRelease("C1", "8n", t + humanize, v);
-  kickLayer.triggerAttackRelease("C1", "16n", t + humanize, v * 0.4);
+  const intensity = section === 0 ? 0.7 : section === 3 ? 0.8 : 1;
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
+  kickLayer.triggerAttackRelease("C1", "16n", t, v * 0.4 * intensity);
 }, [
   0.9, null, null, 0.5, null, null, 0.85, null, null, 0.4, 0.9, null, null, null, 0.5, null,
   0.9, null, null, 0.5, null, null, 0.85, null, null, 0.45, 0.9, null, null, null, 0.55, 0.4,
@@ -98,10 +95,9 @@ const kickPat = new Tone.Sequence((t, v) => {
 const snarePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.6) return;
-  const humanize = (Math.random() - 0.5) * 0.008;
-  snare.triggerAttackRelease("16n", t + humanize, v);
-  snareBody.triggerAttackRelease("E3", "16n", t + humanize, v * 0.5);
+  const intensity = section === 3 ? 0.6 : 1;
+  snare.triggerAttackRelease("16n", t, v * intensity);
+  snareBody.triggerAttackRelease("E3", "16n", t, v * 0.5 * intensity);
 }, [
   null, null, null, null, 0.85, null, null, 0.3, null, null, null, null, 0.9, null, null, null,
   null, null, null, null, 0.85, null, null, 0.35, null, null, null, null, 0.9, null, null, 0.4,
@@ -117,10 +113,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.1 : section === 0 ? 0.7 : 1;
-  if (section === 0 && Math.random() > 0.7) return;
-  const humanize = (Math.random() - 0.5) * 0.006;
-  if (v > 0.75) hatO.triggerAttackRelease("32n", t + humanize, v * 0.45 * intensity);
-  else hat.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.75) hatO.triggerAttackRelease("32n", t, v * 0.45 * intensity);
+  else hat.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.5, 0.2, 0.4, 0.25, 0.5, 0.2, 0.45, 0.3, 0.5, 0.2, 0.4, 0.25, 0.5, 0.2, 0.5, 0.35,
   0.55, 0.25, 0.45, 0.3, 0.5, 0.25, 0.5, 0.35, 0.55, 0.25, 0.45, 0.3, 0.55, 0.25, 0.8, 0.4,
@@ -132,7 +126,6 @@ const rimPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.88) return;
   rim.triggerAttackRelease("32n", t, v);
 }, [
   null, null, null, null, null, null, null, 0.5, null, null, null, null, null, null, null, 0.55,
@@ -145,7 +138,6 @@ const shakerPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section < 2) return;
-  if (Math.random() > 0.9) return;
   shaker.triggerAttackRelease("32n", t, v);
 }, [
   0.3, 0.2, 0.25, 0.2, 0.3, 0.2, 0.25, 0.22, 0.3, 0.2, 0.25, 0.2, 0.3, 0.22, 0.28, 0.22,
@@ -166,13 +158,8 @@ bass.volume.value = -8;
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.6) return;
-  // Humanized timing and velocity
-  const humanize = (Math.random() - 0.5) * 0.008;
-  const vel = 0.8 + Math.random() * 0.15;
-  // Occasional octave jump
-  const note = (Math.random() > 0.96) ? n.replace("1", "2") : n;
-  bass.triggerAttackRelease(note, "8n", t + humanize, vel);
+  const intensity = section === 0 ? 0.6 : 1;
+  bass.triggerAttackRelease(n, "8n", t, 0.85 * intensity);
 }, [
   // Bbmaj9
   "Bb1", null, "Bb1", null, "D2", null, null, null, "Bb1", null, "Bb1", null, "F2", null, null, null,
@@ -208,11 +195,10 @@ const chordPat = new Tone.Sequence((t, c) => {
   if (!c) return;
   const section = getSection();
   const vel = section === 0 ? 0.3 : section === 2 ? 0.5 : 0.4;
-  const humanize = (Math.random() - 0.5) * 0.01;
-  epiano.triggerAttackRelease(c, "2n", t + humanize, vel);
+  epiano.triggerAttackRelease(c, "2n", t, vel);
   // Layer in fuller sections
-  if (section >= 1 && Math.random() > 0.5) {
-    epianoLayer.triggerAttackRelease(c, "2n", t + humanize + 0.02, vel * 0.4);
+  if (section >= 1) {
+    epianoLayer.triggerAttackRelease(c, "2n", t + 0.02, vel * 0.4);
   }
 }, [
   // Bbmaj9
@@ -243,10 +229,7 @@ const leadPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  // Humanized velocity and timing
-  const vel = 0.45 + Math.random() * 0.15;
-  const humanize = (Math.random() - 0.5) * 0.01;
-  lead.triggerAttackRelease(n, "8n", t + humanize, vel);
+  lead.triggerAttackRelease(n, "8n", t, 0.52);
 }, [
   null, null, null, null, null, null, "D5", "C5", "Bb4", null, null, null, null, null, null, null,
   null, null, null, null, "F5", null, "D5", null, "C5", null, null, null, null, null, null, null,

@@ -63,10 +63,8 @@ const getSection = () => Math.floor((Tone.Transport.position.split(":")[0] % 32)
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.7) return;
-  if (section === 3 && Math.random() > 0.5) return;
-  if (Math.random() > 0.92) kick.triggerAttackRelease("C1", "16n", t, v * 0.3);
-  kick.triggerAttackRelease("C1", "8n", t, v);
+  const intensity = section === 0 ? 0.6 : section === 3 ? 0.7 : 1;
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
 }, [
   0.9, null, null, 0.4, 0.85, null, 0.3, null, 0.9, null, null, 0.5, 0.8, null, 0.35, null,
   0.9, null, null, 0.4, 0.85, null, null, 0.4, 0.9, null, null, 0.5, 0.85, null, 0.3, 0.5,
@@ -81,9 +79,9 @@ const kickPat = new Tone.Sequence((t, v) => {
 const snarePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.8) return;
-  if (section === 2 && Math.random() > 0.7) clap.triggerAttackRelease("16n", t, v * 0.5);
-  snare.triggerAttackRelease("16n", t, v);
+  const intensity = section === 0 ? 0.7 : 1;
+  if (section === 2) clap.triggerAttackRelease("16n", t, v * 0.5);
+  snare.triggerAttackRelease("16n", t, v * intensity);
 }, [
   null, null, null, null, 0.9, null, null, null, null, null, null, null, 0.85, null, null, null,
   null, null, null, null, 0.9, null, null, null, null, null, null, null, 0.85, null, null, 0.4,
@@ -99,7 +97,7 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.2 : section === 0 ? 0.7 : 1;
-  if (v > 0.7 || (Math.random() > 0.93)) {
+  if (v > 0.7) {
     hihatOpen.triggerAttackRelease("32n", t, v * 0.5 * intensity);
   } else {
     hihatClosed.triggerAttackRelease("32n", t, v * intensity);
@@ -129,9 +127,8 @@ bass.volume.value = -6;
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.6) return;
-  const note = (Math.random() > 0.95) ? n.replace("2", "3") : n;
-  bass.triggerAttackRelease(note, "8n", t, 0.85);
+  const vel = section === 0 ? 0.65 : 0.85;
+  bass.triggerAttackRelease(n, "8n", t, vel);
 }, [
   "D2", null, "D2", "D2", null, null, "F2", null, "D2", null, "D2", "A1", null, null, "D2", null,
   "G2", null, "G2", "G2", null, null, "B1", null, "G2", null, "G2", "D2", null, null, "G2", null,
@@ -186,8 +183,7 @@ const arpPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0) return;
-  if (section === 3 && Math.random() > 0.5) return;
-  const vel = section === 2 ? 0.7 : 0.55;
+  const vel = section === 2 ? 0.7 : section === 3 ? 0.45 : 0.55;
   arp.triggerAttackRelease(n, "16n", t, vel);
 }, [
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,

@@ -79,16 +79,13 @@ const shaker = new Tone.NoiseSynth({
 }).connect(brightFilter);
 shaker.volume.value = -22;
 
-// Live feel kick pattern with ghost notes
+// Live feel kick pattern
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.6) return;
-  // Ghost note
-  if (Math.random() > 0.95) kick.triggerAttackRelease("C1", "32n", t - 0.02, v * 0.2);
-  const humanize = (Math.random() - 0.5) * 0.006;
-  kick.triggerAttackRelease("C1", "8n", t + humanize, v);
-  kickClick.triggerAttackRelease("32n", t + humanize, v * 0.3);
+  const intensity = section === 0 ? 0.6 : 1;
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
+  kickClick.triggerAttackRelease("32n", t, v * 0.3 * intensity);
 }, [
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, null,
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, 0.5,
@@ -103,12 +100,10 @@ const kickPat = new Tone.Sequence((t, v) => {
 const snarePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.6) return;
-  const humanize = (Math.random() - 0.5) * 0.006;
-  snare.triggerAttackRelease("16n", t + humanize, v);
-  snareBody.triggerAttackRelease("E3", "16n", t + humanize, v * 0.4);
-  // Layer clap in chorus
-  if (section === 2) clap.triggerAttackRelease("16n", t + humanize + 0.01, v * 0.6);
+  const intensity = section === 3 ? 0.7 : 1;
+  snare.triggerAttackRelease("16n", t, v * intensity);
+  snareBody.triggerAttackRelease("E3", "16n", t, v * 0.4 * intensity);
+  if (section === 2) clap.triggerAttackRelease("16n", t, v * 0.6);
 }, [
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null,
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, 0.4,
@@ -124,10 +119,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.15 : section === 0 ? 0.65 : 1;
-  if (section === 0 && Math.random() > 0.7) return;
-  const humanize = (Math.random() - 0.5) * 0.005;
-  if (v > 0.8) hatO.triggerAttackRelease("32n", t + humanize, v * 0.5 * intensity);
-  else hat.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.8) hatO.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  else hat.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.5, 0.9, 0.5, 0.6, 0.5, 0.9, 0.5, 0.7, 0.5, 0.9, 0.5, 0.6, 0.5, 0.9, 0.5, 0.7,
   0.55, 0.92, 0.52, 0.62, 0.52, 0.9, 0.52, 0.72, 0.52, 0.9, 0.52, 0.62, 0.55, 0.92, 0.55, 0.75,
@@ -139,7 +132,6 @@ const shakerPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section < 1) return;
-  if (Math.random() > 0.9) return;
   shaker.triggerAttackRelease("32n", t, v);
 }, [
   0.3, 0.2, 0.25, 0.2, 0.3, 0.2, 0.25, 0.22, 0.3, 0.2, 0.25, 0.2, 0.3, 0.22, 0.28, 0.22,
@@ -172,10 +164,8 @@ bass.volume.value = -8;
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 0 && Math.random() > 0.5) return;
-  const humanize = (Math.random() - 0.5) * 0.008;
-  const vel = 0.8 + Math.random() * 0.15;
-  bass.triggerAttackRelease(n, "8n", t + humanize, vel);
+  const vel = section === 0 ? 0.65 : 0.85;
+  bass.triggerAttackRelease(n, "8n", t, vel);
 }, [
   // C
   "C2", null, "C2", null, "C2", null, null, null, "C2", null, "C2", null, "E2", null, null, null,
@@ -205,8 +195,7 @@ const pianoPat = new Tone.Sequence((t, c) => {
   if (!c) return;
   const section = getSection();
   const vel = section === 0 ? 0.35 : section === 2 ? 0.55 : 0.45;
-  const humanize = (Math.random() - 0.5) * 0.008;
-  piano.triggerAttackRelease(c, "4n", t + humanize, vel);
+  piano.triggerAttackRelease(c, "4n", t, vel);
 }, [
   // C
   ["C4", "E4", "G4"], null, null, null, null, null, ["E4", "G4"], null, null, null, null, null, ["C4", "E4", "G4"], null, null, null,
@@ -235,7 +224,7 @@ guitar.volume.value = -14;
 // Strum simulation with slight delays
 const strumChord = (chord, time, vel) => {
   chord.forEach((note, i) => {
-    guitar.triggerAttackRelease(note, "2n", time + i * 0.012, vel * (0.9 + Math.random() * 0.1));
+    guitar.triggerAttackRelease(note, "2n", time + i * 0.012, vel);
   });
 };
 
@@ -300,8 +289,7 @@ const leadPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  const vel = 0.5 + Math.random() * 0.15;
-  lead.triggerAttackRelease(n, "8n", t, vel);
+  lead.triggerAttackRelease(n, "8n", t, 0.55);
 }, [
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, "G4", "E4",
   "C5", null, null, null, null, null, null, null, null, null, null, null, "G4", null, "E4", null,

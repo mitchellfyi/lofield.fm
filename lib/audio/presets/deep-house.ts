@@ -72,18 +72,13 @@ const rimshot = new Tone.NoiseSynth({
 }).connect(warmFilter);
 rimshot.volume.value = -14;
 
-// Four-on-floor with section variation and ghost notes
+// Four-on-floor with section variation
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  // Sparse in intro
-  if (section === 0 && Math.random() > 0.6) return;
-  // Drop some in breakdown
-  if (section === 3 && Math.random() > 0.4) return;
-  // Ghost note before main hit
-  if (Math.random() > 0.94) kick.triggerAttackRelease("C1", "32n", t - 0.02, v * 0.25);
-  kick.triggerAttackRelease("C1", "8n", t, v);
-  kickLayer.triggerAttackRelease("32n", t, v * 0.4);
+  const intensity = section === 0 ? 0.6 : section === 3 ? 0.5 : 1;
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
+  kickLayer.triggerAttackRelease("32n", t, v * 0.4 * intensity);
 }, [
   // 8 bars = 128 16th notes
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, null,
@@ -100,11 +95,8 @@ const clapPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 3) return;
-  // Random timing humanization
-  const humanize = (Math.random() - 0.5) * 0.008;
-  // Layer snare with clap in full section
-  if (section === 2 && Math.random() > 0.6) snareLayer.triggerAttackRelease("16n", t + humanize, v * 0.4);
-  clap.triggerAttackRelease("8n", t + humanize, v);
+  if (section === 2) snareLayer.triggerAttackRelease("16n", t, v * 0.4);
+  clap.triggerAttackRelease("8n", t, v);
 }, [
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null,
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, 0.4,
@@ -120,12 +112,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.1 : section === 0 ? 0.6 : 1;
-  // Random ghost note drops
-  if (section === 0 && Math.random() > 0.7) return;
-  // Humanized timing
-  const humanize = (Math.random() - 0.5) * 0.005;
-  if (v > 0.8) hatO.triggerAttackRelease("32n", t + humanize, v * 0.5 * intensity);
-  else hatC.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.8) hatO.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  else hatC.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.5, 0.9, 0.5, 0.6, 0.5, 0.9, 0.5, 0.7, 0.5, 0.9, 0.5, 0.6, 0.5, 0.9, 0.5, 0.7,
   0.55, 0.9, 0.5, 0.65, 0.5, 0.85, 0.55, 0.7, 0.5, 0.9, 0.55, 0.6, 0.5, 0.9, 0.6, 0.75,
@@ -137,8 +125,6 @@ const percPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section < 1) return;
-  // Random drops for humanization
-  if (Math.random() > 0.88) return;
   perc.triggerAttackRelease(n, "16n", t, 0.6);
 }, [
   null, null, null, "G3", null, null, null, null, null, null, null, "G3", null, null, null, null,
@@ -151,7 +137,6 @@ const rimPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.9) return;
   rimshot.triggerAttackRelease("32n", t, v);
 }, [
   null, null, null, null, null, null, null, 0.5, null, null, null, null, null, null, null, 0.55,
@@ -173,13 +158,8 @@ const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0) return;
-  if (section === 3 && Math.random() > 0.5) return;
-  const vel = section === 2 ? 0.9 : 0.75;
-  // Occasional octave jump
-  const note = (Math.random() > 0.95) ? n.replace("1", "2") : n;
-  // Humanized timing
-  const humanize = (Math.random() - 0.5) * 0.006;
-  bass.triggerAttackRelease(note, "16n", t + humanize, vel);
+  const vel = section === 2 ? 0.9 : section === 3 ? 0.6 : 0.75;
+  bass.triggerAttackRelease(n, "16n", t, vel);
 }, [
   // Fm (F Ab C)
   "F1", null, "F2", "F1", null, "Ab1", null, null, "F1", null, "F2", "F1", null, "Ab1", null, "F1",
@@ -239,8 +219,6 @@ const stabPat = new Tone.Sequence((t, c) => {
   if (!c) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  // Random drops
-  if (Math.random() > 0.92) return;
   stab.triggerAttackRelease(c, "16n", t, 0.6);
 }, [
   null, null, null, ["F4", "Ab4", "C5"], null, null, null, null, null, null, null, ["F4", "Ab4"], null, null, null, null,
@@ -279,9 +257,7 @@ const leadPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  // Humanized velocity
-  const vel = 0.5 + Math.random() * 0.15;
-  lead.triggerAttackRelease(n, "8n", t, vel);
+  lead.triggerAttackRelease(n, "8n", t, 0.55);
 }, [
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, "C5", "Ab4",
   null, null, null, null, null, null, null, null, null, null, null, null, "F5", null, "Eb5", null,
@@ -307,7 +283,6 @@ const arpPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.9) return;
   arp.triggerAttackRelease(n, "16n", t, 0.45);
 }, [
   "F4", "Ab4", "C5", "Ab4", "F4", "Ab4", "C5", "Ab4", "F4", "Ab4", "C5", "Ab4", "F4", "Ab4", "C5", "Eb5",

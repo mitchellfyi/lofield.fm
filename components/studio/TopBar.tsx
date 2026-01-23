@@ -79,7 +79,7 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
               <div className="relative z-[100]" ref={dropdownRef}>
                 <button
                   onClick={() => setShowPresets(!showPresets)}
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
                   aria-label="Demo Songs"
                 >
                   <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
 
             <button
               onClick={() => setShowHelp(true)}
-              className="px-2.5 sm:px-4 py-2 rounded-lg text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+              className="px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
               aria-label="Help"
             >
               <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +178,7 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
             <div className="px-6 py-4 border-t border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800 flex justify-end">
               <button
                 onClick={() => setShowHelp(false)}
-                className="px-6 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white transition-all duration-200 shadow-lg shadow-cyan-500/20"
+                className="px-6 py-2 rounded-sm text-sm font-semibold bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white transition-all duration-200 shadow-lg shadow-cyan-500/20"
               >
                 Close
               </button>

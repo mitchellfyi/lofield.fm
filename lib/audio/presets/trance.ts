@@ -86,14 +86,13 @@ ride.volume.value = -20;
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.35) return;
+  const intensity = section === 3 ? 0.4 : 1;
   // Sidechain trigger
   sidechainComp.attack.setValueAtTime(0.005, t);
   sidechainComp.release.setValueAtTime(0.15, t);
-  const humanize = (Math.random() - 0.5) * 0.003;
-  kick.triggerAttackRelease("C1", "8n", t + humanize, v);
-  kickClick.triggerAttackRelease("32n", t + humanize, v * 0.4);
-  kickSub.triggerAttackRelease("C0", "8n", t + humanize, v * 0.35);
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
+  kickClick.triggerAttackRelease("32n", t, v * 0.4 * intensity);
+  kickSub.triggerAttackRelease("C0", "8n", t, v * 0.35 * intensity);
 }, [
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, null,
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, 0.55,
@@ -109,9 +108,8 @@ const clapPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 3) return;
-  const humanize = (Math.random() - 0.5) * 0.004;
-  clap.triggerAttackRelease("16n", t + humanize, v);
-  clapLayer.triggerAttackRelease("16n", t + humanize + 0.01, v * 0.5);
+  clap.triggerAttackRelease("16n", t, v);
+  clapLayer.triggerAttackRelease("16n", t + 0.01, v * 0.5);
 }, [
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null,
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, 0.45,
@@ -127,10 +125,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.2 : section === 3 ? 0.5 : 1;
-  if (section === 3 && Math.random() > 0.5) return;
-  const humanize = (Math.random() - 0.5) * 0.003;
-  if (v > 0.85) hatO.triggerAttackRelease("32n", t + humanize, v * 0.5 * intensity);
-  else hat.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.85) hatO.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  else hat.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.65, 0.3, 0.5, 0.32, 0.65, 0.3, 0.9, 0.42, 0.65, 0.3, 0.5, 0.32, 0.65, 0.3, 0.55, 0.45,
   0.68, 0.32, 0.52, 0.35, 0.68, 0.32, 0.92, 0.45, 0.68, 0.35, 0.52, 0.35, 0.68, 0.35, 0.58, 0.48
@@ -176,8 +172,7 @@ bass.volume.value = -8;
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.4) return;
-  const vel = section === 2 ? 0.95 : 0.8;
+  const vel = section === 2 ? 0.95 : section === 3 ? 0.5 : 0.8;
   bass.triggerAttackRelease(n, "16n", t, vel);
 }, [
   // Am
@@ -252,9 +247,7 @@ const arpPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.92) return;
-  const vel = 0.5 + Math.random() * 0.15;
-  pluck.triggerAttackRelease(n, "32n", t, vel);
+  pluck.triggerAttackRelease(n, "32n", t, 0.55);
 }, [
   // Am
   "A4", "C5", "E5", "A5", "E5", "C5", "A4", "C5", "A4", "C5", "E5", "A5", "E5", "C5", "E5", "A5",

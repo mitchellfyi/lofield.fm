@@ -123,13 +123,13 @@ export function ChatPanel({
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
             placeholder="Describe your beat..."
-            className="flex-1 px-3 sm:px-4 py-3 sm:py-2.5 bg-slate-950/50 text-cyan-100 placeholder-slate-500 border border-cyan-500/30 rounded-xl sm:rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-base sm:text-sm"
+            className="flex-1 px-3 sm:px-4 py-3 sm:py-2.5 bg-slate-950/50 text-cyan-100 placeholder-slate-500 border border-cyan-500/30 rounded-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-base sm:text-sm"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim()}
-            className="px-4 sm:px-6 py-3 sm:py-2.5 bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 hover:from-cyan-500 hover:via-cyan-400 hover:to-cyan-500 active:from-cyan-700 active:via-cyan-600 active:to-cyan-700 disabled:from-slate-700 disabled:via-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-xl sm:rounded-lg font-semibold text-sm transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 disabled:shadow-none border border-cyan-500/30 hover:border-cyan-500/50 disabled:border-slate-600 relative overflow-hidden group backdrop-blur-sm"
+            className="px-4 sm:px-6 py-3 sm:py-2.5 bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 hover:from-cyan-500 hover:via-cyan-400 hover:to-cyan-500 active:from-cyan-700 active:via-cyan-600 active:to-cyan-700 disabled:from-slate-700 disabled:via-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white rounded-sm font-semibold text-sm transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 disabled:shadow-none border border-cyan-500/30 hover:border-cyan-500/50 disabled:border-slate-600 relative overflow-hidden group backdrop-blur-sm"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

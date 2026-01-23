@@ -50,17 +50,8 @@ pulseLayer.volume.value = -20;
 const pulsePat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  const vel = section === 2 ? 0.5 : section === 0 ? 0.25 : 0.4;
-  if (section === 0 && Math.random() > 0.5) return;
-  if (section === 3 && Math.random() > 0.4) return;
-  // Humanized velocity
-  const humanVel = vel * (0.9 + Math.random() * 0.2);
-  pulse.triggerAttackRelease(n, "2n", t, humanVel);
-  // Layer an octave up occasionally
-  if (Math.random() > 0.8) {
-    const octaveUp = Tone.Frequency(n).transpose(12).toNote();
-    pulseLayer.triggerAttackRelease(octaveUp, "2n", t + 0.1, humanVel * 0.4);
-  }
+  const vel = section === 2 ? 0.5 : section === 0 ? 0.25 : section === 3 ? 0.3 : 0.4;
+  pulse.triggerAttackRelease(n, "2n", t, vel);
 }, [
   "C4", null, null, null, "E4", null, null, null, "G4", null, null, null, "B3", null, null, null,
   "C4", null, null, null, "E4", null, null, null, "G4", null, null, null, "C5", null, null, null,
@@ -156,13 +147,7 @@ const shimmerPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.7) return;
   shimmer.triggerAttackRelease(n, "8n", t, 0.3);
-  // Occasional doubling
-  if (Math.random() > 0.75) {
-    const fifth = Tone.Frequency(n).transpose(7).toNote();
-    shimmer2.triggerAttackRelease(fifth, "8n", t + 0.05, 0.2);
-  }
 }, [
   null, null, "G5", null, null, null, null, null, null, null, null, null, "C6", null, null, null,
   null, null, null, null, null, null, "E5", null, null, null, null, null, null, null, "B5", null,
@@ -194,14 +179,8 @@ const bellPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 3) return;
-  if (Math.random() > 0.8) return;
   const vel = section === 2 ? 0.38 : 0.25;
   bell.triggerAttackRelease(n, "8n", t, vel);
-  // Random layer
-  if (Math.random() > 0.7) {
-    const octaveUp = Tone.Frequency(n).transpose(12).toNote();
-    bellLayer.triggerAttackRelease(octaveUp, "8n", t + 0.1, vel * 0.4);
-  }
 }, [
   "C6", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
   null, null, null, null, null, null, null, null, null, null, null, null, "E6", null, null, null,
@@ -259,9 +238,7 @@ const arpPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.85) return;
-  const vel = 0.35 + Math.random() * 0.15;
-  arp.triggerAttackRelease(n, "8n", t, vel);
+  arp.triggerAttackRelease(n, "8n", t, 0.42);
 }, [
   null, null, "C4", null, "E4", null, "G4", null, "B4", null, "G4", null, "E4", null, "C4", null,
   null, null, null, null, "C4", null, "E4", null, "G4", null, "C5", null, "B4", null, "G4", null,

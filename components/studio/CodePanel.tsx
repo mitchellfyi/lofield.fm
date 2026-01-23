@@ -29,14 +29,14 @@ interface CodePanelProps {
 
 // Syntax highlighting with high contrast colors
 const syntaxHighlight = syntaxHighlighting(HighlightStyle.define([
-  { tag: tags.keyword, color: '#c792ea' }, // Purple for keywords (const, let, function, etc.)
-  { tag: tags.string, color: '#c3e88d' }, // Green for strings
-  { tag: tags.number, color: '#f78c6c' }, // Orange for numbers
+  { tag: tags.keyword, color: '#22d3ee' }, // Cyan for keywords (const, let, function, etc.)
+  { tag: tags.string, color: '#67e8f9' }, // Green for strings
+  { tag: tags.number, color: '#67e8f9' }, // Light blue for numbers
   { tag: tags.comment, color: '#546e7a', fontStyle: 'italic' }, // Gray for comments
   { tag: tags.variableName, color: '#eeffff' }, // Light cyan for variables
   { tag: tags.function(tags.variableName), color: '#82aaff' }, // Blue for functions
   { tag: tags.className, color: '#ffcb6b' }, // Yellow for classes
-  { tag: tags.propertyName, color: '#c792ea' }, // Purple for properties
+  { tag: tags.propertyName, color: '#82aaff' }, // Lime green for properties
   { tag: tags.operator, color: '#89ddff' }, // Cyan for operators
   { tag: tags.punctuation, color: '#eeffff' }, // Light for punctuation
   { tag: tags.bracket, color: '#eeffff' }, // Light for brackets
@@ -179,13 +179,13 @@ export function CodePanel({
           )}
           <button
             onClick={handleRevert}
-            className="px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
+            className="px-2 sm:px-3 py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
           >
             Revert
           </button>
           <button
             onClick={handleCopy}
-            className="px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
+            className="px-2 sm:px-3 py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>

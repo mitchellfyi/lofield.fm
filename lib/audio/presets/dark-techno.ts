@@ -78,16 +78,14 @@ const tom = new Tone.MembraneSynth({
 }).connect(darkReverb);
 tom.volume.value = -12;
 
-// 32-bar kick pattern with fills and ghost notes
+// 32-bar kick pattern with fills
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.3) return;
-  // Ghost note
-  if (Math.random() > 0.95) kick.triggerAttackRelease("C0", "32n", t - 0.015, v * 0.2);
-  kick.triggerAttackRelease("C0", "16n", t, v);
-  kickLayer.triggerAttackRelease("32n", t, v * 0.5);
-  kickSub.triggerAttackRelease("C0", "16n", t, v * 0.3);
+  const intensity = section === 3 ? 0.4 : 1;
+  kick.triggerAttackRelease("C0", "16n", t, v * intensity);
+  kickLayer.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  kickSub.triggerAttackRelease("C0", "16n", t, v * 0.3 * intensity);
 }, [
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, 0.7,
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, 0.6, 0.8,
@@ -103,9 +101,8 @@ const clapPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section === 3) return;
-  const humanize = (Math.random() - 0.5) * 0.006;
-  if (section === 2 && Math.random() > 0.7) clapLayer.triggerAttackRelease("16n", t + humanize, v * 0.4);
-  clap.triggerAttackRelease("16n", t + humanize, v);
+  if (section === 2) clapLayer.triggerAttackRelease("16n", t, v * 0.4);
+  clap.triggerAttackRelease("16n", t, v);
 }, [
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null,
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, 0.5,
@@ -121,10 +118,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.2 : section === 0 ? 0.7 : 1;
-  if (section === 0 && Math.random() > 0.75) return;
-  const humanize = (Math.random() - 0.5) * 0.004;
-  if (v > 0.85) hatO.triggerAttackRelease("32n", t + humanize, v * 0.45 * intensity);
-  else hat.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.85) hatO.triggerAttackRelease("32n", t, v * 0.45 * intensity);
+  else hat.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.7, 0.3, 0.5, 0.3, 0.7, 0.3, 0.5, 0.4, 0.7, 0.3, 0.5, 0.3, 0.7, 0.3, 0.6, 0.5,
   0.75, 0.35, 0.55, 0.35, 0.7, 0.35, 0.55, 0.45, 0.7, 0.35, 0.5, 0.4, 0.75, 0.35, 0.65, 0.55,
@@ -136,7 +131,6 @@ const ridePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   if (section < 2) return;
-  if (Math.random() > 0.9) return;
   ride.triggerAttackRelease("32n", t, v);
 }, [
   null, 0.4, null, null, null, 0.45, null, null, null, 0.4, null, null, null, 0.5, null, null,
@@ -149,7 +143,6 @@ const tomPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.92) return;
   tom.triggerAttackRelease(n, "8n", t, 0.7);
 }, [
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
@@ -180,15 +173,8 @@ const filterLFO = new Tone.LFO("4n", 600, 2500).connect(acidFilter.frequency).st
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.4) return;
-  const vel = section === 2 ? 0.95 : 0.8;
-  // Occasional slide
-  if (Math.random() > 0.97) {
-    acidBass.triggerAttackRelease(n, "16n", t, vel);
-    acidBass.frequency.rampTo(Tone.Frequency(n).transpose(12).toFrequency(), 0.05, t + 0.02);
-  } else {
-    acidBass.triggerAttackRelease(n, "16n", t, vel);
-  }
+  const vel = section === 2 ? 0.95 : section === 3 ? 0.5 : 0.8;
+  acidBass.triggerAttackRelease(n, "16n", t, vel);
 }, [
   "A1", null, "A1", "A2", null, "A1", null, "G1", "A1", null, "A1", "C2", null, "A1", null, "E1",
   "A1", null, "A1", "A2", null, "A1", "G1", "A1", "A1", null, "C2", "A1", null, "A1", "E1", "G1",
@@ -240,7 +226,6 @@ const stabPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  if (Math.random() > 0.93) return;
   stab.triggerAttackRelease(n, "32n", t, 0.7);
 }, [
   null, null, null, "A4", null, null, null, null, null, null, null, null, null, null, "E4", null,

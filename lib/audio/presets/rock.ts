@@ -83,12 +83,9 @@ rackTom.volume.value = -10;
 const kickPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.5) return;
-  // Ghost note
-  if (Math.random() > 0.95) kick.triggerAttackRelease("C1", "32n", t - 0.015, v * 0.2);
-  const humanize = (Math.random() - 0.5) * 0.004;
-  kick.triggerAttackRelease("C1", "8n", t + humanize, v);
-  kickClick.triggerAttackRelease("32n", t + humanize, v * 0.4);
+  const intensity = section === 3 ? 0.6 : 1;
+  kick.triggerAttackRelease("C1", "8n", t, v * intensity);
+  kickClick.triggerAttackRelease("32n", t, v * 0.4 * intensity);
 }, [
   1, null, null, null, 1, null, null, null, 1, null, null, null, 1, null, null, 0.6,
   1, null, null, null, 1, null, null, null, 1, null, null, 0.5, 1, null, 0.6, 0.7,
@@ -103,10 +100,9 @@ const kickPat = new Tone.Sequence((t, v) => {
 const snarePat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.5) return;
-  const humanize = (Math.random() - 0.5) * 0.004;
-  snare.triggerAttackRelease("16n", t + humanize, v);
-  snareBody.triggerAttackRelease("E3", "16n", t + humanize, v * 0.5);
+  const intensity = section === 3 ? 0.6 : 1;
+  snare.triggerAttackRelease("16n", t, v * intensity);
+  snareBody.triggerAttackRelease("E3", "16n", t, v * 0.5 * intensity);
 }, [
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, null,
   null, null, null, null, 1, null, null, null, null, null, null, null, 1, null, null, 0.45,
@@ -122,10 +118,8 @@ const hatPat = new Tone.Sequence((t, v) => {
   if (!v) return;
   const section = getSection();
   const intensity = section === 2 ? 1.2 : section === 3 ? 0.6 : 1;
-  if (section === 3 && Math.random() > 0.6) return;
-  const humanize = (Math.random() - 0.5) * 0.004;
-  if (v > 0.85) hatO.triggerAttackRelease("32n", t + humanize, v * 0.5 * intensity);
-  else hat.triggerAttackRelease("32n", t + humanize, v * intensity);
+  if (v > 0.85) hatO.triggerAttackRelease("32n", t, v * 0.5 * intensity);
+  else hat.triggerAttackRelease("32n", t, v * intensity);
 }, [
   0.7, 0.3, 0.5, 0.3, 0.7, 0.3, 0.6, 0.4, 0.7, 0.3, 0.5, 0.3, 0.9, 0.35, 0.6, 0.5,
   0.75, 0.35, 0.55, 0.35, 0.75, 0.35, 0.65, 0.45, 0.75, 0.38, 0.55, 0.38, 0.92, 0.4, 0.65, 0.55
@@ -179,10 +173,8 @@ bass.volume.value = -8;
 const bassPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
-  if (section === 3 && Math.random() > 0.4) return;
-  const humanize = (Math.random() - 0.5) * 0.005;
-  const vel = section === 2 ? 0.95 : 0.8;
-  bass.triggerAttackRelease(n, "16n", t + humanize, vel);
+  const vel = section === 2 ? 0.95 : section === 3 ? 0.6 : 0.8;
+  bass.triggerAttackRelease(n, "16n", t, vel);
 }, [
   // E
   "E1", null, "E2", "E1", null, "E1", null, null, "E1", null, "E2", "E1", null, "E1", null, "G1",
@@ -222,9 +214,8 @@ const powerChordPat = new Tone.Sequence((t, c) => {
   const section = getSection();
   if (section === 3) return;
   const vel = section === 2 ? 0.8 : section === 0 ? 0.5 : 0.65;
-  const humanize = (Math.random() - 0.5) * 0.006;
-  guitar.triggerAttackRelease(c, "4n", t + humanize, vel);
-  guitarLayer.triggerAttackRelease(c, "4n", t + humanize + 0.005, vel * 0.6);
+  guitar.triggerAttackRelease(c, "4n", t, vel);
+  guitarLayer.triggerAttackRelease(c, "4n", t + 0.005, vel * 0.6);
 }, [
   // E5
   ["E2", "B2", "E3"], null, null, null, ["E2", "B2"], null, null, null, ["E2", "B2", "E3"], null, null, null, ["E2", "B2"], null, null, null,
@@ -256,14 +247,7 @@ const leadPat = new Tone.Sequence((t, n) => {
   if (!n) return;
   const section = getSection();
   if (section === 0 || section === 3) return;
-  const vel = 0.6 + Math.random() * 0.15;
-  // Occasional bend
-  if (Math.random() > 0.9) {
-    lead.triggerAttackRelease(n, "8n", t, vel);
-    lead.frequency.rampTo(Tone.Frequency(n).transpose(2).toFrequency(), 0.08, t + 0.02);
-  } else {
-    lead.triggerAttackRelease(n, "8n", t, vel);
-  }
+  lead.triggerAttackRelease(n, "8n", t, 0.65);
 }, [
   null, null, null, null, null, null, null, null, null, null, null, null, null, null, "E5", "D5",
   "B4", null, null, null, null, null, "E5", null, "G5", null, null, null, "E5", null, "D5", null,
