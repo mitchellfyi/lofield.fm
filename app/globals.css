@@ -3,6 +3,12 @@
 :root {
   --background: #0f172a;
   --foreground: #e2e8f0;
+  
+  /* Mobile-safe viewport height - use dvh (dynamic viewport height) when available */
+  --vh: 100vh;
+  @supports (height: 1dvh) {
+    --vh: 100dvh;
+  }
 }
 
 @theme inline {
@@ -19,10 +25,15 @@
   }
 }
 
+/* Full-screen app container - prevents scrolling for studio interface */
+html,
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
 }
 
 /* Global button cursor */
