@@ -208,6 +208,19 @@ Commits:
 - 2ac2010 - test: Add tests for useModelSelection hook behavior
 - d3f6402 - fix: Fix lint errors in useModelSelection tests
 
+### 2026-01-23 20:38 - Documentation Sync
+
+Docs updated:
+- README.md - Added "AI Model Selection" section documenting the feature
+
+Annotations:
+- N/A (Next.js project, not Rails)
+
+Consistency checks:
+- [x] Code matches docs
+- [x] No broken links
+- [x] Schema annotations current (N/A for this project)
+
 ---
 
 ## Testing Evidence
@@ -231,5 +244,12 @@ Commits:
 
 ## Links
 
-- File: `app/api/chat/route.ts`
-- File: `app/studio/page.tsx`
+- File: `lib/models.ts` - Model configuration and types
+- File: `lib/hooks/useModelSelection.ts` - localStorage persistence hook
+- File: `lib/__tests__/models.test.ts` - Model config unit tests
+- File: `lib/hooks/__tests__/useModelSelection.test.ts` - Hook unit tests
+- File: `components/studio/ModelSelector.tsx` - Dropdown UI component
+- File: `components/studio/TopBar.tsx` - Updated to include ModelSelector
+- File: `app/api/chat/route.ts` - API route with model validation
+- File: `app/studio/page.tsx` - Studio page with model selection wiring
+- File: `README.md` - Documentation updated with feature description

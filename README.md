@@ -18,6 +18,16 @@ A Next.js application for generating lofi beats through chat using Strudel live 
 3. Chat "make a lofi beat at 90bpm" to generate new code
 4. Follow-up messages tweak the same track
 
+### AI Model Selection
+
+Select your preferred AI model from the dropdown in the top bar:
+
+- **GPT-4o Mini** (default) - Fast and affordable, great for most tasks
+- **GPT-4o** - Most capable, best for complex music generation
+- **GPT-4 Turbo** - Powerful with large context window
+
+Your selection persists in localStorage across sessions.
+
 ## Audio Initialization & Known Quirks
 
 ### Reliable Strudel Player
