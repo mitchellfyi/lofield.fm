@@ -61,9 +61,9 @@ describe("SignUpForm", () => {
     });
 
     it("should validate password confirmation match", () => {
-      const password = "securepassword123";
-      const confirmPassword = "securepassword123";
-      const mismatchPassword = "differentpassword";
+      const password: string = "securepassword123";
+      const confirmPassword: string = "securepassword123";
+      const mismatchPassword: string = "differentpassword";
 
       expect(password === confirmPassword).toBe(true);
       expect(password === mismatchPassword).toBe(false);
@@ -72,17 +72,19 @@ describe("SignUpForm", () => {
 
   describe("terms acceptance validation", () => {
     it("should require terms acceptance before signup", () => {
-      const acceptTerms = false;
+      // Simulate unchecked checkbox state
+      const checkboxState = { checked: false };
 
       // Validation: must accept terms
-      const isValid = acceptTerms === true;
+      const isValid = checkboxState.checked === true;
       expect(isValid).toBe(false);
     });
 
     it("should pass validation when terms are accepted", () => {
-      const acceptTerms = true;
+      // Simulate checked checkbox state
+      const checkboxState = { checked: true };
 
-      const isValid = acceptTerms === true;
+      const isValid = checkboxState.checked === true;
       expect(isValid).toBe(true);
     });
   });
