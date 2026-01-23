@@ -7,13 +7,17 @@ const openai = createOpenAI({
 import { streamText, type ModelMessage } from "ai";
 import { validateToneCode } from "@/lib/audio/llmContract";
 import { loadSystemPrompt, buildRetryPrompt } from "@/lib/prompts/loader";
+import { isValidModel, DEFAULT_MODEL } from "@/lib/models";
 
 export const runtime = "nodejs";
 
 const MAX_RETRIES = 2;
 
-async function generateWithValidation(messages: ModelMessage[], retryCount = 0): Promise<Response> {
-  const modelName = process.env.OPENAI_MODEL || "gpt-4o-mini";
+async function generateWithValidation(
+  messages: ModelMessage[],
+  modelName: string,
+  retryCount = 0
+): Promise<Response> {
   const systemPrompt = loadSystemPrompt();
   const result = streamText({
     model: openai(modelName),
@@ -53,7 +57,7 @@ async function generateWithValidation(messages: ModelMessage[], retryCount = 0):
     ];
 
     // Retry recursively
-    return generateWithValidation(newMessages, retryCount + 1);
+    return generateWithValidation(newMessages, modelName, retryCount + 1);
   }
 
   // Return the response (either valid or max retries reached)
@@ -77,7 +81,12 @@ async function generateWithValidation(messages: ModelMessage[], retryCount = 0):
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { messages } = body;
+  const { messages, model: requestedModel } = body;
+
+  // Validate and select model
+  const modelName = requestedModel && isValidModel(requestedModel)
+    ? requestedModel
+    : DEFAULT_MODEL;
 
   // Build messages with context, filtering out invalid messages
   // The frontend may send messages with 'text' instead of 'content' or parts array
@@ -111,5 +120,5 @@ export async function POST(req: Request) {
     return new Response("No valid messages provided", { status: 400 });
   }
 
-  return generateWithValidation(contextMessages);
+  return generateWithValidation(contextMessages, modelName);
 }
