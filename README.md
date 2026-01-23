@@ -7,9 +7,15 @@ A Next.js application for generating lofi beats through chat using Strudel live 
 ### Setup
 
 1. `npm install`
-2. Copy `.env.example` to `.env.local` and add your `OPENAI_API_KEY`
-3. `npm run dev`
-4. Open http://localhost:3000/strudel
+2. Copy `.env.example` to `.env.local` and configure:
+   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
+   - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
+   - `API_KEY_ENCRYPTION_SECRET` - Generate with `openssl rand -hex 32`
+   - `OPENAI_API_KEY` - (Optional) Fallback for development only
+3. Run Supabase migrations: `npx supabase db push`
+4. `npm run dev`
+5. Open http://localhost:3000/studio
 
 ### Usage
 
@@ -27,6 +33,17 @@ Select your preferred AI model from the dropdown in the top bar:
 - **GPT-4 Turbo** - Powerful with large context window
 
 Your selection persists in localStorage across sessions.
+
+### API Key Management
+
+Users must provide their own OpenAI API key to use the chat feature:
+
+1. **First-time use**: A modal prompts you to enter your API key
+2. **Settings page**: Access via the gear icon in the top bar to manage your key
+3. **Security**: Keys are encrypted at rest using AES-256-GCM
+4. **Privacy**: Your key is stored in your user account, never shared
+
+In development mode (`NODE_ENV=development`), the app falls back to the server's `OPENAI_API_KEY` env var if no user key is set. In production, a user key is always required.
 
 ## Audio Initialization & Known Quirks
 

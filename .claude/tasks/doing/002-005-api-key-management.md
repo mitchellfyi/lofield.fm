@@ -431,6 +431,24 @@ Quality checks: ESLint ran on each file, no violations.
 
 ---
 
+### 2026-01-23 21:44 - Documentation Sync
+
+Docs updated:
+- `README.md` - Updated setup instructions with Supabase and encryption config
+- `README.md` - Added "API Key Management" section explaining user key workflow
+- `.env.example` - Already updated in implementation phase
+
+Code comments reviewed:
+- `lib/api-keys.ts` - Well-documented with clear encryption comments
+- `app/api/chat/route.ts` - Clear comments on dev/prod fallback behavior
+
+Consistency checks:
+- [x] Code matches docs (README reflects actual behavior)
+- [x] No broken links (no markdown links in new docs)
+- [x] Schema annotations: N/A (Next.js project, no Rails models)
+
+---
+
 ## Notes
 
 - Consider using Supabase Vault for key encryption
@@ -441,5 +459,25 @@ Quality checks: ESLint ran on each file, no violations.
 
 ## Links
 
-- File: `app/api/chat/route.ts`
+### Created Files
+- `supabase/migrations/002_api_keys.sql` - Database schema
+- `lib/api-keys.ts` - Encryption and CRUD service
+- `lib/hooks/useApiKey.ts` - Client-side hook
+- `lib/__tests__/api-keys.test.ts` - Service tests
+- `lib/hooks/__tests__/useApiKey.test.ts` - Hook tests
+- `app/api/validate-key/route.ts` - Key validation endpoint
+- `app/api/api-keys/route.ts` - Key CRUD endpoint
+- `app/settings/page.tsx` - Settings page
+- `components/settings/ApiKeyModal.tsx` - Modal component
+- `components/settings/__tests__/ApiKeyModal.test.ts` - Modal tests
+- `components/studio/ApiKeyPrompt.tsx` - Inline prompt
+
+### Modified Files
+- `app/api/chat/route.ts` - User key lookup with dev fallback
+- `app/studio/page.tsx` - API key integration
+- `components/studio/TopBar.tsx` - Settings link
+- `.env.example` - Encryption secret variable
+- `README.md` - Setup and feature documentation
+
+### Dependencies
 - Depends: `002-004-supabase-auth-setup`
