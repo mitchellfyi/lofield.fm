@@ -6,6 +6,12 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Script from 'next/script';
 import { validateStrudelCode, extractCodeBlocks } from '@/lib/strudel/llmContract';
 import { getStrudelRuntime, type PlayerState, type RuntimeEvent } from '@/lib/strudel/runtime';
+import { TopBar } from '@/components/strudel/TopBar';
+import { ChatPanel } from '@/components/strudel/ChatPanel';
+import { CodePanel } from '@/components/strudel/CodePanel';
+import { PlayerControls } from '@/components/strudel/PlayerControls';
+import { ConsolePanel } from '@/components/strudel/ConsolePanel';
+import type { UIMessage } from '@ai-sdk/react';
 
 const DEFAULT_CODE = `setcps(85/60/4)
 stack(
@@ -219,179 +225,198 @@ export default function StrudelPage() {
         }}
         onError={() => setError('Failed to load Strudel library')}
       />
-      <div className="flex h-screen bg-zinc-900 text-white">
-        {/* Left Panel - Chat */}
-        <div className="w-1/2 flex flex-col border-r border-zinc-700">
-          <div className="p-4 border-b border-zinc-700">
-            <h1 className="text-2xl font-bold">Strudel Chat</h1>
-            <p className="text-sm text-zinc-400">Chat to generate and modify beats</p>
-          </div>
-          
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => {
-              const textParts = message.parts.filter(part => part.type === 'text');
-              const content = textParts.map(part => part.text).join('\n');
-              
-              return (
-                <div
-                  key={message.id}
-                  className={`p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-blue-600 ml-auto max-w-[80%]'
-                      : 'bg-zinc-800 mr-auto max-w-[80%]'
-                  }`}
-                >
-                  <div className="text-xs text-zinc-400 mb-1">
-                    {message.role === 'user' ? 'You' : 'Assistant'}
-                  </div>
-                  <div className="whitespace-pre-wrap">{content}</div>
-                </div>
-              );
-            })}
-            {isLoading && (
-              <div className="p-3 rounded-lg bg-zinc-800 mr-auto max-w-[80%]">
-                <div className="text-xs text-zinc-400 mb-1">Assistant</div>
-                <div>Thinking...</div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+      
+      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
+        {/* Animated background effect */}
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent opacity-50 pointer-events-none" />
+        <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
+        
+        {/* Top Bar */}
+        <TopBar playerState={playerState} />
 
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t border-zinc-700">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type a message... (e.g., 'make a lofi beat at 90bpm')"
-                className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={isLoading}
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden relative z-10">
+          {/* Desktop Layout: Split View */}
+          <div className="hidden md:flex flex-1">
+            {/* Left Panel - Chat */}
+            <div className="w-1/2 flex flex-col border-r border-cyan-950/50 backdrop-blur-sm">
+              <ChatPanel
+                messages={messages}
+                inputValue={inputValue}
+                onInputChange={setInputValue}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
               />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
-              >
-                Send
-              </button>
             </div>
-          </form>
-        </div>
 
-        {/* Right Panel - Code & Controls */}
-        <div className="w-1/2 flex flex-col">
-          <div className="p-4 border-b border-zinc-700">
-            <h2 className="text-xl font-bold">Code Editor</h2>
+            {/* Right Panel - Code & Controls */}
+            <div className="w-1/2 flex flex-col backdrop-blur-sm">
+              <div className="flex-1 overflow-hidden">
+                <CodePanel
+                  code={code}
+                  onChange={setCode}
+                  validationErrors={validationErrors}
+                  defaultCode={DEFAULT_CODE}
+                />
+              </div>
+
+              {/* Controls & Console */}
+              <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50 space-y-4">
+                <PlayerControls
+                  playerState={playerState}
+                  strudelLoaded={strudelLoaded}
+                  onInitAudio={initAudio}
+                  onPlay={() => playCode(code)}
+                  onStop={stop}
+                />
+
+                <ConsolePanel events={runtimeEvents} error={error} />
+              </div>
+            </div>
           </div>
 
-          {/* Code Editor */}
-          <div className="flex-1 p-4">
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              spellCheck={false}
+          {/* Mobile Layout: Tabbed */}
+          <div className="md:hidden flex flex-col flex-1">
+            <MobileTabs
+              code={code}
+              setCode={setCode}
+              validationErrors={validationErrors}
+              messages={messages}
+              inputValue={inputValue}
+              setInputValue={setInputValue}
+              handleSubmit={handleSubmit}
+              isLoading={isLoading}
+              playerState={playerState}
+              strudelLoaded={strudelLoaded}
+              initAudio={initAudio}
+              playCode={() => playCode(code)}
+              stop={stop}
+              runtimeEvents={runtimeEvents}
+              error={error}
+              defaultCode={DEFAULT_CODE}
             />
           </div>
-
-          {/* Controls */}
-          <div className="p-4 border-t border-zinc-700 space-y-4">
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={initAudio}
-                disabled={!strudelLoaded || playerState !== 'idle'}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
-              >
-                Init Audio
-              </button>
-              <button
-                onClick={() => playCode(code)}
-                disabled={!strudelLoaded || playerState === 'loading' || playerState === 'error'}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
-              >
-                {playerState === 'playing' ? 'Restart' : 'Play'}
-              </button>
-              <button
-                onClick={stop}
-                disabled={playerState !== 'playing'}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 rounded-lg font-medium transition-colors"
-              >
-                Stop
-              </button>
-              <div className="ml-auto text-sm">
-                <span className="text-zinc-400">State: </span>
-                <span className={`font-semibold ${
-                  playerState === 'playing' ? 'text-green-400' :
-                  playerState === 'error' ? 'text-red-400' :
-                  playerState === 'loading' ? 'text-yellow-400' :
-                  playerState === 'ready' ? 'text-blue-400' :
-                  'text-zinc-400'
-                }`}>
-                  {playerState}
-                </span>
-              </div>
-            </div>
-
-            {/* Console Panel */}
-            {runtimeEvents.length > 0 && (
-              <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3">
-                <div className="text-xs font-semibold text-zinc-400 mb-2">Console (last {runtimeEvents.length} events)</div>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {runtimeEvents.map((event, idx) => {
-                    const time = new Date(event.timestamp).toLocaleTimeString();
-                    const icon = 
-                      event.type === 'init' ? '🎵' :
-                      event.type === 'play' ? '▶️' :
-                      event.type === 'stop' ? '⏹️' :
-                      event.type === 'eval_ok' ? '✓' :
-                      event.type === 'eval_fail' ? '✗' :
-                      '⚠️';
-                    
-                    return (
-                      <div key={idx} className="text-xs font-mono">
-                        <span className="text-zinc-500">[{time}]</span>
-                        <span className="ml-2">{icon}</span>
-                        <span className={`ml-2 ${
-                          event.type === 'error' || event.type === 'eval_fail' ? 'text-red-400' :
-                          event.type === 'eval_ok' ? 'text-green-400' :
-                          'text-zinc-300'
-                        }`}>
-                          {event.message}
-                        </span>
-                        {event.error && (
-                          <div className="ml-8 text-red-300 mt-1">
-                            {event.error}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Validation Warnings */}
-            {validationErrors.length > 0 && (
-              <div className="p-3 bg-yellow-900/50 border border-yellow-700 rounded-lg text-sm text-yellow-200">
-                <div className="font-semibold mb-1">⚠️ Validation Issues:</div>
-                <ul className="list-disc list-inside space-y-1">
-                  {validationErrors.map((error, idx) => (
-                    <li key={idx}>{error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div className="p-3 bg-red-900/50 border border-red-700 rounded-lg text-sm text-red-200">
-                {error}
-              </div>
-            )}
-          </div>
         </div>
+      </div>
+    </>
+  );
+}
+
+// Mobile Tabs Component
+interface MobileTabsProps {
+  code: string;
+  setCode: (code: string) => void;
+  validationErrors: string[];
+  messages: UIMessage[];
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
+  playerState: PlayerState;
+  strudelLoaded: boolean;
+  initAudio: () => void;
+  playCode: () => void;
+  stop: () => void;
+  runtimeEvents: RuntimeEvent[];
+  error: string;
+  defaultCode: string;
+}
+
+function MobileTabs({
+  code,
+  setCode,
+  validationErrors,
+  messages,
+  inputValue,
+  setInputValue,
+  handleSubmit,
+  isLoading,
+  playerState,
+  strudelLoaded,
+  initAudio,
+  playCode,
+  stop,
+  runtimeEvents,
+  error,
+  defaultCode,
+}: MobileTabsProps) {
+  const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'console'>('chat');
+
+  return (
+    <>
+      {/* Tab Navigation */}
+      <div className="flex border-b border-cyan-500/20 bg-slate-900/50">
+        <button
+          onClick={() => setActiveTab('chat')}
+          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+            activeTab === 'chat'
+              ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
+              : 'text-slate-400 hover:text-cyan-300'
+          }`}
+        >
+          Chat
+        </button>
+        <button
+          onClick={() => setActiveTab('code')}
+          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+            activeTab === 'code'
+              ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
+              : 'text-slate-400 hover:text-cyan-300'
+          }`}
+        >
+          Code
+        </button>
+        <button
+          onClick={() => setActiveTab('console')}
+          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+            activeTab === 'console'
+              ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
+              : 'text-slate-400 hover:text-cyan-300'
+          }`}
+        >
+          Console
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === 'chat' && (
+          <ChatPanel
+            messages={messages}
+            inputValue={inputValue}
+            onInputChange={setInputValue}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        )}
+
+        {activeTab === 'code' && (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-hidden">
+              <CodePanel
+                code={code}
+                onChange={setCode}
+                validationErrors={validationErrors}
+                defaultCode={defaultCode}
+              />
+            </div>
+            <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
+              <PlayerControls
+                playerState={playerState}
+                strudelLoaded={strudelLoaded}
+                onInitAudio={initAudio}
+                onPlay={playCode}
+                onStop={stop}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'console' && (
+          <div className="h-full overflow-y-auto p-4">
+            <ConsolePanel events={runtimeEvents} error={error} />
+          </div>
+        )}
       </div>
     </>
   );
