@@ -16,7 +16,10 @@ import { CodePanel } from "@/components/studio/CodePanel";
 import { PlayerControls } from "@/components/studio/PlayerControls";
 import { ConsolePanel } from "@/components/studio/ConsolePanel";
 import { TimelineBar } from "@/components/studio/TimelineBar";
+import { ApiKeyPrompt } from "@/components/studio/ApiKeyPrompt";
 import { useModelSelection } from "@/lib/hooks/useModelSelection";
+import { useApiKey } from "@/lib/hooks/useApiKey";
+import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
 import type { UIMessage } from "@ai-sdk/react";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
@@ -294,6 +297,8 @@ export default function StudioPage() {
   const [inputValue, setInputValue] = useState("");
   const [liveMode, setLiveMode] = useState(true); // Live coding mode - auto-update on edit
   const [selectedModel, setSelectedModel] = useModelSelection();
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const { hasKey, loading: apiKeyLoading, refresh: refreshApiKey } = useApiKey();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>("");
   const runtimeRef = useRef(getAudioRuntime());
@@ -522,6 +527,12 @@ export default function StudioPage() {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
 
+    // Check if user has API key before sending
+    if (!hasKey && !apiKeyLoading) {
+      setShowApiKeyModal(true);
+      return;
+    }
+
     // Include current code as context for the AI to make incremental changes
     const messageWithContext = `Current code:
 \`\`\`js
@@ -532,6 +543,10 @@ Request: ${inputValue}`;
 
     sendMessage({ text: messageWithContext });
     setInputValue("");
+  };
+
+  const handleApiKeySuccess = async () => {
+    await refreshApiKey();
   };
 
   return (
@@ -558,14 +573,20 @@ Request: ${inputValue}`;
           <div className="hidden md:flex flex-1">
             {/* Left Panel - Chat */}
             <div className="w-1/2 flex flex-col border-r border-cyan-950/50 backdrop-blur-sm">
-              <ChatPanel
-                messages={messages}
-                inputValue={inputValue}
-                onInputChange={setInputValue}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-                statusMessage={chatStatusMessage}
-              />
+              {!hasKey && !apiKeyLoading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <ApiKeyPrompt onAddKey={() => setShowApiKeyModal(true)} />
+                </div>
+              ) : (
+                <ChatPanel
+                  messages={messages}
+                  inputValue={inputValue}
+                  onInputChange={setInputValue}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  statusMessage={chatStatusMessage}
+                />
+              )}
             </div>
 
             {/* Right Panel - Code & Controls */}
@@ -618,6 +639,12 @@ Request: ${inputValue}`;
           </div>
         </div>
       </div>
+
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        onSuccess={handleApiKeySuccess}
+      />
     </>
   );
 }
