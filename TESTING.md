@@ -94,7 +94,11 @@ Tests run automatically on every PR via GitHub Actions (`.github/workflows/tests
 ## Environment Variables
 
 - `NEXT_PUBLIC_E2E=1` - Enables test API (only in E2E mode)
-- `OPENAI_API_KEY` - Required for AI chat tests (CI secret)
+- `OPENAI_API_KEY` - Required for AI chat tests
+  - For local testing: Create `.env.local` with your OpenAI key
+  - For CI: Configure as a repository secret in GitHub Settings → Secrets and variables → Actions
+
+**Note**: E2E tests that involve AI chat will be skipped if `OPENAI_API_KEY` is not set.
 
 ## Test Patterns
 

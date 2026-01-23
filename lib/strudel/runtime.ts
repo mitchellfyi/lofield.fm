@@ -219,8 +219,8 @@ class StrudelRuntime {
   private hush(): void {
     if (typeof window !== 'undefined' && window.hush) {
       try {
-        window.hush();
         this.hushCallCount++;
+        window.hush();
       } catch (err) {
         // Ignore hush errors
       }
