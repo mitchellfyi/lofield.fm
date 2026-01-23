@@ -15,7 +15,10 @@ export async function POST(req: Request) {
 
     // Basic format validation for OpenAI keys
     if (!key.startsWith("sk-")) {
-      return NextResponse.json({ valid: false, error: "Invalid API key format. OpenAI keys start with 'sk-'" }, { status: 400 });
+      return NextResponse.json(
+        { valid: false, error: "Invalid API key format. OpenAI keys start with 'sk-'" },
+        { status: 400 }
+      );
     }
 
     // Test the key by making a minimal API call
@@ -24,7 +27,6 @@ export async function POST(req: Request) {
     await generateText({
       model: openai("gpt-4o-mini"),
       prompt: "Say 'ok'",
-      maxTokens: 1,
     });
 
     return NextResponse.json({ valid: true });
@@ -32,20 +34,33 @@ export async function POST(req: Request) {
     // Handle OpenAI API errors
     const message = error instanceof Error ? error.message : "Unknown error";
 
-    if (message.includes("401") || message.includes("Incorrect API key") || message.includes("invalid_api_key")) {
+    if (
+      message.includes("401") ||
+      message.includes("Incorrect API key") ||
+      message.includes("invalid_api_key")
+    ) {
       return NextResponse.json({ valid: false, error: "Invalid API key" }, { status: 400 });
     }
 
     if (message.includes("429") || message.includes("rate limit")) {
-      return NextResponse.json({ valid: false, error: "API key is rate limited. Please try again later." }, { status: 400 });
+      return NextResponse.json(
+        { valid: false, error: "API key is rate limited. Please try again later." },
+        { status: 400 }
+      );
     }
 
     if (message.includes("insufficient_quota")) {
-      return NextResponse.json({ valid: false, error: "API key has insufficient quota" }, { status: 400 });
+      return NextResponse.json(
+        { valid: false, error: "API key has insufficient quota" },
+        { status: 400 }
+      );
     }
 
     // Log unexpected errors for debugging but don't expose details
     console.error("API key validation error:", message);
-    return NextResponse.json({ valid: false, error: "Failed to validate API key. Please try again." }, { status: 500 });
+    return NextResponse.json(
+      { valid: false, error: "Failed to validate API key. Please try again." },
+      { status: 500 }
+    );
   }
 }
