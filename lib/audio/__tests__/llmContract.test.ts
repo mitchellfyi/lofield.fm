@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { extractStreamingCode, extractCodeBlocks, validateToneCode } from "../llmContract";
+import {
+  extractStreamingCode,
+  extractCodeBlocks,
+  validateToneCode,
+  validateJavaScriptSyntax,
+  validateRawToneCode,
+} from "../llmContract";
 
 describe("llmContract", () => {
   describe("extractStreamingCode", () => {
@@ -179,6 +185,170 @@ const synth = new Tone.Synth();
 
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.type === "multiple_code_blocks")).toBe(true);
+    });
+
+    it("should reject code with syntax errors", () => {
+      const text = `\`\`\`js
+Tone.Transport.bpm.value = 120;
+const synth = new Tone.Synth(
+\`\`\``;
+
+      const result = validateToneCode(text);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.type === "syntax_error")).toBe(true);
+    });
+
+    it("should include syntax error message in error details", () => {
+      const text = `\`\`\`js
+Tone.Transport.bpm.value = 120
+const synth = {
+\`\`\``;
+
+      const result = validateToneCode(text);
+
+      expect(result.valid).toBe(false);
+      const syntaxError = result.errors.find((e) => e.type === "syntax_error");
+      expect(syntaxError).toBeDefined();
+      expect(syntaxError?.message).toContain("JavaScript syntax error");
+    });
+  });
+
+  describe("validateJavaScriptSyntax", () => {
+    it("should accept valid JavaScript code", () => {
+      const code = `
+const x = 1;
+const fn = () => x + 1;
+const obj = { a: 1, b: 2 };
+`;
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should accept complex valid code with classes and async", () => {
+      const code = `
+class MyClass {
+  constructor(x) {
+    this.x = x;
+  }
+  async method() {
+    return await Promise.resolve(this.x);
+  }
+}
+`;
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it("should reject code with unclosed brackets", () => {
+      const code = `const synth = new Tone.Synth(`;
+
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should reject code with unclosed braces", () => {
+      const code = `const obj = { a: 1`;
+
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should reject code with invalid syntax", () => {
+      const code = `const = 1;`;
+
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+
+    it("should accept empty string as valid syntax", () => {
+      const result = validateJavaScriptSyntax("");
+
+      expect(result.valid).toBe(true);
+    });
+
+    it("should accept comments-only code", () => {
+      const code = `// Just a comment
+/* Another comment */`;
+
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it("should reject incomplete string literals", () => {
+      const code = `const msg = "hello`;
+
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(false);
+    });
+
+    it("should reject incomplete template literals", () => {
+      const code = "const msg = `hello";
+
+      const result = validateJavaScriptSyntax(code);
+
+      expect(result.valid).toBe(false);
+    });
+  });
+
+  describe("validateRawToneCode", () => {
+    it("should accept valid Tone.js code", () => {
+      const code = `
+Tone.Transport.bpm.value = 120;
+const synth = new Tone.Synth().toDestination();
+`;
+      const result = validateRawToneCode(code);
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("should reject code with syntax errors", () => {
+      const code = `Tone.Transport.bpm.value = 120;
+const synth = new Tone.Synth(`;
+
+      const result = validateRawToneCode(code);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.type === "syntax_error")).toBe(true);
+    });
+
+    it("should reject code without Tone.js usage", () => {
+      const code = `const x = 1;`;
+
+      const result = validateRawToneCode(code);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.type === "missing_tone")).toBe(true);
+    });
+
+    it("should return early on syntax errors without checking Tone usage", () => {
+      const code = `const synth = {`;
+
+      const result = validateRawToneCode(code);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].type).toBe("syntax_error");
+    });
+
+    it("should include the code in the result", () => {
+      const code = `Tone.Transport.start();`;
+
+      const result = validateRawToneCode(code);
+
+      expect(result.code).toBe(code);
     });
   });
 });
