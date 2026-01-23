@@ -6,18 +6,31 @@ export default function Home() {
       {/* Animated background effect */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent opacity-50 pointer-events-none" />
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
-      
-      {/* Waveform visualization */}
-      <div className="fixed inset-0 flex items-center justify-between gap-0.5 px-2 pointer-events-none opacity-30">
-        {Array.from({ length: 60 }).map((_, i) => (
-          <div
-            key={i}
-            className="waveform-bar flex-1 bg-gradient-to-t from-cyan-500/60 via-cyan-400/40 to-transparent rounded-t"
-            style={{ height: `${30 + Math.random() * 70}%` }}
-          />
-        ))}
+
+      {/* Waveform visualization - static pattern for consistent rendering */}
+      <div className="fixed inset-0 flex items-end justify-between gap-0.5 px-2 pointer-events-none opacity-30">
+        {Array.from({ length: 240 }).map((_, i) => {
+          // More complex deterministic height pattern with multiple sine/cosine waves
+          const height = 30 + 
+            Math.sin(i * 0.3) * 25 + 
+            Math.cos(i * 0.7) * 20 + 
+            Math.sin(i * 1.2) * 15 + 
+            Math.cos(i * 0.5) * 10;
+          // Add variation for animation pattern
+          const pattern = i % 4;
+          return (
+            <div
+              key={i}
+              className={`waveform-bar waveform-pattern-${pattern} flex-1 bg-gradient-to-t from-cyan-500/60 via-cyan-400/40 to-transparent rounded-t`}
+              style={{
+                height: `${Math.max(20, Math.min(100, height))}%`,
+                "--index": i.toString(),
+              } as React.CSSProperties & { "--index": string }}
+            />
+          );
+        })}
       </div>
-      
+
       <main className="text-center relative z-10">
         <div className="flex items-center justify-center gap-3 mb-6">
           <div className="h-3 w-3 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
@@ -32,7 +45,12 @@ export default function Home() {
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
             </svg>
             Open Music Studio
           </span>

@@ -1,18 +1,22 @@
-'use client';
+"use client";
 
-import { useChat } from '@ai-sdk/react';
-import { TextStreamChatTransport } from 'ai';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { validateToneCode, validateRawToneCode, extractStreamingCode } from '@/lib/audio/llmContract';
-import { getAudioRuntime, type PlayerState, type RuntimeEvent } from '@/lib/audio/runtime';
-import { useTransportState } from '@/lib/audio/useVisualization';
-import { TopBar } from '@/components/studio/TopBar';
-import { ChatPanel } from '@/components/studio/ChatPanel';
-import { CodePanel } from '@/components/studio/CodePanel';
-import { PlayerControls } from '@/components/studio/PlayerControls';
-import { ConsolePanel } from '@/components/studio/ConsolePanel';
-import { TimelineBar } from '@/components/studio/TimelineBar';
-import type { UIMessage } from '@ai-sdk/react';
+import { useChat } from "@ai-sdk/react";
+import { TextStreamChatTransport } from "ai";
+import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  validateToneCode,
+  validateRawToneCode,
+  extractStreamingCode,
+} from "@/lib/audio/llmContract";
+import { getAudioRuntime, type PlayerState, type RuntimeEvent } from "@/lib/audio/runtime";
+import { useTransportState } from "@/lib/audio/useVisualization";
+import { TopBar } from "@/components/studio/TopBar";
+import { ChatPanel } from "@/components/studio/ChatPanel";
+import { CodePanel } from "@/components/studio/CodePanel";
+import { PlayerControls } from "@/components/studio/PlayerControls";
+import { ConsolePanel } from "@/components/studio/ConsolePanel";
+import { TimelineBar } from "@/components/studio/TimelineBar";
+import type { UIMessage } from "@ai-sdk/react";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
@@ -261,41 +265,63 @@ const padPat = new Tone.Sequence((t, c) => {
 
 // Dangerous tokens to reject
 const DANGEROUS_TOKENS = [
-  'fetch',
-  'XMLHttpRequest',
-  'WebSocket',
-  'document',
-  'localStorage',
-  'sessionStorage',
-  'import',
-  'require',
-  'eval',
-  'Function'
+  "fetch",
+  "XMLHttpRequest",
+  "WebSocket",
+  "document",
+  "localStorage",
+  "sessionStorage",
+  "import",
+  "require",
+  "eval",
+  "Function",
 ];
-
-// Patterns that are allowed even if they contain blocked words
-const ALLOWED_PATTERNS: string[] = [];
 
 export default function StudioPage() {
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [playerState, setPlayerState] = useState<PlayerState>('idle');
-  const [audioLoaded, setAudioLoaded] = useState(true); // Tone.js is always available as a module
+  const [playerState, setPlayerState] = useState<PlayerState>("idle");
+  const audioLoaded = true; // Tone.js is always available as a module
   const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [liveMode, setLiveMode] = useState(true); // Live coding mode - auto-update on edit
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastProcessedMessageRef = useRef<string>('');
+  const lastProcessedMessageRef = useRef<string>("");
   const runtimeRef = useRef(getAudioRuntime());
   const liveUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastPlayedCodeRef = useRef<string>('');
+  const lastPlayedCodeRef = useRef<string>("");
 
-  const { messages, sendMessage, status: chatStatus } = useChat({
-    transport: new TextStreamChatTransport({ api: '/api/chat' }),
+  const {
+    messages,
+    sendMessage,
+    status: chatStatus,
+  } = useChat({
+    transport: new TextStreamChatTransport({ api: "/api/chat" }),
   });
 
-  const isLoading = chatStatus === 'submitted' || chatStatus === 'streaming';
+  const isLoading = chatStatus === "submitted" || chatStatus === "streaming";
+
+  // Validate code for dangerous tokens
+  const validateCode = useCallback(
+    (codeToValidate: string): boolean => {
+      for (const token of DANGEROUS_TOKENS) {
+        if (codeToValidate.includes(token)) {
+          setError(`Code contains dangerous token: ${token}`);
+          return false;
+        }
+      }
+
+      // Check for window usage - not allowed in user code
+      if (codeToValidate.includes("window")) {
+        setError("Code contains dangerous token: window");
+        return false;
+      }
+
+      return true;
+    },
+    [setError]
+  );
 
   // Subscribe to runtime state changes
   useEffect(() => {
@@ -310,7 +336,7 @@ export default function StudioPage() {
   // Live coding: auto-update when code changes while playing
   useEffect(() => {
     // Only trigger live updates when in live mode and currently playing
-    if (!liveMode || playerState !== 'playing') {
+    if (!liveMode || playerState !== "playing") {
       return;
     }
 
@@ -343,7 +369,7 @@ export default function StudioPage() {
       lastPlayedCodeRef.current = code;
       runtime.play(code, true).catch((err) => {
         // Silently handle errors during live coding to avoid disrupting flow
-        console.warn('Live update error:', err);
+        console.warn("Live update error:", err);
       });
     }, 150); // 150ms debounce - fast for responsiveness
 
@@ -352,58 +378,44 @@ export default function StudioPage() {
         clearTimeout(liveUpdateTimeoutRef.current);
       }
     };
-  }, [code, liveMode, playerState]);
+  }, [code, liveMode, playerState, validateCode]);
 
-  const validateCode = (code: string): boolean => {
-    for (const token of DANGEROUS_TOKENS) {
-      if (code.includes(token)) {
-        setError(`Code contains dangerous token: ${token}`);
-        return false;
+  const playCode = useCallback(
+    async (codeToPlay: string) => {
+      if (!audioLoaded) {
+        setError("Audio system not ready. Please wait.");
+        return;
       }
-    }
-    
-    // Check for window usage - not allowed in user code
-    if (code.includes('window')) {
-      setError('Code contains dangerous token: window');
-      return false;
-    }
-    
-    return true;
-  };
 
-  const playCode = useCallback(async (codeToPlay: string) => {
-    if (!audioLoaded) {
-      setError('Audio system not ready. Please wait.');
-      return;
-    }
+      if (!validateCode(codeToPlay)) {
+        return;
+      }
 
-    if (!validateCode(codeToPlay)) {
-      return;
-    }
+      // Validate raw Tone.js code before playing (code from editor, not LLM response)
+      const validation = validateRawToneCode(codeToPlay);
+      if (!validation.valid) {
+        setError(`Code validation failed: ${validation.errors.map((e) => e.message).join(", ")}`);
+        setValidationErrors(validation.errors.map((e) => e.message));
+        return;
+      }
 
-    // Validate raw Tone.js code before playing (code from editor, not LLM response)
-    const validation = validateRawToneCode(codeToPlay);
-    if (!validation.valid) {
-      setError(`Code validation failed: ${validation.errors.map(e => e.message).join(', ')}`);
-      setValidationErrors(validation.errors.map(e => e.message));
-      return;
-    }
-
-    try {
-      const runtime = runtimeRef.current;
-      lastPlayedCodeRef.current = codeToPlay; // Track what we're playing
-      await runtime.play(codeToPlay);
-      setError('');
-      setValidationErrors([]);
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to play: ${errorMsg}`);
-    }
-  }, [audioLoaded]);
+      try {
+        const runtime = runtimeRef.current;
+        lastPlayedCodeRef.current = codeToPlay; // Track what we're playing
+        await runtime.play(codeToPlay);
+        setError("");
+        setValidationErrors([]);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(`Failed to play: ${errorMsg}`);
+      }
+    },
+    [audioLoaded, validateCode]
+  );
 
   // Scroll to bottom of messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Extract code from assistant messages - LIVE during streaming
@@ -411,10 +423,10 @@ export default function StudioPage() {
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'assistant') {
+      if (lastMessage.role === "assistant") {
         // Collect all text parts
-        const textParts = lastMessage.parts.filter(part => part.type === 'text');
-        const fullText = textParts.map(part => part.text).join('\n');
+        const textParts = lastMessage.parts.filter((part) => part.type === "text");
+        const fullText = textParts.map((part) => part.text).join("\n");
 
         // Skip if already processed this exact text
         if (lastProcessedMessageRef.current === fullText) {
@@ -426,6 +438,8 @@ export default function StudioPage() {
 
         if (code) {
           // Update the code editor live as text streams in
+          // This is intentional - syncing external streaming data to state
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setCode(code);
 
           if (isComplete) {
@@ -437,11 +451,11 @@ export default function StudioPage() {
               setValidationErrors([]);
               // Auto-restart if playing
               const runtime = runtimeRef.current;
-              if (runtime.getState() === 'playing' && audioLoaded) {
+              if (runtime.getState() === "playing" && audioLoaded) {
                 playCode(code);
               }
             } else {
-              setValidationErrors(validation.errors.map(e => e.message));
+              setValidationErrors(validation.errors.map((e) => e.message));
             }
           }
           // While streaming (isComplete=false), just update the editor without validation
@@ -452,13 +466,13 @@ export default function StudioPage() {
 
   const stop = () => {
     if (!audioLoaded) {
-      setError('Audio system not ready.');
+      setError("Audio system not ready.");
       return;
     }
     try {
       const runtime = runtimeRef.current;
       runtime.stop();
-      setError('');
+      setError("");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       setError(`Failed to stop: ${errorMsg}`);
@@ -478,16 +492,19 @@ ${code}
 Request: ${inputValue}`;
 
     sendMessage({ text: messageWithContext });
-    setInputValue('');
+    setInputValue("");
   };
 
   return (
     <>
-      <div className="flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden" style={{ height: 'var(--vh)' }}>
+      <div
+        className="flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden"
+        style={{ height: "var(--vh)" }}
+      >
         {/* Animated background effect */}
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent opacity-50 pointer-events-none" />
         <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
-        
+
         {/* Top Bar */}
         <TopBar playerState={playerState} onLoadPreset={setCode} />
 
@@ -595,31 +612,31 @@ function MobileTabs({
   liveMode,
   onLiveModeChange,
 }: MobileTabsProps) {
-  const [activeTab, setActiveTab] = useState<'chat' | 'code'>('chat');
+  const [activeTab, setActiveTab] = useState<"chat" | "code">("chat");
   const [showSequencer, setShowSequencer] = useState(true);
-  const isPlaying = playerState === 'playing';
-  const canPlay = audioLoaded && playerState !== 'loading' && playerState !== 'error';
+  const isPlaying = playerState === "playing";
+  const canPlay = audioLoaded && playerState !== "loading" && playerState !== "error";
 
   return (
     <div className="flex flex-col h-full">
       {/* Tab Navigation */}
       <div className="flex border-b border-cyan-500/20 bg-slate-900/50">
         <button
-          onClick={() => setActiveTab('chat')}
+          onClick={() => setActiveTab("chat")}
           className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'chat'
-              ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
-              : 'text-slate-400 active:text-cyan-300'
+            activeTab === "chat"
+              ? "text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10"
+              : "text-slate-400 active:text-cyan-300"
           }`}
         >
           Chat
         </button>
         <button
-          onClick={() => setActiveTab('code')}
+          onClick={() => setActiveTab("code")}
           className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'code'
-              ? 'text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10'
-              : 'text-slate-400 active:text-cyan-300'
+            activeTab === "code"
+              ? "text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10"
+              : "text-slate-400 active:text-cyan-300"
           }`}
         >
           Code
@@ -628,7 +645,7 @@ function MobileTabs({
 
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'chat' && (
+        {activeTab === "chat" && (
           <ChatPanel
             messages={messages}
             inputValue={inputValue}
@@ -638,7 +655,7 @@ function MobileTabs({
           />
         )}
 
-        {activeTab === 'code' && (
+        {activeTab === "code" && (
           <div className="flex flex-col h-full">
             {/* Toggleable Sequencer */}
             {showSequencer && (
@@ -673,10 +690,21 @@ function MobileTabs({
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-bold text-sm bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 hover:from-cyan-500 hover:via-cyan-400 hover:to-cyan-500 disabled:from-slate-700 disabled:via-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 disabled:shadow-none border border-cyan-500/30 disabled:border-slate-600 relative overflow-hidden group backdrop-blur-sm"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
-              {playerState === 'loading' ? (
+              {playerState === "loading" ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
               ) : (
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -687,7 +715,7 @@ function MobileTabs({
                   )}
                 </svg>
               )}
-              {isPlaying ? 'Restart' : 'Play'}
+              {isPlaying ? "Restart" : "Play"}
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/30 to-cyan-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(6,182,212,0.1)_0%,_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -720,17 +748,21 @@ function MiniTimeline() {
   const totalBars = 32;
   const currentBar = (transport.bar - 1) % totalBars;
   const section = Math.floor(currentBar / 8);
-  const sectionLabels = ['A', 'B', 'C', 'D'];
+  const sectionLabels = ["A", "B", "C", "D"];
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${
-        transport.playing ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-slate-400'
-      }`}>
+      <div
+        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${
+          transport.playing ? "bg-cyan-500 text-white" : "bg-slate-700 text-slate-400"
+        }`}
+      >
         {sectionLabels[section]}
       </div>
       <div className="text-right">
-        <div className="text-xs font-mono text-white tabular-nums">{transport.bar}/{totalBars}</div>
+        <div className="text-xs font-mono text-white tabular-nums">
+          {transport.bar}/{totalBars}
+        </div>
         <div className="text-[10px] text-slate-400">{transport.bpm} BPM</div>
       </div>
     </div>
