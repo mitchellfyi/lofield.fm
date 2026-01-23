@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   validateToneCode,
   validateRawToneCode,
@@ -264,6 +264,11 @@ const padPat = new Tone.Sequence((t, c) => {
   ["G4", "D5"], null, null, null, ["G4", "B4", "D5"], null, null, null
 ], "2n").start(0);`;
 
+// Shared ref for model selection accessible from body function
+// This pattern is needed because TextStreamChatTransport.body is a function
+// called at request time, not render time
+const globalModelRef = { current: "gpt-4o-mini" };
+
 // Dangerous tokens to reject
 const DANGEROUS_TOKENS = [
   "fetch",
@@ -294,12 +299,27 @@ export default function StudioPage() {
   const liveUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPlayedCodeRef = useRef<string>("");
 
+  // Keep global ref in sync with state for body function
+  useEffect(() => {
+    globalModelRef.current = selectedModel;
+  }, [selectedModel]);
+
+  // Create transport with dynamic body that reads from global ref (called at request time)
+  const chatTransport = useMemo(
+    () =>
+      new TextStreamChatTransport({
+        api: "/api/chat",
+        body: () => ({ model: globalModelRef.current }),
+      }),
+    []
+  );
+
   const {
     messages,
     sendMessage,
     status: chatStatus,
   } = useChat({
-    transport: new TextStreamChatTransport({ api: "/api/chat" }),
+    transport: chatTransport,
   });
 
   const isLoading = chatStatus === "submitted" || chatStatus === "streaming";
@@ -493,7 +513,7 @@ ${code}
 
 Request: ${inputValue}`;
 
-    sendMessage({ text: messageWithContext, body: { model: selectedModel } });
+    sendMessage({ text: messageWithContext });
     setInputValue("");
   };
 
