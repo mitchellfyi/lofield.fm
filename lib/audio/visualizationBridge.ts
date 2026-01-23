@@ -9,6 +9,13 @@
 
 import * as Tone from 'tone';
 
+// Audio analysis data
+export interface AudioAnalysisData {
+  fft: Float32Array;        // Frequency data (dB values, typically -100 to 0)
+  waveform: Float32Array;   // Time domain data (-1 to 1)
+  rms: number;              // Root mean square (overall volume level 0-1)
+}
+
 export interface TransportState {
   position: string;      // "0:0:0" format (bar:beat:sixteenth)
   seconds: number;       // Absolute time in seconds
@@ -42,6 +49,12 @@ const DEFAULT_TRANSPORT_STATE: TransportState = {
   progress: 0,
 };
 
+const DEFAULT_AUDIO_ANALYSIS: AudioAnalysisData = {
+  fft: new Float32Array(64),
+  waveform: new Float32Array(256),
+  rms: 0,
+};
+
 class VisualizationBridge {
   private static instance: VisualizationBridge | null = null;
 
@@ -51,6 +64,12 @@ class VisualizationBridge {
   private activeLines: Set<number> = new Set();
   private maxTriggerEvents = 100;
   private triggerDecayMs = 150; // Lines stay highlighted for 150ms
+
+  // Audio analysis
+  private fftAnalyser: Tone.Analyser | null = null;
+  private waveformAnalyser: Tone.Analyser | null = null;
+  private audioAnalysis: AudioAnalysisData = { ...DEFAULT_AUDIO_ANALYSIS };
+  private analysisListeners = new Set<() => void>();
 
   // RAF loop
   private rafId: number | null = null;
@@ -63,6 +82,25 @@ class VisualizationBridge {
 
   private constructor() {
     this.exposeGlobalTrigger();
+    this.initAnalysers();
+  }
+
+  /**
+   * Initialize audio analysers connected to master output
+   */
+  private initAnalysers(): void {
+    if (typeof window === 'undefined') return;
+
+    // Create FFT analyser for frequency data (64 bins for performance)
+    this.fftAnalyser = new Tone.Analyser('fft', 64);
+    this.fftAnalyser.smoothing = 0.8;
+
+    // Create waveform analyser for time domain data
+    this.waveformAnalyser = new Tone.Analyser('waveform', 256);
+
+    // Connect to master output
+    Tone.getDestination().connect(this.fftAnalyser);
+    Tone.getDestination().connect(this.waveformAnalyser);
   }
 
   static getInstance(): VisualizationBridge {
@@ -116,7 +154,7 @@ class VisualizationBridge {
   }
 
   /**
-   * RAF tick - polls transport state and prunes old triggers
+   * RAF tick - polls transport state, audio analysis, and prunes old triggers
    */
   private tick = (): void => {
     if (!this.running) return;
@@ -140,12 +178,35 @@ class VisualizationBridge {
         this.notifyTransportListeners();
       }
 
+      // Update audio analysis data
+      this.updateAudioAnalysis();
+
       // Prune old triggers and update active lines
       this.pruneOldTriggers(now);
     }
 
     this.rafId = requestAnimationFrame(this.tick);
   };
+
+  /**
+   * Read current audio analysis data from analysers
+   */
+  private updateAudioAnalysis(): void {
+    if (!this.fftAnalyser || !this.waveformAnalyser) return;
+
+    const fft = this.fftAnalyser.getValue() as Float32Array;
+    const waveform = this.waveformAnalyser.getValue() as Float32Array;
+
+    // Calculate RMS (root mean square) for overall volume level
+    let sumSquares = 0;
+    for (let i = 0; i < waveform.length; i++) {
+      sumSquares += waveform[i] * waveform[i];
+    }
+    const rms = Math.sqrt(sumSquares / waveform.length);
+
+    this.audioAnalysis = { fft, waveform, rms };
+    this.notifyAnalysisListeners();
+  }
 
   /**
    * Read current transport state from Tone.js
@@ -241,6 +302,10 @@ class VisualizationBridge {
     this.triggerListeners.forEach(listener => listener());
   }
 
+  private notifyAnalysisListeners(): void {
+    this.analysisListeners.forEach(listener => listener());
+  }
+
   /**
    * Subscribe to transport state changes
    */
@@ -277,6 +342,21 @@ class VisualizationBridge {
   getTriggerEvents(): TriggerEvent[] {
     return [...this.triggerEvents];
   }
+
+  /**
+   * Subscribe to audio analysis changes
+   */
+  subscribeAnalysis = (callback: () => void): (() => void) => {
+    this.analysisListeners.add(callback);
+    return () => this.analysisListeners.delete(callback);
+  };
+
+  /**
+   * Get current audio analysis snapshot
+   */
+  getAnalysisSnapshot = (): AudioAnalysisData => {
+    return this.audioAnalysis;
+  };
 }
 
 // Export singleton getter

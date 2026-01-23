@@ -11,6 +11,7 @@ import {
   getVisualizationBridge,
   TransportState,
   TriggerEvent,
+  AudioAnalysisData,
 } from './visualizationBridge';
 
 const DEFAULT_TRANSPORT_STATE: TransportState = {
@@ -24,6 +25,12 @@ const DEFAULT_TRANSPORT_STATE: TransportState = {
 };
 
 const EMPTY_SET = new Set<number>();
+
+const DEFAULT_AUDIO_ANALYSIS: AudioAnalysisData = {
+  fft: new Float32Array(64),
+  waveform: new Float32Array(256),
+  rms: 0,
+};
 
 /**
  * Hook for transport state (position, BPM, playing)
@@ -107,4 +114,19 @@ export function useVisualizationBridge() {
   }, []);
 
   return { start, stop, reset };
+}
+
+/**
+ * Hook for audio analysis data (FFT, waveform, RMS)
+ * Updates at 60fps when audio is playing
+ */
+export function useAudioAnalysis(): AudioAnalysisData {
+  const bridge = getVisualizationBridge();
+
+  return useSyncExternalStore(
+    bridge.subscribeAnalysis,
+    bridge.getAnalysisSnapshot,
+    // Server snapshot
+    () => DEFAULT_AUDIO_ANALYSIS
+  );
 }

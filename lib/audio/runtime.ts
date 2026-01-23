@@ -246,13 +246,16 @@ class AudioRuntime {
       // Ensure audio context is running
       await Tone.getContext().resume();
 
-      // Reset transport position to 0 right before starting
-      // This ensures sequences starting at position 0 will play from the beginning
-      Tone.getTransport().position = 0;
+      // Configure transport for 32-bar loop (4 sections x 8 bars)
+      const transport = Tone.getTransport();
+      transport.position = 0;
+      transport.loop = true;
+      transport.loopStart = 0;
+      transport.loopEnd = '32:0:0'; // 32 bars
 
       // Start transport immediately - no offset needed since we've waited for everything
-      if (Tone.getTransport().state !== 'started') {
-        Tone.getTransport().start();
+      if (transport.state !== 'started') {
+        transport.start();
       }
 
       this.addEvent({

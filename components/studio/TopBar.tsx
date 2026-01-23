@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { PlayerState } from '@/lib/audio/runtime';
 import { PRESETS, type Preset } from '@/lib/audio/presets';
+import { WaveformVisualizer } from './WaveformVisualizer';
 
 interface TopBarProps {
   playerState: PlayerState;
@@ -51,8 +52,13 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
 
   return (
     <>
-      <div className="border-b border-cyan-950/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-sm relative z-30">
-        <div className="flex items-center justify-between px-6 py-4">
+      <div className="border-b border-cyan-950/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 backdrop-blur-sm relative z-30 overflow-hidden">
+        {/* Full-width background waveform visualizer */}
+        <div className="absolute inset-0 z-0">
+          <WaveformVisualizer className="w-full h-full" fillContainer />
+        </div>
+
+        <div className="flex items-center justify-between px-6 py-4 relative z-10">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
@@ -60,7 +66,7 @@ export function TopBar({ playerState, onLoadPreset }: TopBarProps) {
                 LoField Music Lab
               </h1>
             </div>
-            
+
             <div className={`px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-sm transition-all duration-300 ${getStateColor()}`}>
               {getStateLabel()}
             </div>

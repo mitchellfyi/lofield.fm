@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { RuntimeEvent } from '@/lib/audio/runtime';
 
 interface ConsolePanelProps {
@@ -8,6 +9,8 @@ interface ConsolePanelProps {
 }
 
 export function ConsolePanel({ events, error }: ConsolePanelProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   if (events.length === 0 && !error) {
     return null;
   }
@@ -46,40 +49,53 @@ export function ConsolePanel({ events, error }: ConsolePanelProps) {
       {/* Console Log */}
       {events.length > 0 && (
         <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm overflow-hidden">
-          <div className="px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50 hover:bg-slate-900/70 transition-colors flex items-center justify-between gap-2"
+          >
             <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
               Event Log ({events.slice(-10).length} recent)
             </div>
-          </div>
-          <div className="p-3 space-y-1.5 max-h-40 overflow-y-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
-            {events.slice(-10).map((event, idx) => {
-              const time = new Date(event.timestamp).toLocaleTimeString('en-US', {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              });
-              const icon = getEventIcon(event.type);
-              const color = getEventColor(event.type);
+            <svg
+              className={`w-3 h-3 text-cyan-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {isExpanded && (
+            <div className="p-3 space-y-1.5 max-h-40 overflow-y-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
+              {events.slice(-10).map((event, idx) => {
+                const time = new Date(event.timestamp).toLocaleTimeString('en-US', {
+                  hour12: false,
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+                const icon = getEventIcon(event.type);
+                const color = getEventColor(event.type);
 
-              return (
-                <div key={idx} className="text-xs font-mono leading-relaxed">
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-600 text-[10px] mt-0.5">[{time}]</span>
-                    <span className="text-xs mt-0.5">{icon}</span>
-                    <span className={`flex-1 ${color}`}>
-                      {event.message}
-                    </span>
-                  </div>
-                  {event.error && (
-                    <div className="ml-20 text-rose-300/80 text-[10px] mt-0.5 pl-2 border-l-2 border-rose-500/30">
-                      {event.error}
+                return (
+                  <div key={idx} className="text-xs font-mono leading-relaxed">
+                    <div className="flex items-start gap-2">
+                      <span className="text-slate-600 text-[10px] mt-0.5">[{time}]</span>
+                      <span className="text-xs mt-0.5">{icon}</span>
+                      <span className={`flex-1 ${color}`}>
+                        {event.message}
+                      </span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    {event.error && (
+                      <div className="ml-20 text-rose-300/80 text-[10px] mt-0.5 pl-2 border-l-2 border-rose-500/30">
+                        {event.error}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

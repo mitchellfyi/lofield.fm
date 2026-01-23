@@ -127,8 +127,13 @@ export function validateToneCode(text: string): ValidationResult {
 
 /**
  * Build a retry prompt for validation failures
+ * @deprecated Use buildRetryPrompt from @/lib/prompts/loader instead (server-side only)
+ * 
+ * This client-safe version is kept for backward compatibility but should not be used
+ * in new code. The server-side version in @/lib/prompts/loader loads from markdown files.
  */
 export function buildRetryPrompt(validationErrors: ValidationError[]): string {
+  // Client-safe inline version (matches the template in prompts/retry-prompt.md)
   const errorMessages = validationErrors.map(e => `- ${e.message}`).join('\n');
   
   return `Your previous response had validation errors:
