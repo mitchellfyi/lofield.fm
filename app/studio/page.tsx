@@ -16,6 +16,7 @@ import { CodePanel } from "@/components/studio/CodePanel";
 import { PlayerControls } from "@/components/studio/PlayerControls";
 import { ConsolePanel } from "@/components/studio/ConsolePanel";
 import { TimelineBar } from "@/components/studio/TimelineBar";
+import { useModelSelection } from "@/lib/hooks/useModelSelection";
 import type { UIMessage } from "@ai-sdk/react";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
@@ -286,6 +287,7 @@ export default function StudioPage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [liveMode, setLiveMode] = useState(true); // Live coding mode - auto-update on edit
+  const [selectedModel, setSelectedModel] = useModelSelection();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>("");
   const runtimeRef = useRef(getAudioRuntime());
@@ -491,7 +493,7 @@ ${code}
 
 Request: ${inputValue}`;
 
-    sendMessage({ text: messageWithContext });
+    sendMessage({ text: messageWithContext, body: { model: selectedModel } });
     setInputValue("");
   };
 
@@ -506,7 +508,12 @@ Request: ${inputValue}`;
         <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
 
         {/* Top Bar */}
-        <TopBar playerState={playerState} onLoadPreset={setCode} />
+        <TopBar
+          playerState={playerState}
+          onLoadPreset={setCode}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+        />
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative z-10">
