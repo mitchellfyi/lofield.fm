@@ -6,19 +6,18 @@
 
 | Status   | Count |
 | -------- | ----- |
-| 📋 Todo  | 17    |
+| 📋 Todo  | 16    |
 | 🔄 Doing | 0     |
-| ✅ Done  | 0     |
+| ✅ Done  | 1     |
 
 ---
 
 ## 📋 Todo (16)
 
-### Priority 002 - High (5)
+### Priority 002 - High (4)
 
 | ID        | Task                                                                                                               | Blocked By |
 | --------- | ------------------------------------------------------------------------------------------------------------------ | ---------- |
-| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/todo/002-001-quality-ci-setup.md)                   | -          |
 | `002-002` | [Add AI Model Selection with gpt-4o-mini Default](.claude/tasks/todo/002-002-ai-model-selection.md)                | -          |
 | `002-003` | [Chat Prompt Hardening with Schema Validation and Retry Loop](.claude/tasks/todo/002-003-chat-prompt-hardening.md) | -          |
 | `002-004` | [Implement Supabase Backend and Authentication](.claude/tasks/todo/002-004-supabase-auth-setup.md)                 | -          |
@@ -54,9 +53,11 @@ _No tasks in progress._
 
 ---
 
-## ✅ Done (0)
+## ✅ Done (1)
 
-_No completed tasks yet._
+| ID        | Task                                                                                            | Completed            |
+| --------- | ----------------------------------------------------------------------------------------------- | -------------------- |
+| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/done/002-001-quality-ci-setup.md) | 2026-01-23 20:12     |
 
 ---
 
@@ -81,18 +82,17 @@ _No completed tasks yet._
 
 Tasks ready to start (no blockers):
 
-1. **002-001** - Quality CI Setup ⭐ _Recommended first_
-2. **002-002** - AI Model Selection
-3. **002-003** - Chat Prompt Hardening
-4. **002-004** - Supabase Auth Setup ⭐ _Unlocks many tasks_
-5. **003-003** - Export Options
-6. **003-005** - Preset Library
-7. **003-006** - Tweaks UX
-8. **003-007** - Multi-Track Support
-9. **003-008** - Undo/Redo
-10. **003-010** - Observability
-11. **004-001** - Mobile Usability
+1. **002-002** - AI Model Selection
+2. **002-003** - Chat Prompt Hardening
+3. **002-004** - Supabase Auth Setup ⭐ _Unlocks many tasks_
+4. **003-003** - Export Options
+5. **003-005** - Preset Library
+6. **003-006** - Tweaks UX
+7. **003-007** - Multi-Track Support
+8. **003-008** - Undo/Redo
+9. **003-010** - Observability
+10. **004-001** - Mobile Usability
 
 ---
 
-_Last updated: 2026-01-23_
+_Last updated: 2026-01-23 20:14_
