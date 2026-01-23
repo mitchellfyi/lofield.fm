@@ -6,7 +6,7 @@
   
   /* Mobile-safe viewport height - use dvh (dynamic viewport height) when available */
   --vh: 100vh;
-  @supports (height: 100dvh) {
+  @supports (height: 1dvh) {
     --vh: 100dvh;
   }
 }
@@ -33,7 +33,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   height: 100%;
   overflow: hidden;
-  position: fixed;
   width: 100%;
 }
 
