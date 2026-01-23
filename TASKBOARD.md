@@ -6,24 +6,21 @@
 
 | Status   | Count |
 | -------- | ----- |
-| 📋 Todo  | 16    |
-| 🔄 Doing | 0     |
-| ✅ Done  | 1     |
+| Todo     | 16    |
+| Doing    | 0     |
+| Done     | 4     |
 
 ---
 
-## 📋 Todo (16)
+## Todo (16)
 
-### Priority 002 - High (4)
+### Priority 002 - High (1)
 
-| ID        | Task                                                                                                               | Blocked By |
-| --------- | ------------------------------------------------------------------------------------------------------------------ | ---------- |
-| `002-002` | [Add AI Model Selection with gpt-4o-mini Default](.claude/tasks/todo/002-002-ai-model-selection.md)                | -          |
-| `002-003` | [Chat Prompt Hardening with Schema Validation and Retry Loop](.claude/tasks/todo/002-003-chat-prompt-hardening.md) | -          |
-| `002-004` | [Implement Supabase Backend and Authentication](.claude/tasks/todo/002-004-supabase-auth-setup.md)                 | -          |
-| `002-005` | [User API Key Management with Required Modal](.claude/tasks/todo/002-005-api-key-management.md)                    | `002-004`  |
+| ID        | Task                                                                                            | Blocked By |
+| --------- | ----------------------------------------------------------------------------------------------- | ---------- |
+| `002-005` | [User API Key Management with Required Modal](.claude/tasks/todo/002-005-api-key-management.md) | `002-004`  |
 
-### Priority 003 - Medium (11)
+### Priority 003 - Medium (13)
 
 | ID        | Task                                                                                                     | Blocked By           |
 | --------- | -------------------------------------------------------------------------------------------------------- | -------------------- |
@@ -38,42 +35,48 @@
 | `003-009` | [Session Cost Controls - Rate Limits and Quotas](.claude/tasks/todo/003-009-session-cost-controls.md)    | `002-004`            |
 | `003-010` | [Observability - Error Tracking and Event Logging](.claude/tasks/todo/003-010-observability.md)          | -                    |
 | `003-011` | [Record Mode - Capture Live Performance Changes](.claude/tasks/todo/003-011-record-mode.md)              | `003-001`, `003-006` |
+| `003-012` | [Install Vercel Analytics](.claude/tasks/todo/003-012-install-vercel-analytics.md)                       | -                    |
 
-### Priority 004 - Low (1)
+### Priority 004 - Low (3)
 
-| ID        | Task                                                                    | Blocked By |
-| --------- | ----------------------------------------------------------------------- | ---------- |
-| `004-001` | [Mobile Usability Pass](.claude/tasks/todo/004-001-mobile-usability.md) | -          |
+| ID        | Task                                                                                       | Blocked By |
+| --------- | ------------------------------------------------------------------------------------------ | ---------- |
+| `004-001` | [Mobile Usability Pass](.claude/tasks/todo/004-001-mobile-usability.md)                    | -          |
+| `004-001` | [Model Cost Display](.claude/tasks/todo/004-001-model-cost-display.md)                     | -          |
+| `004-002` | [Model-Specific Prompts](.claude/tasks/todo/004-002-model-specific-prompts.md)             | -          |
 
 ---
 
-## 🔄 Doing (0)
+## Doing (0)
 
 _No tasks in progress._
 
 ---
 
-## ✅ Done (1)
+## Done (4)
 
-| ID        | Task                                                                                             | Completed        |
-| --------- | ------------------------------------------------------------------------------------------------ | ---------------- |
-| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/done/002-001-quality-ci-setup.md) | 2026-01-23 20:12 |
+| ID        | Task                                                                                                               | Completed        |
+| --------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/done/002-001-quality-ci-setup.md)                   | 2026-01-23 20:12 |
+| `002-002` | [Add AI Model Selection with gpt-4o-mini Default](.claude/tasks/done/002-002-ai-model-selection.md)                | 2026-01-23 20:52 |
+| `002-003` | [Chat Prompt Hardening with Schema Validation and Retry Loop](.claude/tasks/done/002-003-chat-prompt-hardening.md) | 2026-01-23 21:12 |
+| `002-004` | [Implement Supabase Backend and Authentication](.claude/tasks/done/002-004-supabase-auth-setup.md)                 | 2026-01-23 21:20 |
 
 ---
 
 ## Dependency Graph
 
 ```
-002-004 (Supabase Auth)
-├── 002-005 (API Key Management)
-├── 003-001 (Save Tracks)
+002-004 (Supabase Auth) [DONE]
+├── 002-005 (API Key Management) [UNBLOCKED]
+├── 003-001 (Save Tracks) [UNBLOCKED]
 │   ├── 003-002 (Track Revisions)
 │   ├── 003-004 (Shareable Links)
-│   └── 003-011 (Record Mode) ← also needs 003-006
-└── 003-009 (Cost Controls)
+│   └── 003-011 (Record Mode) <- also needs 003-006
+└── 003-009 (Cost Controls) [UNBLOCKED]
 
 003-006 (Tweaks UX)
-└── 003-011 (Record Mode) ← also needs 003-001
+└── 003-011 (Record Mode) <- also needs 003-001
 ```
 
 ---
@@ -82,17 +85,20 @@ _No tasks in progress._
 
 Tasks ready to start (no blockers):
 
-1. **002-002** - AI Model Selection
-2. **002-003** - Chat Prompt Hardening
-3. **002-004** - Supabase Auth Setup ⭐ _Unlocks many tasks_
-4. **003-003** - Export Options
-5. **003-005** - Preset Library
-6. **003-006** - Tweaks UX
-7. **003-007** - Multi-Track Support
-8. **003-008** - Undo/Redo
+1. **002-005** - API Key Management (unlocked by 002-004)
+2. **003-001** - Save Tracks (unlocked by 002-004)
+3. **003-003** - Export Options
+4. **003-005** - Preset Library
+5. **003-006** - Tweaks UX
+6. **003-007** - Multi-Track Support
+7. **003-008** - Undo/Redo
+8. **003-009** - Cost Controls (unlocked by 002-004)
 9. **003-010** - Observability
-10. **004-001** - Mobile Usability
+10. **003-012** - Install Vercel Analytics
+11. **004-001** - Mobile Usability
+12. **004-001** - Model Cost Display
+13. **004-002** - Model-Specific Prompts
 
 ---
 
-_Last updated: 2026-01-23 20:14_
+_Last updated: 2026-01-23 21:20_
