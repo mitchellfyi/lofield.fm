@@ -442,6 +442,7 @@ export default function StudioPage() {
 
   // Extract code from assistant messages - LIVE during streaming
   // Updates the code editor in real-time as the AI generates code
+  // Falls back to last working code if validation fails after server retries
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -456,13 +457,13 @@ export default function StudioPage() {
         }
 
         // Extract code (handles both complete and streaming code blocks)
-        const { code, isComplete } = extractStreamingCode(fullText);
+        const { code: extractedCode, isComplete } = extractStreamingCode(fullText);
 
-        if (code) {
+        if (extractedCode) {
           // Update the code editor live as text streams in
           // This is intentional - syncing external streaming data to state
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setCode(code);
+          setCode(extractedCode);
 
           if (isComplete) {
             // Code block is complete - do final validation and auto-restart if playing
@@ -474,10 +475,23 @@ export default function StudioPage() {
               // Auto-restart if playing
               const runtime = runtimeRef.current;
               if (runtime.getState() === "playing" && audioLoaded) {
-                playCode(code);
+                playCode(extractedCode);
               }
             } else {
-              setValidationErrors(validation.errors.map((e) => e.message));
+              // Validation failed after server-side retries
+              // Fall back to last working code if available
+              const errorMsgs = validation.errors.map((e) => e.message);
+              setValidationErrors(errorMsgs);
+
+              if (lastPlayedCodeRef.current) {
+                // Revert to last working code in editor
+                // This is intentional - recovering from failed AI generation
+                 
+                setCode(lastPlayedCodeRef.current);
+                setError("Code generation failed. Reverted to last working version.");
+              } else {
+                setError(`Code validation failed: ${errorMsgs.join(", ")}`);
+              }
             }
           }
           // While streaming (isComplete=false), just update the editor without validation
