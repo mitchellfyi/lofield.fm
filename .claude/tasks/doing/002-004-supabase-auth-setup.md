@@ -12,8 +12,8 @@
 | Completed   |                                                        |
 | Blocked By  |                                                        |
 | Blocks      | `002-005-api-key-management`, `003-001-save-tracks-db` |
-| Assigned To |                                                        |
-| Assigned At |                                                        |
+| Assigned To | `worker-1` |
+| Assigned At | `2026-01-23 21:01` |
 
 ---
 
