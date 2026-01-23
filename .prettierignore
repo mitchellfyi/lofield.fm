@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Generated files
+*.min.js
+*.min.css
+package-lock.json
+
+# Type definitions
+next-env.d.ts
+
+# Coverage
+coverage/
+
+# Playwright
+playwright-report/
+test-results/
