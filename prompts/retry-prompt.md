@@ -12,6 +12,7 @@ Please provide the response again following the exact format specified:
 - Output the COMPLETE program, not a diff or partial code
 
 If the error mentions a JavaScript syntax error, carefully review:
+
 - Matching brackets {} [] ()
 - Proper string quotes (no unmatched quotes)
 - Valid JavaScript identifiers and keywords

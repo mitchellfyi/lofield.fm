@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field       | Value                           |
-| ----------- | ------------------------------- |
-| ID          | `004-002-model-specific-prompts`|
-| Status      | `todo`                          |
-| Priority    | `004` Low                       |
-| Created     | `2026-01-23 20:40`              |
-| Started     |                                 |
-| Completed   |                                 |
-| Blocked By  |                                 |
-| Blocks      |                                 |
-| Assigned To |                                 |
-| Assigned At |                                 |
+| Field       | Value                            |
+| ----------- | -------------------------------- |
+| ID          | `004-002-model-specific-prompts` |
+| Status      | `todo`                           |
+| Priority    | `004` Low                        |
+| Created     | `2026-01-23 20:40`               |
+| Started     |                                  |
+| Completed   |                                  |
+| Blocked By  |                                  |
+| Blocks      |                                  |
+| Assigned To |                                  |
+| Assigned At |                                  |
 
 ---
 
@@ -22,6 +22,7 @@
 This is a follow-up improvement from task 002-002-ai-model-selection.
 
 Different models may benefit from different system prompts or prompt variations. For example:
+
 - GPT-4o may handle more complex instructions
 - GPT-4o-mini might need simpler, more direct prompts
 - Some models may have different context window sizes to consider
