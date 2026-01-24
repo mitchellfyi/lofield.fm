@@ -732,6 +732,7 @@ Request: ${inputValue}`;
           onOpenTracks={() => setShowTrackBrowser(true)}
           onOpenHistory={currentTrackId ? () => setShowRevisionHistory(true) : undefined}
           hasRevisions={revisions.length > 0}
+          hasUnsavedChanges={hasUnsavedChanges}
         />
 
         {/* Main Content */}
