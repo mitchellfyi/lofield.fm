@@ -26,8 +26,11 @@ import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
 import { TrackBrowser } from "@/components/studio/TrackBrowser";
 import { RevisionHistory } from "@/components/studio/RevisionHistory";
 import { SaveButton } from "@/components/studio/SaveButton";
+import { ExportButton } from "@/components/studio/ExportButton";
+import { Toast } from "@/components/studio/Toast";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
+import type { ToastState } from "@/lib/export/types";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
@@ -320,6 +323,10 @@ export default function StudioPage() {
   const lastSavedCodeRef = useRef<string>("");
   const [showRevisionHistory, setShowRevisionHistory] = useState(false);
 
+  // Export state
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [toast, setToast] = useState<ToastState>({ visible: false, message: "", type: "info" });
+
   // Project and track hooks
   const { projects, createProject } = useProjects();
   const { createTrack, updateTrack } = useTracks(selectedProjectId);
@@ -585,6 +592,15 @@ Request: ${inputValue}`;
     await refreshApiKey();
   };
 
+  // Toast helper
+  const showToast = useCallback((message: string, type: ToastState["type"]) => {
+    setToast({ visible: true, message, type });
+  }, []);
+
+  const dismissToast = useCallback(() => {
+    setToast(prev => ({ ...prev, visible: false }));
+  }, []);
+
   // Track unsaved changes when code differs from last saved
   useEffect(() => {
     if (currentTrackId && code !== lastSavedCodeRef.current) {
@@ -768,6 +784,14 @@ Request: ${inputValue}`;
                   audioLoaded={audioLoaded}
                   onPlay={() => playCode(code)}
                   onStop={stop}
+                  exportButton={
+                    <ExportButton
+                      code={code}
+                      trackName={currentTrackName ?? undefined}
+                      onExportAudio={() => setShowExportModal(true)}
+                      onToast={showToast}
+                    />
+                  }
                 />
 
                 <ConsolePanel events={runtimeEvents} error={error} />
@@ -869,6 +893,14 @@ Request: ${inputValue}`;
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onDismiss={dismissToast}
+      />
     </>
   );
 }
