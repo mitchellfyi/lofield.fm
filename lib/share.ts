@@ -44,7 +44,8 @@ async function createServiceClient() {
 export async function getSharedTrack(token: string): Promise<PublicTrackData | null> {
   const supabase = await createServiceClient();
 
-  const { data, error } = await supabase
+  // First get the track with its project's user_id
+  const { data: trackData, error: trackError } = await supabase
     .from("tracks")
     .select(
       `
@@ -53,38 +54,44 @@ export async function getSharedTrack(token: string): Promise<PublicTrackData | n
       current_code,
       created_at,
       privacy,
-      project:projects!inner(
-        user_id,
-        profile:profiles!user_id(display_name)
-      )
+      project:projects!inner(user_id)
     `
     )
     .eq("share_token", token)
     .in("privacy", ["public", "unlisted"])
     .single();
 
-  if (error) {
-    if (error.code === "PGRST116") {
+  if (trackError) {
+    if (trackError.code === "PGRST116") {
       return null; // Not found
     }
-    // Log error but don't expose to caller
-    console.error("Failed to fetch shared track:", error.message);
+    console.error("Failed to fetch shared track:", trackError.message);
     return null;
   }
 
-  if (!data) {
+  if (!trackData) {
     return null;
   }
 
-  // Extract author name from nested profile
-  const authorName = data.project?.profile?.display_name ?? null;
+  // Get the author's display name from profiles
+  let authorName: string | null = null;
+  const projectData = trackData.project as unknown as { user_id: string } | null;
+  if (projectData?.user_id) {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", projectData.user_id)
+      .single();
+
+    authorName = profileData?.display_name ?? null;
+  }
 
   return {
-    id: data.id,
-    name: data.name,
-    current_code: data.current_code,
-    created_at: data.created_at,
-    privacy: data.privacy as PrivacyLevel,
+    id: trackData.id,
+    name: trackData.name,
+    current_code: trackData.current_code,
+    created_at: trackData.created_at,
+    privacy: trackData.privacy as PrivacyLevel,
     author_name: authorName,
   };
 }
