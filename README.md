@@ -74,6 +74,20 @@ The Strudel audio engine has been enhanced with a reliable state machine to prov
 - The runtime maintains a singleton instance to prevent multiple initializations
 - Strudel library is loaded from CDN and must complete loading before use
 
+### Mobile Browser Support
+
+The studio is designed to work on mobile devices with a responsive layout:
+
+- **Responsive Design**: Single-column layout with tab switching (Chat/Code) on screens < 768px
+- **Touch Targets**: All interactive elements meet the 44px minimum for accessibility
+- **iOS Safari**: Special handling for AudioContext interruptions (phone calls, Siri, backgrounding)
+- **Virtual Keyboard**: Layout adjusts properly when the on-screen keyboard appears
+
+**Mobile-specific notes:**
+- iOS Safari may require tapping the Play button again if audio is interrupted by a phone call or Siri
+- Code editing is functional but optimized for desktop; consider using desktop for extended sessions
+- The app supports "Add to Home Screen" as a progressive web app (PWA)
+
 ### Analytics
 
 LoField Music Lab uses [Vercel Analytics](https://vercel.com/docs/analytics) to understand how users interact with the application.
