@@ -22,6 +22,7 @@ import { useApiKey } from "@/lib/hooks/useApiKey";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useTracks, useAutoSave } from "@/lib/hooks/useTracks";
 import { useRevisions } from "@/lib/hooks/useRevisions";
+import { useHistory } from "@/lib/hooks/useHistory";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
 import { TrackBrowser } from "@/components/studio/TrackBrowser";
 import { RevisionHistory } from "@/components/studio/RevisionHistory";
@@ -291,6 +292,29 @@ const padPat = new Tone.Sequence((t, c) => {
 // called at request time, not render time
 const globalModelRef = { current: "gpt-4o-mini" };
 
+/**
+ * Snapshot of editor state for undo/redo history.
+ * Captures everything needed to restore the composition state.
+ */
+interface HistorySnapshot {
+  code: string;
+  layers: AudioLayer[];
+  tweaks: TweaksConfig;
+  selectedLayerId: string | null;
+}
+
+/**
+ * Create the initial history snapshot.
+ */
+function createInitialSnapshot(): HistorySnapshot {
+  return {
+    code: DEFAULT_CODE,
+    layers: [{ ...DEFAULT_LAYERS[0], code: DEFAULT_CODE }],
+    tweaks: DEFAULT_TWEAKS,
+    selectedLayerId: DEFAULT_LAYERS[0]?.id || null,
+  };
+}
+
 // Dangerous tokens to reject
 const DANGEROUS_TOKENS = [
   "fetch",
@@ -347,6 +371,21 @@ export default function StudioPage() {
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(
     () => DEFAULT_LAYERS[0]?.id || null
   );
+
+  // Undo/Redo history for the entire editor state
+  const {
+    state: historyState,
+    push: pushHistory,
+    pushDebounced: pushHistoryDebounced,
+    undo: historyUndo,
+    redo: historyRedo,
+    canUndo,
+    canRedo,
+    reset: resetHistory,
+  } = useHistory<HistorySnapshot>(createInitialSnapshot());
+
+  // Track if we're currently restoring from history to avoid re-pushing
+  const isRestoringFromHistoryRef = useRef(false);
 
   // Project and track hooks
   const { projects, createProject } = useProjects();
@@ -639,9 +678,87 @@ Request: ${inputValue}`;
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  /**
+   * Create a snapshot of the current state for history.
+   */
+  const createSnapshot = useCallback((): HistorySnapshot => {
+    return {
+      code,
+      layers,
+      tweaks,
+      selectedLayerId,
+    };
+  }, [code, layers, tweaks, selectedLayerId]);
+
+  /**
+   * Restore state from a history snapshot.
+   */
+  const restoreSnapshot = useCallback(
+    (snapshot: HistorySnapshot) => {
+      isRestoringFromHistoryRef.current = true;
+      setCode(snapshot.code);
+      setLayers(snapshot.layers);
+      setTweaks(snapshot.tweaks);
+      setSelectedLayerId(snapshot.selectedLayerId);
+
+      // If playing, update playback with restored code
+      if (playerState === "playing") {
+        const combinedCode = combineLayers(snapshot.layers);
+        const runtime = runtimeRef.current;
+        lastPlayedCodeRef.current = combinedCode;
+        runtime.play(combinedCode, true).catch((err) => {
+          console.warn("Undo/redo playback error:", err);
+        });
+      }
+
+      // Reset the flag after state updates are applied
+      requestAnimationFrame(() => {
+        isRestoringFromHistoryRef.current = false;
+      });
+    },
+    [playerState]
+  );
+
+  /**
+   * Handle undo - restore previous state from history.
+   */
+  const handleUndo = useCallback(() => {
+    if (!canUndo) return;
+    historyUndo();
+  }, [canUndo, historyUndo]);
+
+  /**
+   * Handle redo - restore next state from history.
+   */
+  const handleRedo = useCallback(() => {
+    if (!canRedo) return;
+    historyRedo();
+  }, [canRedo, historyRedo]);
+
+  // Sync component state when history state changes (from undo/redo)
+  const prevHistoryStateRef = useRef<HistorySnapshot | null>(null);
+  useEffect(() => {
+    // Skip initial render and skip if we just pushed (to avoid infinite loop)
+    if (prevHistoryStateRef.current === null) {
+      prevHistoryStateRef.current = historyState;
+      return;
+    }
+
+    // Only restore if history state actually changed (from undo/redo)
+    if (prevHistoryStateRef.current !== historyState) {
+      prevHistoryStateRef.current = historyState;
+      restoreSnapshot(historyState);
+    }
+  }, [historyState, restoreSnapshot]);
+
   // Handle tweaks changes - inject into code and trigger live update
   const handleTweaksChange = useCallback(
     (newTweaks: TweaksConfig) => {
+      // Push current state to history before changing (debounced for rapid slider moves)
+      if (!isRestoringFromHistoryRef.current) {
+        pushHistoryDebounced(createSnapshot());
+      }
+
       setTweaks(newTweaks);
       const updatedCode = injectTweaks(code, newTweaks);
       setCode(updatedCode);
@@ -655,12 +772,17 @@ Request: ${inputValue}`;
         });
       }
     },
-    [code, playerState]
+    [code, playerState, createSnapshot, pushHistoryDebounced]
   );
 
   // Handle layer changes
   const handleLayersChange = useCallback(
     (newLayers: AudioLayer[]) => {
+      // Push current state to history before changing
+      if (!isRestoringFromHistoryRef.current) {
+        pushHistory(createSnapshot());
+      }
+
       setLayers(newLayers);
       // Update the combined code for playback
       const combined = combineLayers(newLayers);
@@ -675,7 +797,7 @@ Request: ${inputValue}`;
         });
       }
     },
-    [playerState, liveMode]
+    [playerState, liveMode, createSnapshot, pushHistory]
   );
 
   // Handle selecting a layer - update the code editor to show that layer's code
@@ -695,6 +817,11 @@ Request: ${inputValue}`;
   // Sync code editor changes back to the selected layer
   const handleCodeChange = useCallback(
     (newCode: string) => {
+      // Push current state to history before changing (debounced for typing)
+      if (!isRestoringFromHistoryRef.current) {
+        pushHistoryDebounced(createSnapshot());
+      }
+
       setCode(newCode);
       // Update the selected layer's code
       if (selectedLayerId) {
@@ -705,7 +832,7 @@ Request: ${inputValue}`;
         );
       }
     },
-    [selectedLayerId]
+    [selectedLayerId, createSnapshot, pushHistoryDebounced]
   );
 
   // Track unsaved changes when code differs from last saved
@@ -718,19 +845,30 @@ Request: ${inputValue}`;
   }, [code, currentTrackId]);
 
   // Handle selecting a track from the browser
-  const handleSelectTrack = useCallback((track: Track) => {
-    setCurrentTrackId(track.id);
-    setCurrentTrackName(track.name);
-    setSelectedProjectId(track.project_id);
-    const trackCode = track.current_code || DEFAULT_CODE;
-    setCode(trackCode);
-    lastSavedCodeRef.current = trackCode;
-    setHasUnsavedChanges(false);
-    setShowTrackBrowser(false);
-    // Extract tweaks from loaded code
-    const loadedTweaks = extractTweaks(trackCode);
-    setTweaks(loadedTweaks || DEFAULT_TWEAKS);
-  }, []);
+  const handleSelectTrack = useCallback(
+    (track: Track) => {
+      setCurrentTrackId(track.id);
+      setCurrentTrackName(track.name);
+      setSelectedProjectId(track.project_id);
+      const trackCode = track.current_code || DEFAULT_CODE;
+      setCode(trackCode);
+      lastSavedCodeRef.current = trackCode;
+      setHasUnsavedChanges(false);
+      setShowTrackBrowser(false);
+      // Extract tweaks from loaded code
+      const loadedTweaks = extractTweaks(trackCode);
+      setTweaks(loadedTweaks || DEFAULT_TWEAKS);
+
+      // Reset history when loading a different track
+      resetHistory({
+        code: trackCode,
+        layers: [{ ...DEFAULT_LAYERS[0], code: trackCode }],
+        tweaks: loadedTweaks || DEFAULT_TWEAKS,
+        selectedLayerId: DEFAULT_LAYERS[0]?.id || null,
+      });
+    },
+    [resetHistory]
+  );
 
   // Handle reverting to a previous revision
   const handleRevert = useCallback((newCode: string) => {
@@ -840,6 +978,10 @@ Request: ${inputValue}`;
           onOpenHistory={currentTrackId ? () => setShowRevisionHistory(true) : undefined}
           hasRevisions={revisions.length > 0}
           hasUnsavedChanges={hasUnsavedChanges}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
 
         {/* Main Content */}
