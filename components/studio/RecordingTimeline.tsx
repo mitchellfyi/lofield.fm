@@ -129,10 +129,7 @@ export function RecordingTimeline({
         {/* Background grid */}
         <div className="absolute inset-0 flex">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex-1 border-r border-slate-700/30 last:border-r-0"
-            />
+            <div key={i} className="flex-1 border-r border-slate-700/30 last:border-r-0" />
           ))}
         </div>
 
@@ -235,8 +232,8 @@ export function RecordingTimeline({
               {} as Record<string, number>
             )
           ).map(([key, count]) => {
-            const event = recording.events.find(
-              (e) => (e.type === "tweak" ? e.param === key : e.type === key)
+            const event = recording.events.find((e) =>
+              e.type === "tweak" ? e.param === key : e.type === key
             );
             if (!event) return null;
             return (

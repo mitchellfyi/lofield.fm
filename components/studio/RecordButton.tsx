@@ -39,7 +39,13 @@ export function RecordButton({
       <button
         onClick={handleClick}
         disabled={disabled && !isRecording}
-        title={disabled && !isRecording ? disabledReason : isRecording ? "Stop recording" : "Start recording"}
+        title={
+          disabled && !isRecording
+            ? disabledReason
+            : isRecording
+              ? "Stop recording"
+              : "Start recording"
+        }
         className={`
           relative px-4 py-4 rounded-sm font-bold text-base transition-all duration-200
           border backdrop-blur-sm overflow-hidden group

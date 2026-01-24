@@ -36,10 +36,7 @@ export function exportRecordingToJson(recording: Recording): Blob {
 /**
  * Generate a filename for the recording export
  */
-export function generateRecordingFilename(
-  recording: Recording,
-  extension: "json" | "csv"
-): string {
+export function generateRecordingFilename(recording: Recording, extension: "json" | "csv"): string {
   const sanitizedName = (recording.name || "recording")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -114,7 +111,10 @@ export async function importRecordingFromJson(file: File): Promise<Partial<Recor
     if (typeof e.timestamp_ms !== "number") {
       throw new Error(`Invalid event at index ${index}: missing timestamp_ms`);
     }
-    if (!e.type || !["tweak", "layer_mute", "layer_volume", "layer_solo"].includes(e.type as string)) {
+    if (
+      !e.type ||
+      !["tweak", "layer_mute", "layer_volume", "layer_solo"].includes(e.type as string)
+    ) {
       throw new Error(`Invalid event at index ${index}: invalid type`);
     }
 

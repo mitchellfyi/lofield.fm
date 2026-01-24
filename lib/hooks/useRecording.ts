@@ -25,11 +25,7 @@ export interface UseRecordingResult {
   /** Stop recording and return the captured events */
   stopRecording: () => RecordingEvent[];
   /** Capture a tweak parameter change */
-  captureTweak: (
-    param: keyof TweaksConfig,
-    oldValue: number,
-    newValue: number
-  ) => void;
+  captureTweak: (param: keyof TweaksConfig, oldValue: number, newValue: number) => void;
   /** Capture a layer mute toggle */
   captureLayerMute: (layerId: string, oldValue: boolean, newValue: boolean) => void;
   /** Capture a layer volume change */
