@@ -5,15 +5,15 @@
 | Field       | Value               |
 | ----------- | ------------------- |
 | ID          | `003-006-tweaks-ux` |
-| Status      | `doing`             |
+| Status      | `done`              |
 | Priority    | `003` Medium        |
 | Created     | `2026-01-23 12:00`  |
 | Started     | `2026-01-24 14:14`  |
-| Completed   |                     |
+| Completed   | `2026-01-24 14:31`  |
 | Blocked By  |                     |
 | Blocks      |                     |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-24 14:14` |
+| Assigned To |                     |
+| Assigned At |                     |
 
 ---
 
@@ -32,18 +32,18 @@ Users want quick, visual controls to tweak their beats without typing code or ch
 
 ## Acceptance Criteria
 
-- [ ] Collapsible "Tweaks" panel in UI
-- [ ] BPM slider (60-200, updates setcps)
-- [ ] Swing slider (0-100%)
-- [ ] Master filter slider (lowpass cutoff)
-- [ ] Reverb/delay amount sliders
-- [ ] Changes apply in real-time while playing
-- [ ] Visual feedback (current value display)
-- [ ] Reset to defaults button
-- [ ] Tweaks persist with track save
-- [ ] Tests written and passing
-- [ ] Quality gates pass
-- [ ] Changes committed with task reference
+- [x] Collapsible "Tweaks" panel in UI
+- [x] BPM slider (60-200, updates setcps)
+- [x] Swing slider (0-100%)
+- [x] Master filter slider (lowpass cutoff)
+- [x] Reverb/delay amount sliders
+- [x] Changes apply in real-time while playing
+- [x] Visual feedback (current value display)
+- [x] Reset to defaults button
+- [x] Tweaks persist with track save
+- [x] Tests written and passing
+- [x] Quality gates pass
+- [x] Changes committed with task reference
 
 ---
 
@@ -52,34 +52,38 @@ Users want quick, visual controls to tweak their beats without typing code or ch
 ### Implementation Plan (Generated 2026-01-24 14:21)
 
 #### Gap Analysis
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Collapsible "Tweaks" panel in UI | no | Need to create new TweaksPanel component |
-| BPM slider (60-200, updates setcps) | no | Need slider + Tone.Transport.bpm.value integration |
-| Swing slider (0-100%) | no | Need slider + Tone.Transport.swing integration |
-| Master filter slider (lowpass cutoff) | no | Need slider + code injection for master filter |
-| Reverb/delay amount sliders | no | Need sliders + code injection for wet values |
-| Changes apply in real-time while playing | partial | Runtime already supports live updates via `play(code, true)` |
-| Visual feedback (current value display) | no | Need value labels on sliders |
-| Reset to defaults button | no | Need reset button with default values |
-| Tweaks persist with track save | no | Need to store tweaks in track data (JSON column or code injection) |
-| Tests written and passing | no | Need Vitest unit tests for all components |
-| Quality gates pass | pending | Will verify after implementation |
-| Changes committed with task reference | pending | Will commit when done |
+
+| Criterion                                | Status  | Gap                                                                |
+| ---------------------------------------- | ------- | ------------------------------------------------------------------ |
+| Collapsible "Tweaks" panel in UI         | no      | Need to create new TweaksPanel component                           |
+| BPM slider (60-200, updates setcps)      | no      | Need slider + Tone.Transport.bpm.value integration                 |
+| Swing slider (0-100%)                    | no      | Need slider + Tone.Transport.swing integration                     |
+| Master filter slider (lowpass cutoff)    | no      | Need slider + code injection for master filter                     |
+| Reverb/delay amount sliders              | no      | Need sliders + code injection for wet values                       |
+| Changes apply in real-time while playing | partial | Runtime already supports live updates via `play(code, true)`       |
+| Visual feedback (current value display)  | no      | Need value labels on sliders                                       |
+| Reset to defaults button                 | no      | Need reset button with default values                              |
+| Tweaks persist with track save           | no      | Need to store tweaks in track data (JSON column or code injection) |
+| Tests written and passing                | no      | Need Vitest unit tests for all components                          |
+| Quality gates pass                       | pending | Will verify after implementation                                   |
+| Changes committed with task reference    | pending | Will commit when done                                              |
 
 #### Architecture Decisions
 
 **Audio Engine**: The app uses **Tone.js** (not Strudel). Key globals:
+
 - `Tone.Transport.bpm.value` - Direct BPM control
 - `Tone.Transport.swing` - Swing percentage (0-1)
 - Master effects chain exists in DEFAULT_CODE with variables like `masterLowpass`, `masterReverb`, `tapeDelay`
 
 **Persistence Strategy**: Option A - Store tweaks in code injection
+
 - Rationale: Avoids database migration, works with existing save system
 - Implementation: Inject tweak values at the top of code before execution
 - Format: `// TWEAKS: {"bpm":82,"swing":0.08,"filter":8000,"reverb":0.25,"delay":0.2}`
 
 **Real-Time Updates**: Use `getAudioRuntime().play(code, true)` for seamless updates
+
 - The `keepPosition=true` flag maintains playback position during code re-eval
 
 #### Files to Create
@@ -148,6 +152,7 @@ Users want quick, visual controls to tweak their beats without typing code or ch
 7. Run quality gates and fix any issues
 
 #### Test Plan
+
 - [ ] TweaksPanel exports correctly
 - [ ] TweakSlider renders with correct min/max/value
 - [ ] BPM slider updates within 60-200 range
@@ -163,11 +168,13 @@ Users want quick, visual controls to tweak their beats without typing code or ch
 - [ ] Real-time updates work while playing
 
 #### Docs to Update
+
 - None required (feature is self-explanatory, UI-discoverable)
 
 #### UI/UX Details
 
 **TweaksPanel Layout**:
+
 ```
 ┌─ Tweaks (click to expand/collapse) ──────────────┐
 │ BPM          [=====|=====]  82                   │
@@ -181,11 +188,13 @@ Users want quick, visual controls to tweak their beats without typing code or ch
 ```
 
 **Slider Styling** (matching existing UI):
+
 - Track: `bg-slate-800 h-1.5 rounded-full`
 - Thumb: `bg-cyan-500 w-3 h-3 rounded-full cursor-pointer`
 - Active track: `bg-gradient-to-r from-cyan-600 to-cyan-400`
 
 **Panel Styling** (matching ConsolePanel):
+
 - Container: `rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm`
 - Header: `px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50`
 - Expand/collapse chevron animation
@@ -193,6 +202,7 @@ Users want quick, visual controls to tweak their beats without typing code or ch
 #### Tweaks Code Injection Format
 
 Input code:
+
 ```javascript
 Tone.Transport.bpm.value = 82;
 Tone.Transport.swing = 0.08;
@@ -200,6 +210,7 @@ Tone.Transport.swing = 0.08;
 ```
 
 After injection with tweaks `{bpm: 90, swing: 0.15, filter: 6000, reverb: 0.4, delay: 0.3}`:
+
 ```javascript
 // TWEAKS: {"bpm":90,"swing":0.15,"filter":6000,"reverb":0.4,"delay":0.3}
 Tone.Transport.bpm.value = 90;
@@ -208,6 +219,7 @@ Tone.Transport.swing = 0.15;
 ```
 
 The injector will:
+
 1. Parse existing BPM/swing lines and replace values
 2. Find `masterLowpass` filter frequency and update
 3. Find `masterReverb` wet value and update
@@ -217,9 +229,66 @@ The injector will:
 
 ## Work Log
 
+### 2026-01-24 14:31 - Review Complete
+
+**Code review**:
+
+- Issues found: none
+- Issues fixed: N/A
+
+**Consistency**:
+
+- All criteria met: yes
+- Test coverage adequate: yes (154 new tests, 883 total passing)
+- Docs in sync: yes (JSDoc comments accurate)
+
+**Quality gates final verification**:
+
+- ESLint: pass
+- TypeScript: pass (tsc --noEmit clean)
+- Prettier: pass
+- Tests: 883 passing, 0 failures
+
+**Follow-up tasks created**: none (feature complete as specified)
+
+**Code review checklist**:
+
+| Check                         | Status | Notes                                                        |
+| ----------------------------- | ------ | ------------------------------------------------------------ |
+| Code follows project patterns | ✅      | TweaksPanel follows ConsolePanel pattern                     |
+| No code smells                | ✅      | Clean functional components with hooks                       |
+| Error handling appropriate    | ✅      | Graceful fallbacks with console.warn                         |
+| No security vulnerabilities   | ✅      | Safe JSON parsing with try/catch                             |
+| No N+1 queries                | ✅      | N/A - no DB queries                                          |
+| Proper transactions           | ✅      | N/A - no DB changes                                          |
+
+**Final status**: COMPLETE
+
+### 2026-01-24 14:28 - Documentation Sync
+
+**Docs updated**:
+
+- No external docs needed - feature is self-explanatory and UI-discoverable
+- All new files have JSDoc comments:
+  - `lib/types/tweaks.ts` - Interface and constant documentation
+  - `lib/audio/tweaksInjector.ts` - Function documentation with usage examples in header comment
+
+**Annotations**:
+
+- N/A - This is a Next.js/TypeScript project, no Rails model annotations
+
+**Consistency checks**:
+
+- [x] Code matches docs (JSDoc comments accurate)
+- [x] No broken links in codebase
+- [x] Schema annotations current (N/A - no DB changes)
+
+**Notes section updated** to reflect actual implementation (Tone.js, not Strudel).
+
 ### 2026-01-24 14:19 - Implementation Complete
 
 **Implementation Progress**:
+
 - Completed: All 5 implementation steps
 - Files created:
   - `lib/types/tweaks.ts` - Types and defaults (commit: 6773858)
@@ -232,6 +301,7 @@ The injector will:
 - Next: Tests phase will write tests
 
 **Commits made**:
+
 1. `6773858` - Add tweaks types and defaults
 2. `8a0ba77` - Add tweaks injector for code transformation
 3. `0fbe76c` - Add TweakSlider component for parameter control
@@ -241,6 +311,7 @@ The injector will:
 ### 2026-01-24 14:21 - Planning Complete
 
 **Codebase Analysis**:
+
 - Analyzed audio architecture: App uses **Tone.js** (not Strudel as originally thought)
 - Found runtime singleton at `lib/audio/runtime.ts` with `play(code, keepPosition)` for live updates
 - Identified existing collapsible panel pattern in `ConsolePanel.tsx`
@@ -248,12 +319,14 @@ The injector will:
 - Confirmed no existing tweaks or slider components
 
 **Architecture Decisions Made**:
+
 1. **Persistence via code injection** - Avoids DB migration, stores `// TWEAKS: {json}` comment
 2. **Reusable TweakSlider component** - Custom styled range input matching existing UI
 3. **Real-time updates via play(code, true)** - Existing runtime API supports this
 4. **State lifted to page.tsx** - Matches existing pattern for track/code state
 
 **Files Identified**:
+
 - 7 new files to create (2 components, 1 types, 1 utils, 3 test files)
 - 1 file to modify (app/studio/page.tsx)
 
@@ -274,18 +347,45 @@ The injector will:
 
 ## Testing Evidence
 
-(To be filled during execution)
+### 2026-01-24 14:27 - Tests Complete
+
+**Tests written**:
+
+- `lib/types/__tests__/tweaks.test.ts` - 22 examples
+- `lib/audio/__tests__/tweaksInjector.test.ts` - 35 examples
+- `components/studio/__tests__/TweakSlider.test.ts` - 46 examples
+- `components/studio/__tests__/TweaksPanel.test.ts` - 51 examples
+
+**Test results**:
+
+- Total: 883 examples, 0 failures (154 new tests added)
+- All existing tests continue to pass
+
+**Quality gates**:
+
+- ESLint: pass
+- TypeScript: pass
+- Prettier: pass
+
+**Commit**: `553e0c2` - Add tests for tweaks feature
 
 ---
 
 ## Notes
 
-- Need to research Strudel's runtime parameter control
-- May need to wrap user code to inject controls
-- Consider MIDI controller support in future
+- Implementation uses Tone.js (not Strudel) for audio engine
+- Tweaks persisted via JSON comment injection in code: `// TWEAKS: {...}`
+- Real-time updates use `getAudioRuntime().play(code, true)` with keepPosition flag
+- Consider MIDI controller support in future enhancement
 
 ---
 
 ## Links
 
-- Strudel docs: parameters and controls
+- Tone.js docs: https://tonejs.github.io/
+- Implementation files:
+  - `lib/types/tweaks.ts` - Types and defaults
+  - `lib/audio/tweaksInjector.ts` - Code transformation
+  - `components/studio/TweakSlider.tsx` - Reusable slider
+  - `components/studio/TweaksPanel.tsx` - Main panel
+  - `app/studio/page.tsx:337-652` - Integration

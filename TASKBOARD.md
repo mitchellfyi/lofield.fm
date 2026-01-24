@@ -1,15 +1,15 @@
 # Taskboard
 
 > Auto-generated
-> Last updated: 2026-01-24 13:01:48
+> Last updated: 2026-01-24 14:31:00
 
 ## Summary
 
 | Status | Count |
-|--------|-------|
-| Doing | 0 |
-| Todo | 10 |
-| Done | 10 |
+| ------ | ----- |
+| Doing  | 0     |
+| Todo   | 9     |
+| Done   | 11    |
 
 ---
 
@@ -21,7 +21,6 @@ _No tasks in progress_
 
 ## Todo
 
-- **[003-006-tweaks-ux.md](.claude/tasks/todo/003-006-tweaks-ux.md)** - Tweaks UX - Quick Parameter Sliders
 - **[003-007-multi-track-support.md](.claude/tasks/todo/003-007-multi-track-support.md)** - Multi-Track Support with Mute/Solo
 - **[003-008-undo-redo.md](.claude/tasks/todo/003-008-undo-redo.md)** - Undo/Redo Across Chat and Code Edits
 - **[003-009-session-cost-controls.md](.claude/tasks/todo/003-009-session-cost-controls.md)** - Session Cost Controls - Rate Limits and Quotas
@@ -36,6 +35,7 @@ _No tasks in progress_
 
 ## Recently Completed (Last 10)
 
+- **[003-006-tweaks-ux.md](.claude/tasks/done/003-006-tweaks-ux.md)** - Tweaks UX - Quick Parameter Sliders
 - **[003-005-preset-library.md](.claude/tasks/done/003-005-preset-library.md)** - Preset Library with Starter Patterns and Genre Templates
 - **[003-004-shareable-links.md](.claude/tasks/done/003-004-shareable-links.md)** - Shareable Links with Public Read-Only Pages
 - **[003-003-export-options.md](.claude/tasks/done/003-003-export-options.md)** - Export Options - Copy Code, Download JS, Render Audio
@@ -45,5 +45,3 @@ _No tasks in progress_
 - **[002-004-supabase-auth-setup.md](.claude/tasks/done/002-004-supabase-auth-setup.md)** - Implement Supabase Backend and Authentication
 - **[002-003-chat-prompt-hardening.md](.claude/tasks/done/002-003-chat-prompt-hardening.md)** - Chat Prompt Hardening with Schema Validation and Retry Loop
 - **[002-002-ai-model-selection.md](.claude/tasks/done/002-002-ai-model-selection.md)** - Add AI Model Selection with gpt-4o-mini Default
-- **[002-001-quality-ci-setup.md](.claude/tasks/done/002-001-quality-ci-setup.md)** - Setup Quality Checking Scripts and CI Pipeline
-
