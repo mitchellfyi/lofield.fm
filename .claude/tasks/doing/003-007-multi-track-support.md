@@ -328,16 +328,46 @@ Duration: 5.06s
 - `0791c0c` - test: Add specs for multi-track layer support
 - `1f462cf` - style: Apply prettier formatting to layer components
 
+### 2026-01-24 14:51 - Documentation Sync
+
+Docs checked:
+- `prompts/system-prompt.md` - Already includes MULTI-LAYER COMPOSITION section (lines 32-43)
+- `README.md` - No updates needed (doesn't describe layers feature, user docs not required per CLAUDE.md)
+- No `docs/` folder exists in project
+- No `MISSION_TASKS.md` file exists (noted in plan but file doesn't exist)
+
+Inline documentation verified:
+- `lib/types/audioLayer.ts` - Has JSDoc comments for interface, functions, and constants
+- `lib/audio/layerCombiner.ts` - Has JSDoc comments for all exported functions
+- `components/studio/LayerRow.tsx` - Has inline comments for UI sections
+- `components/studio/LayersPanel.tsx` - Uses TypeScript interfaces for documentation
+
+Consistency checks:
+- [x] Code matches docs (system-prompt.md accurately describes layer format)
+- [x] No broken links in markdown files
+- [x] Schema annotations - N/A (Node.js project, no Ruby annotations)
+
+Notes:
+- README mentions "Strudel" but app uses Tone.js - this is a pre-existing inconsistency outside scope of this task
+- Links section below updated to reference correct files
+
 ---
 
 ## Notes
 
-- Default tracks: drums, bass, melody
-- Consider color-coding tracks
-- May need track-specific chat sessions
+- Default layer: "main" (single layer to start)
+- Layers are color-coded with 10-color palette
+- May need track-specific chat sessions (future enhancement)
+- Drag-to-reorder deferred to follow-up task
 
 ---
 
 ## Links
 
-- Strudel stack() documentation
+- `lib/types/audioLayer.ts` - AudioLayer type definition
+- `lib/audio/layerCombiner.ts` - Layer combination logic
+- `components/studio/LayerRow.tsx` - Individual layer row component
+- `components/studio/LayersPanel.tsx` - Layers panel container
+- `app/studio/page.tsx` - Studio page integration
+- `prompts/system-prompt.md` - AI instructions for multi-layer handling
+- `app/api/chat/route.ts` - Chat API layer context injection
