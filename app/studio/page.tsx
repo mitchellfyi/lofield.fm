@@ -32,11 +32,14 @@ import { ShareButton } from "@/components/studio/ShareButton";
 import { ShareDialog } from "@/components/studio/ShareDialog";
 import { Toast } from "@/components/studio/Toast";
 import { TweaksPanel } from "@/components/studio/TweaksPanel";
+import { LayersPanel } from "@/components/studio/LayersPanel";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import type { ToastState } from "@/lib/export/types";
 import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
 import { extractTweaks, injectTweaks } from "@/lib/audio/tweaksInjector";
+import { type AudioLayer, DEFAULT_LAYERS } from "@/lib/types/audioLayer";
+import { combineLayers } from "@/lib/audio/layerCombiner";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
@@ -337,6 +340,14 @@ export default function StudioPage() {
   // Tweaks state
   const [tweaks, setTweaks] = useState<TweaksConfig>(DEFAULT_TWEAKS);
 
+  // Layers state - for multi-track composition
+  const [layers, setLayers] = useState<AudioLayer[]>(() => [
+    { ...DEFAULT_LAYERS[0], code: DEFAULT_CODE },
+  ]);
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(
+    () => DEFAULT_LAYERS[0]?.id || null
+  );
+
   // Project and track hooks
   const { projects, createProject } = useProjects();
   const { createTrack, updateTrack } = useTracks(selectedProjectId);
@@ -408,16 +419,19 @@ export default function StudioPage() {
     return unsubscribe;
   }, []);
 
-  // Live coding: auto-update when code changes while playing
+  // Live coding: auto-update when layers change while playing
   useEffect(() => {
     // Only trigger live updates when in live mode and currently playing
     if (!liveMode || playerState !== "playing") {
       return;
     }
 
-    // Skip if code hasn't actually changed from what's currently playing
+    // Combine all layers for playback
+    const combinedCode = combineLayers(layers);
+
+    // Skip if combined code hasn't actually changed from what's currently playing
     // This prevents the restart-on-first-play bug
-    if (code === lastPlayedCodeRef.current) {
+    if (combinedCode === lastPlayedCodeRef.current) {
       return;
     }
 
@@ -429,11 +443,11 @@ export default function StudioPage() {
     // Debounce the update to avoid rapid re-evaluation
     liveUpdateTimeoutRef.current = setTimeout(() => {
       // Validate before playing
-      if (!validateCode(code)) {
+      if (!validateCode(combinedCode)) {
         return;
       }
 
-      const validation = validateRawToneCode(code);
+      const validation = validateRawToneCode(combinedCode);
       if (!validation.valid) {
         // Don't show errors during live typing - just skip invalid code
         return;
@@ -441,8 +455,8 @@ export default function StudioPage() {
 
       // Re-play the updated code, keeping the current position
       const runtime = runtimeRef.current;
-      lastPlayedCodeRef.current = code;
-      runtime.play(code, true).catch((err) => {
+      lastPlayedCodeRef.current = combinedCode;
+      runtime.play(combinedCode, true).catch((err) => {
         // Silently handle errors during live coding to avoid disrupting flow
         console.warn("Live update error:", err);
       });
@@ -453,7 +467,7 @@ export default function StudioPage() {
         clearTimeout(liveUpdateTimeoutRef.current);
       }
     };
-  }, [code, liveMode, playerState, validateCode]);
+  }, [layers, liveMode, playerState, validateCode]);
 
   const playCode = useCallback(
     async (codeToPlay: string) => {
@@ -630,6 +644,56 @@ Request: ${inputValue}`;
     [code, playerState]
   );
 
+  // Handle layer changes
+  const handleLayersChange = useCallback(
+    (newLayers: AudioLayer[]) => {
+      setLayers(newLayers);
+      // Update the combined code for playback
+      const combined = combineLayers(newLayers);
+      setCode(combined);
+
+      // If playing in live mode, update playback
+      if (playerState === "playing" && liveMode) {
+        const runtime = runtimeRef.current;
+        lastPlayedCodeRef.current = combined;
+        runtime.play(combined, true).catch((err) => {
+          console.warn("Layer update error:", err);
+        });
+      }
+    },
+    [playerState, liveMode]
+  );
+
+  // Handle selecting a layer - update the code editor to show that layer's code
+  const handleSelectLayer = useCallback(
+    (layerId: string | null) => {
+      setSelectedLayerId(layerId);
+      if (layerId) {
+        const layer = layers.find((l) => l.id === layerId);
+        if (layer) {
+          setCode(layer.code);
+        }
+      }
+    },
+    [layers]
+  );
+
+  // Sync code editor changes back to the selected layer
+  const handleCodeChange = useCallback(
+    (newCode: string) => {
+      setCode(newCode);
+      // Update the selected layer's code
+      if (selectedLayerId) {
+        setLayers((prevLayers) =>
+          prevLayers.map((layer) =>
+            layer.id === selectedLayerId ? { ...layer, code: newCode } : layer
+          )
+        );
+      }
+    },
+    [selectedLayerId]
+  );
+
   // Track unsaved changes when code differs from last saved
   useEffect(() => {
     if (currentTrackId && code !== lastSavedCodeRef.current) {
@@ -791,7 +855,7 @@ Request: ${inputValue}`;
               <div className="flex-1 min-h-0">
                 <CodePanel
                   code={code}
-                  onChange={setCode}
+                  onChange={handleCodeChange}
                   validationErrors={validationErrors}
                   defaultCode={DEFAULT_CODE}
                   liveMode={liveMode}
@@ -816,7 +880,7 @@ Request: ${inputValue}`;
                 <PlayerControls
                   playerState={playerState}
                   audioLoaded={audioLoaded}
-                  onPlay={() => playCode(code)}
+                  onPlay={() => playCode(combineLayers(layers))}
                   onStop={stop}
                   shareButton={
                     <ShareButton
@@ -836,6 +900,14 @@ Request: ${inputValue}`;
 
                 <TweaksPanel tweaks={tweaks} onTweaksChange={handleTweaksChange} />
 
+                <LayersPanel
+                  layers={layers}
+                  selectedLayerId={selectedLayerId}
+                  isPlaying={playerState === "playing"}
+                  onLayersChange={handleLayersChange}
+                  onSelectLayer={handleSelectLayer}
+                />
+
                 <ConsolePanel events={runtimeEvents} error={error} />
               </div>
             </div>
@@ -845,7 +917,7 @@ Request: ${inputValue}`;
           <div className="md:hidden flex flex-col flex-1">
             <MobileTabs
               code={code}
-              setCode={setCode}
+              setCode={handleCodeChange}
               validationErrors={validationErrors}
               messages={messages}
               inputValue={inputValue}
@@ -854,7 +926,7 @@ Request: ${inputValue}`;
               isLoading={isLoading}
               playerState={playerState}
               audioLoaded={audioLoaded}
-              playCode={() => playCode(code)}
+              playCode={() => playCode(combineLayers(layers))}
               stop={stop}
               defaultCode={DEFAULT_CODE}
               liveMode={liveMode}
