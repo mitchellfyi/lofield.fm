@@ -51,7 +51,7 @@ export function TrackBrowser({
       // This is intentional initialization when data first loads
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setExpandedProjects(new Set([projects[0].id]));
-       
+
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, expandedProjects.size]);
@@ -116,10 +116,7 @@ export function TrackBrowser({
         {/* Header */}
         <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800 flex items-center justify-between">
           <h2 className="text-xl font-bold text-cyan-300">My Tracks</h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -209,7 +206,12 @@ export function TrackBrowser({
                         className="p-1 text-slate-400 hover:text-cyan-400 transition-colors"
                         title="Rename"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -227,7 +229,12 @@ export function TrackBrowser({
                         className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
                         title="Delete"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -383,7 +390,12 @@ export function TrackBrowser({
                               }}
                               className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"

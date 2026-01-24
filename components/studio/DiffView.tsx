@@ -56,9 +56,7 @@ export function DiffView({
           <button
             onClick={() => setMode("unified")}
             className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-              mode === "unified"
-                ? "bg-cyan-600 text-white"
-                : "text-slate-400 hover:text-white"
+              mode === "unified" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
             Unified
@@ -66,9 +64,7 @@ export function DiffView({
           <button
             onClick={() => setMode("side-by-side")}
             className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-              mode === "side-by-side"
-                ? "bg-cyan-600 text-white"
-                : "text-slate-400 hover:text-white"
+              mode === "side-by-side" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
             Side by Side
@@ -111,11 +107,7 @@ function UnifiedDiff({ diff }: UnifiedDiffProps) {
             lineNumber++;
           }
 
-          const bgColor = part.added
-            ? "bg-emerald-500/10"
-            : part.removed
-              ? "bg-rose-500/10"
-              : "";
+          const bgColor = part.added ? "bg-emerald-500/10" : part.removed ? "bg-rose-500/10" : "";
           const textColor = part.added
             ? "text-emerald-400"
             : part.removed
@@ -137,9 +129,7 @@ function UnifiedDiff({ diff }: UnifiedDiffProps) {
               <span className="w-12 flex-shrink-0 px-2 py-0.5 text-right text-slate-500 select-none border-r border-slate-700">
                 {!part.removed ? lineNumber : ""}
               </span>
-              <span className={`w-6 flex-shrink-0 text-center py-0.5 ${textColor}`}>
-                {prefix}
-              </span>
+              <span className={`w-6 flex-shrink-0 text-center py-0.5 ${textColor}`}>{prefix}</span>
               <pre className={`flex-1 px-2 py-0.5 ${textColor} whitespace-pre-wrap break-all`}>
                 {line || " "}
               </pre>

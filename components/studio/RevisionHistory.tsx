@@ -122,7 +122,10 @@ export function RevisionHistory({
               </button>
               <h2 className="text-xl font-bold text-cyan-300">Compare Revisions</h2>
             </div>
-            <button onClick={closeDiff} className="text-slate-400 hover:text-white transition-colors">
+            <button
+              onClick={closeDiff}
+              className="text-slate-400 hover:text-white transition-colors"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -268,7 +271,9 @@ export function RevisionHistory({
           ) : revisions.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <p>No revisions yet</p>
-              <p className="text-sm mt-2">Revisions are created automatically when you make changes via chat.</p>
+              <p className="text-sm mt-2">
+                Revisions are created automatically when you make changes via chat.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">

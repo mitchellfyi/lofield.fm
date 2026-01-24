@@ -47,36 +47,33 @@ export function useProjects(): UseProjectsResult {
     fetchProjects();
   }, [fetchProjects]);
 
-  const createProject = useCallback(
-    async (name: string): Promise<ProjectWithTrackCount | null> => {
-      try {
-        setError(null);
+  const createProject = useCallback(async (name: string): Promise<ProjectWithTrackCount | null> => {
+    try {
+      setError(null);
 
-        const res = await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
 
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "Failed to create project");
-        }
-
+      if (!res.ok) {
         const data = await res.json();
-        const newProject = { ...data.project, track_count: 0 };
-
-        // Add to local state
-        setProjects((prev) => [newProject, ...prev]);
-
-        return newProject;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create project");
-        return null;
+        throw new Error(data.error || "Failed to create project");
       }
-    },
-    []
-  );
+
+      const data = await res.json();
+      const newProject = { ...data.project, track_count: 0 };
+
+      // Add to local state
+      setProjects((prev) => [newProject, ...prev]);
+
+      return newProject;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create project");
+      return null;
+    }
+  }, []);
 
   const updateProject = useCallback(
     async (id: string, name: string): Promise<ProjectWithTrackCount | null> => {
@@ -97,11 +94,7 @@ export function useProjects(): UseProjectsResult {
         const data = await res.json();
 
         // Update in local state
-        setProjects((prev) =>
-          prev.map((p) =>
-            p.id === id ? { ...p, ...data.project } : p
-          )
-        );
+        setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...data.project } : p)));
 
         return data.project;
       } catch (err) {

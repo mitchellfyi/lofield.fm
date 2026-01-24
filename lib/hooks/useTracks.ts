@@ -57,11 +57,7 @@ export function useTracks(projectId: string | null): UseTracksResult {
   }, [fetchTracks]);
 
   const createTrack = useCallback(
-    async (
-      targetProjectId: string,
-      name: string,
-      code: string = ""
-    ): Promise<Track | null> => {
+    async (targetProjectId: string, name: string, code: string = ""): Promise<Track | null> => {
       try {
         setError(null);
 
@@ -118,9 +114,7 @@ export function useTracks(projectId: string | null): UseTracksResult {
         const data = await res.json();
 
         // Update in local state
-        setTracks((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, ...data.track } : t))
-        );
+        setTracks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data.track } : t)));
 
         return data.track;
       } catch (err) {
