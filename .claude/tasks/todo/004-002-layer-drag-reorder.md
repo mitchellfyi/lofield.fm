@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field       | Value                       |
-| ----------- | --------------------------- |
-| ID          | `004-002-layer-drag-reorder`|
-| Status      | `todo`                      |
-| Priority    | `004` Low                   |
-| Created     | `2026-01-24 14:55`          |
-| Started     |                             |
-| Completed   |                             |
-| Blocked By  |                             |
-| Blocks      |                             |
-| Assigned To |                             |
-| Assigned At |                             |
+| Field       | Value                        |
+| ----------- | ---------------------------- |
+| ID          | `004-002-layer-drag-reorder` |
+| Status      | `todo`                       |
+| Priority    | `004` Low                    |
+| Created     | `2026-01-24 14:55`           |
+| Started     |                              |
+| Completed   |                              |
+| Blocked By  |                              |
+| Blocks      |                              |
+| Assigned To |                              |
+| Assigned At |                              |
 
 ---
 

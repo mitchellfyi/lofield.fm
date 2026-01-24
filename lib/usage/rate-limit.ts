@@ -1,10 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import {
-  RateLimitResult,
-  DEFAULT_REQUESTS_PER_MINUTE,
-  ENV_REQUESTS_PER_MINUTE,
-} from "./types";
+import { RateLimitResult, DEFAULT_REQUESTS_PER_MINUTE, ENV_REQUESTS_PER_MINUTE } from "./types";
 
 // Create a service client for server-side operations
 async function createServiceClient() {

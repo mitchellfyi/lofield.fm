@@ -12,8 +12,8 @@
 | Completed   | `2026-01-24 14:55`            |
 | Blocked By  |                               |
 | Blocks      |                               |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                               |
+| Assigned At |                               |
 
 ---
 
@@ -228,9 +228,11 @@ Status field: matches (done)
 Acceptance criteria: 11/12 checked (1 intentionally deferred)
 
 Issues found:
+
 - None - task was properly completed and committed
 
 Actions taken:
+
 - Verified task file in correct location (done/)
 - Verified all metadata fields correct
 - Verified follow-up task 004-002-layer-drag-reorder.md exists

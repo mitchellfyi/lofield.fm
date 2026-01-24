@@ -63,9 +63,7 @@ export async function GET() {
   }
 
   // Get usage data for all users
-  const { data: usageData } = await serviceClient
-    .from("user_usage")
-    .select("user_id, tokens_used");
+  const { data: usageData } = await serviceClient.from("user_usage").select("user_id, tokens_used");
 
   // Get quota data for all users
   const { data: quotaData } = await serviceClient
@@ -73,9 +71,7 @@ export async function GET() {
     .select("user_id, daily_token_limit, requests_per_minute, tier");
 
   // Get abuse flags count per user
-  const { data: flagsData } = await serviceClient
-    .from("abuse_flags")
-    .select("user_id, count");
+  const { data: flagsData } = await serviceClient.from("abuse_flags").select("user_id, count");
 
   // Create lookup maps
   const usageMap = new Map(usageData?.map((u) => [u.user_id, u]) ?? []);

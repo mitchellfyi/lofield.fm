@@ -12,8 +12,8 @@
 | Completed   |                                 |
 | Blocked By  | `002-004-supabase-auth-setup`   |
 | Blocks      |                                 |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-24 15:20` |
+| Assigned To | `worker-1`                      |
+| Assigned At | `2026-01-24 15:20`              |
 
 ---
 
@@ -50,19 +50,19 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Rate limiting: max N requests per minute | ❌ None | No rate limiting infrastructure exists. Need sliding window rate limiter. |
-| Token cap per request | ❌ None | No token counting. Response is streamed but buffered for validation (good pattern to extend). |
-| Daily token quota per user | ❌ None | No usage tracking table or quota system. |
-| Usage tracking in database | ❌ None | No tables for usage data. Existing migrations: profiles, api_keys, tracks, sharing. |
-| Usage display in UI | ❌ None | Settings page exists (`app/settings/page.tsx`) but has no usage info. |
-| Clear error messages when limits hit | ⚠️ Partial | `api/validate-key/route.ts` handles 429 errors from OpenAI reactively. Need proactive limit errors. |
-| Admin ability to adjust limits | ❌ None | No admin routes (`app/admin/` is empty). No admin role in auth. |
-| Abuse detection | ❌ None | No abuse tracking or flagging system. |
-| Tests written and passing | ❌ None | Need new tests for all cost control modules. |
-| Quality gates pass | N/A | Will verify at end. |
-| Changes committed | N/A | Will commit at end. |
+| Criterion                                | Status     | Gap                                                                                                 |
+| ---------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------- |
+| Rate limiting: max N requests per minute | ❌ None    | No rate limiting infrastructure exists. Need sliding window rate limiter.                           |
+| Token cap per request                    | ❌ None    | No token counting. Response is streamed but buffered for validation (good pattern to extend).       |
+| Daily token quota per user               | ❌ None    | No usage tracking table or quota system.                                                            |
+| Usage tracking in database               | ❌ None    | No tables for usage data. Existing migrations: profiles, api_keys, tracks, sharing.                 |
+| Usage display in UI                      | ❌ None    | Settings page exists (`app/settings/page.tsx`) but has no usage info.                               |
+| Clear error messages when limits hit     | ⚠️ Partial | `api/validate-key/route.ts` handles 429 errors from OpenAI reactively. Need proactive limit errors. |
+| Admin ability to adjust limits           | ❌ None    | No admin routes (`app/admin/` is empty). No admin role in auth.                                     |
+| Abuse detection                          | ❌ None    | No abuse tracking or flagging system.                                                               |
+| Tests written and passing                | ❌ None    | Need new tests for all cost control modules.                                                        |
+| Quality gates pass                       | N/A        | Will verify at end.                                                                                 |
+| Changes committed                        | N/A        | Will commit at end.                                                                                 |
 
 #### Architectural Decisions
 
@@ -86,11 +86,13 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 #### Files to Create
 
 1. **`supabase/migrations/005_usage.sql`** - Database schema
+
    ```sql
    -- user_usage: Track per-user token/request usage
    -- user_quotas: Per-user limits (defaults from env, can override)
    -- abuse_flags: Track violation patterns
    ```
+
    - `user_usage` table: `user_id`, `tokens_used`, `requests_count`, `period_start`, `updated_at`
    - `user_quotas` table: `user_id`, `daily_token_limit`, `requests_per_minute`, `tier`
    - `abuse_flags` table: `user_id`, `violation_type`, `count`, `last_flagged_at`
@@ -272,17 +274,17 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 
 #### Complexity Estimates
 
-| Component | Files | Complexity | Notes |
-|-----------|-------|------------|-------|
-| Database migration | 1 | Low | Standard SQL schema |
-| Token counting | 2 | Low | Simple approximation |
-| Rate limiting | 2 | Medium | Sliding window logic |
-| Quota management | 2 | Medium | Daily reset logic |
-| Abuse detection | 2 | Medium | Pattern recognition |
-| Chat API updates | 1 | Medium | Integrate with streaming |
-| Usage UI | 2 | Low | Display component |
-| Admin pages | 4 | Medium | CRUD operations |
-| Tests | 7+ | Medium | Coverage for all modules |
+| Component          | Files | Complexity | Notes                    |
+| ------------------ | ----- | ---------- | ------------------------ |
+| Database migration | 1     | Low        | Standard SQL schema      |
+| Token counting     | 2     | Low        | Simple approximation     |
+| Rate limiting      | 2     | Medium     | Sliding window logic     |
+| Quota management   | 2     | Medium     | Daily reset logic        |
+| Abuse detection    | 2     | Medium     | Pattern recognition      |
+| Chat API updates   | 1     | Medium     | Integrate with streaming |
+| Usage UI           | 2     | Low        | Display component        |
+| Admin pages        | 4     | Medium     | CRUD operations          |
+| Tests              | 7+    | Medium     | Coverage for all modules |
 
 **Total: ~20 files, ~1500 lines estimated**
 
@@ -306,12 +308,14 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 ### 2026-01-24 - Planning Complete
 
 **Gap Analysis Performed:**
+
 - Reviewed all 11 acceptance criteria against existing codebase
 - Found NO existing cost control infrastructure (rate limiting, quotas, usage tracking)
 - Identified `app/api/chat/route.ts` as the primary integration point
 - Confirmed existing patterns: Supabase auth, RLS, streaming responses with buffering
 
 **Files Analyzed:**
+
 - `app/api/chat/route.ts` - Main chat API with streaming + validation retry logic
 - `app/settings/page.tsx` - Settings UI (API key management only)
 - `middleware.ts` - Auth middleware (no rate limiting)
@@ -320,11 +324,13 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 - `package.json` - No rate limiting or token counting dependencies
 
 **Architectural Decisions:**
+
 1. Supabase-based rate limiting (not Redis) - simpler, no external dependency
 2. Approximate token counting (~4 chars/token) - lighter, good enough for cost controls
 3. Email-based admin access via env var - simple, secure, flexible
 
 **Implementation Plan Created:**
+
 - 14 new files to create
 - 3 existing files to modify
 - 7 test files planned
@@ -362,6 +368,7 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
    - Created API endpoints for admin stats and user management
 
 **Files Created:**
+
 - supabase/migrations/005_usage.sql
 - lib/usage/types.ts
 - lib/usage/tokens.ts
@@ -379,6 +386,7 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 - components/usage/UsageDisplay.tsx
 
 **Files Modified:**
+
 - app/api/chat/route.ts
 - app/settings/page.tsx
 

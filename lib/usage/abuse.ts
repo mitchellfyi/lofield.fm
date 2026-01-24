@@ -69,10 +69,7 @@ export async function checkAbusePatterns(userId: string): Promise<AbuseStatus> {
 /**
  * Record an abuse violation for a user.
  */
-export async function flagAbuse(
-  userId: string,
-  violationType: ViolationType
-): Promise<void> {
+export async function flagAbuse(userId: string, violationType: ViolationType): Promise<void> {
   const supabase = await createServiceClient();
 
   // Check if there's an existing flag for this violation type

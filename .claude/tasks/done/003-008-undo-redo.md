@@ -12,8 +12,8 @@
 | Completed   | `2026-01-24 15:17`  |
 | Blocked By  |                     |
 | Blocks      |                     |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                     |
+| Assigned At |                     |
 
 ---
 
@@ -50,17 +50,17 @@ Users will frequently break their beats through chat prompts or manual edits. Qu
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Undo/redo state management (history stack) | ❌ No | Need to create `lib/hooks/useHistory.ts` |
-| Tracks both AI responses and manual code edits | ❌ No | Need to integrate at change points in `app/studio/page.tsx` |
-| Undo button in UI | ❌ No | Need to add to `components/studio/TopBar.tsx` |
-| Redo button in UI | ❌ No | Need to add to `components/studio/TopBar.tsx` |
-| Keyboard shortcuts (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z) | ❌ No | Need to add keydown handler in `app/studio/page.tsx` |
-| History limited to last N states (e.g., 50) | ❌ No | Will be config in useHistory hook |
-| Disabled state when nothing to undo/redo | ❌ No | TopBar buttons will receive `canUndo`/`canRedo` props |
-| Works with multi-track (undo entire state) | ❌ No | Need to track snapshot: `{ code, layers, tweaks, selectedLayerId }` |
-| Tests written and passing | ❌ No | Need to create `lib/hooks/__tests__/useHistory.test.ts` |
+| Criterion                                         | Status | Gap                                                                 |
+| ------------------------------------------------- | ------ | ------------------------------------------------------------------- |
+| Undo/redo state management (history stack)        | ❌ No  | Need to create `lib/hooks/useHistory.ts`                            |
+| Tracks both AI responses and manual code edits    | ❌ No  | Need to integrate at change points in `app/studio/page.tsx`         |
+| Undo button in UI                                 | ❌ No  | Need to add to `components/studio/TopBar.tsx`                       |
+| Redo button in UI                                 | ❌ No  | Need to add to `components/studio/TopBar.tsx`                       |
+| Keyboard shortcuts (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z) | ❌ No  | Need to add keydown handler in `app/studio/page.tsx`                |
+| History limited to last N states (e.g., 50)       | ❌ No  | Will be config in useHistory hook                                   |
+| Disabled state when nothing to undo/redo          | ❌ No  | TopBar buttons will receive `canUndo`/`canRedo` props               |
+| Works with multi-track (undo entire state)        | ❌ No  | Need to track snapshot: `{ code, layers, tweaks, selectedLayerId }` |
+| Tests written and passing                         | ❌ No  | Need to create `lib/hooks/__tests__/useHistory.test.ts`             |
 
 #### State to Track
 
@@ -68,9 +68,9 @@ The undo/redo system needs to track a **composite snapshot** of:
 
 ```typescript
 interface HistorySnapshot {
-  code: string;              // Current code (from selected layer or combined)
-  layers: AudioLayer[];      // Multi-track layers array
-  tweaks: TweaksConfig;      // BPM, swing, filter, reverb, delay
+  code: string; // Current code (from selected layer or combined)
+  layers: AudioLayer[]; // Multi-track layers array
+  tweaks: TweaksConfig; // BPM, swing, filter, reverb, delay
   selectedLayerId: string | null; // Currently selected layer
 }
 ```
@@ -178,6 +178,7 @@ interface HistorySnapshot {
 #### Reference Patterns
 
 Keyboard handler pattern (from line 811-820):
+
 ```typescript
 useEffect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -192,11 +193,14 @@ useEffect(() => {
 ```
 
 Existing button styling (from TopBar.tsx):
+
 ```typescript
-className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm disabled:opacity-40 disabled:cursor-not-allowed"
+className =
+  "flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm disabled:opacity-40 disabled:cursor-not-allowed";
 ```
 
 Types to import:
+
 ```typescript
 import type { AudioLayer } from "@/lib/types/audioLayer";
 import type { TweaksConfig } from "@/lib/types/tweaks";
@@ -213,9 +217,11 @@ Status field: matches (done)
 Acceptance criteria: 11/11 checked
 
 Issues found:
+
 - TASKBOARD.md was stale (showed task in todo/ instead of done/) - fixed
 
 Actions taken:
+
 - Verified task file correctly in `.claude/tasks/done/`
 - Verified all 11 acceptance criteria are checked
 - Verified implementation files exist (`lib/hooks/useHistory.ts`, tests, TopBar, studio page)
@@ -228,10 +234,12 @@ Task verified: PASS
 ### 2026-01-24 15:17 - Review Complete
 
 **Code Review:**
+
 - Issues found: none
 - Issues fixed: N/A
 
 **Code Review Checklist:**
+
 - [x] Code follows project conventions (TypeScript, React hooks, Tailwind CSS)
 - [x] No code smells or anti-patterns (clean separation of concerns)
 - [x] Error handling is appropriate (no-op on invalid operations)
@@ -240,14 +248,17 @@ Task verified: PASS
 - [x] Proper use of transactions (N/A - client-side)
 
 **Consistency:**
+
 - All criteria met: yes
 - Test coverage adequate: yes (44 tests for useHistory hook)
 - Docs in sync: yes
 
 **Follow-up tasks created:**
+
 - None required - implementation is complete and clean
 
 **Final Quality Gates:**
+
 - ESLint: Pass
 - TypeScript: Pass
 - Prettier: Pass (code files)
@@ -258,29 +269,35 @@ Task verified: PASS
 ### 2026-01-24 15:14 - Documentation Sync
 
 Docs updated:
+
 - Task file: Updated Testing Evidence, Notes, and Links sections
 - No external docs require updates (README.md doesn't document individual features)
 
 Annotations:
+
 - N/A - This is a Next.js project, no Ruby models to annotate
 
 Consistency checks:
+
 - [x] Code matches docs - useHistory.ts has comprehensive JSDoc comments
 - [x] No broken links - all file references verified
 - [x] No external documentation needed - feature is self-discoverable via UI
 
 Notes:
+
 - useHistory hook already has JSDoc comments for all public methods
 - TopBar tooltips provide keyboard shortcut hints to users
-- No docs/*.md directory exists in this project - documentation is in README.md only
+- No docs/\*.md directory exists in this project - documentation is in README.md only
 - Feature doesn't warrant README update (internal UX feature, not API change)
 
 ### 2026-01-24 15:13 - Testing Complete
 
 Tests written:
-- lib/hooks/__tests__/useHistory.test.ts - 44 examples
+
+- lib/hooks/**tests**/useHistory.test.ts - 44 examples
 
 Test coverage:
+
 - Module structure and exports
 - Deep equality behavior (JSON.stringify comparison)
 - History stack operations (push, undo, redo, clear, reset)
@@ -292,10 +309,12 @@ Test coverage:
 - Edge cases (empty state, null, circular refs, rapid pushes)
 
 Test results:
+
 - Total: 1107 examples, 0 failures (44 new + 1063 existing)
 - All tests passing
 
 Quality gates:
+
 - ESLint: Pass
 - TypeScript: Pass
 - Prettier: Pass
@@ -405,6 +424,7 @@ New test file: lib/hooks/__tests__/useHistory.test.ts (44 tests)
 ```
 
 **Manual Testing:**
+
 - Keyboard shortcuts: Cmd/Ctrl+Z (undo), Cmd/Ctrl+Shift+Z (redo), Cmd/Ctrl+Y (redo alternate)
 - UI buttons show disabled state appropriately
 - History persists during session, clears on track switch
@@ -426,13 +446,16 @@ New test file: lib/hooks/__tests__/useHistory.test.ts (44 tests)
 ## Links
 
 **Files Created:**
+
 - `lib/hooks/useHistory.ts` - Core undo/redo hook (184 lines)
 - `lib/hooks/__tests__/useHistory.test.ts` - Test suite (44 tests)
 
 **Files Modified:**
+
 - `components/studio/TopBar.tsx` - Undo/redo buttons added
 - `app/studio/page.tsx` - History integration and keyboard shortcuts
 
 **Reference:**
+
 - NPM: `use-undo`, `immer` - alternative libraries (not used, custom implementation preferred)
 - Pattern: Past/Present/Future stacks (standard undo/redo architecture)

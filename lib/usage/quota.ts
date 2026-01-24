@@ -1,11 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import {
-  QuotaResult,
-  UserQuota,
-  DEFAULT_DAILY_TOKEN_LIMIT,
-  ENV_DAILY_TOKEN_LIMIT,
-} from "./types";
+import { QuotaResult, UserQuota, DEFAULT_DAILY_TOKEN_LIMIT, ENV_DAILY_TOKEN_LIMIT } from "./types";
 
 // Create a service client for server-side operations
 async function createServiceClient() {
@@ -52,9 +47,7 @@ export function getDefaultDailyTokenLimit(): number {
  */
 function getStartOfToday(): Date {
   const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
 /**
@@ -104,10 +97,7 @@ export async function checkDailyQuota(userId: string): Promise<QuotaResult> {
 /**
  * Record token usage for a user.
  */
-export async function recordTokenUsage(
-  userId: string,
-  tokens: number
-): Promise<void> {
+export async function recordTokenUsage(userId: string, tokens: number): Promise<void> {
   const supabase = await createServiceClient();
   const today = getStartOfToday();
 
@@ -212,8 +202,7 @@ export async function getUserQuota(userId: string): Promise<UserQuota> {
   if (periodStart < today) {
     return {
       userId,
-      dailyTokenLimit:
-        quotaSettings?.daily_token_limit ?? getDefaultDailyTokenLimit(),
+      dailyTokenLimit: quotaSettings?.daily_token_limit ?? getDefaultDailyTokenLimit(),
       requestsPerMinute: quotaSettings?.requests_per_minute ?? 20,
       tier: quotaSettings?.tier ?? "free",
       tokensUsed: 0,
@@ -224,8 +213,7 @@ export async function getUserQuota(userId: string): Promise<UserQuota> {
 
   return {
     userId,
-    dailyTokenLimit:
-      quotaSettings?.daily_token_limit ?? getDefaultDailyTokenLimit(),
+    dailyTokenLimit: quotaSettings?.daily_token_limit ?? getDefaultDailyTokenLimit(),
     requestsPerMinute: quotaSettings?.requests_per_minute ?? 20,
     tier: quotaSettings?.tier ?? "free",
     tokensUsed: usage?.tokens_used ?? 0,

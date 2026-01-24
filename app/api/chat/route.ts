@@ -142,9 +142,7 @@ export async function POST(req: Request) {
         status: 429,
         headers: {
           "Content-Type": "application/json",
-          "Retry-After": Math.ceil(
-            (rateLimit.resetAt.getTime() - Date.now()) / 1000
-          ).toString(),
+          "Retry-After": Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000).toString(),
         },
       }
     );

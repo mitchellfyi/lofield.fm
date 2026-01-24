@@ -22,7 +22,11 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState({ dailyTokenLimit: 0, requestsPerMinute: 0, tier: "" });
+  const [editValues, setEditValues] = useState({
+    dailyTokenLimit: 0,
+    requestsPerMinute: 0,
+    tier: "",
+  });
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -129,7 +133,12 @@ export default function AdminUsersPage() {
             className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-purple-300 transition-colors mb-4"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back to Admin
           </Link>
@@ -164,16 +173,17 @@ export default function AdminUsersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-300">
-                      {u.tokensUsed.toLocaleString()}
-                    </td>
+                    <td className="px-4 py-3 text-slate-300">{u.tokensUsed.toLocaleString()}</td>
                     <td className="px-4 py-3">
                       {editingUser === u.id ? (
                         <input
                           type="number"
                           value={editValues.dailyTokenLimit}
                           onChange={(e) =>
-                            setEditValues({ ...editValues, dailyTokenLimit: parseInt(e.target.value) || 0 })
+                            setEditValues({
+                              ...editValues,
+                              dailyTokenLimit: parseInt(e.target.value) || 0,
+                            })
                           }
                           className="w-24 px-2 py-1 rounded bg-slate-700 border border-slate-600 text-slate-200"
                         />
@@ -187,7 +197,10 @@ export default function AdminUsersPage() {
                           type="number"
                           value={editValues.requestsPerMinute}
                           onChange={(e) =>
-                            setEditValues({ ...editValues, requestsPerMinute: parseInt(e.target.value) || 0 })
+                            setEditValues({
+                              ...editValues,
+                              requestsPerMinute: parseInt(e.target.value) || 0,
+                            })
                           }
                           className="w-20 px-2 py-1 rounded bg-slate-700 border border-slate-600 text-slate-200"
                         />
