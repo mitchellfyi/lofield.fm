@@ -598,10 +598,24 @@ export default function StudioPage() {
       return;
     }
 
+    // Build context with all layers for the AI to understand the composition
+    let codeContext: string;
+    if (layers.length > 1) {
+      // Multi-layer: show each layer's code with its name
+      const layerContexts = layers.map(
+        (layer) =>
+          `=== LAYER: ${layer.name}${layer.muted ? " [MUTED]" : ""}${layer.soloed ? " [SOLO]" : ""} ===\n${layer.code}`
+      );
+      codeContext = layerContexts.join("\n\n");
+    } else {
+      // Single layer: just show the code
+      codeContext = code;
+    }
+
     // Include current code as context for the AI to make incremental changes
     const messageWithContext = `Current code:
 \`\`\`js
-${code}
+${codeContext}
 \`\`\`
 
 Request: ${inputValue}`;
