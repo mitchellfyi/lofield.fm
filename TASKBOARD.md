@@ -1,98 +1,49 @@
-# TASKBOARD - lofield.fm
+# Taskboard
 
-> Auto-generated overview of all tasks. See `.claude/tasks/` for full details.
+> Auto-generated
+> Last updated: 2026-01-24 11:11
 
 ## Summary
 
 | Status | Count |
-| ------ | ----- |
-| Todo   | 15    |
-| Doing  | 0     |
-| Done   | 5     |
+|--------|-------|
+| Doing | 0 |
+| Todo | 14 |
+| Done | 6 |
 
 ---
 
-## Todo (15)
+## In Progress
 
-### Priority 003 - Medium (13)
-
-| ID        | Task                                                                                                     | Blocked By           |
-| --------- | -------------------------------------------------------------------------------------------------------- | -------------------- |
-| `003-001` | [Save Tracks to Database with Basic CRUD](.claude/tasks/todo/003-001-save-tracks-db.md)                  | `002-004`            |
-| `003-002` | [Track Version History with Revert and Diff View](.claude/tasks/todo/003-002-track-revisions.md)         | `003-001`            |
-| `003-003` | [Export Options - Copy Code, Download JS, Render Audio](.claude/tasks/todo/003-003-export-options.md)    | -                    |
-| `003-004` | [Shareable Links with Public Read-Only Pages](.claude/tasks/todo/003-004-shareable-links.md)             | `003-001`            |
-| `003-005` | [Preset Library with Starter Patterns and Genre Templates](.claude/tasks/todo/003-005-preset-library.md) | -                    |
-| `003-006` | [Tweaks UX - Quick Parameter Sliders](.claude/tasks/todo/003-006-tweaks-ux.md)                           | -                    |
-| `003-007` | [Multi-Track Support with Mute/Solo](.claude/tasks/todo/003-007-multi-track-support.md)                  | -                    |
-| `003-008` | [Undo/Redo Across Chat and Code Edits](.claude/tasks/todo/003-008-undo-redo.md)                          | -                    |
-| `003-009` | [Session Cost Controls - Rate Limits and Quotas](.claude/tasks/todo/003-009-session-cost-controls.md)    | `002-004`            |
-| `003-010` | [Observability - Error Tracking and Event Logging](.claude/tasks/todo/003-010-observability.md)          | -                    |
-| `003-011` | [Record Mode - Capture Live Performance Changes](.claude/tasks/todo/003-011-record-mode.md)              | `003-001`, `003-006` |
-| `003-012` | [Install Vercel Analytics](.claude/tasks/todo/003-012-install-vercel-analytics.md)                       | -                    |
-
-### Priority 004 - Low (3)
-
-| ID        | Task                                                                           | Blocked By |
-| --------- | ------------------------------------------------------------------------------ | ---------- |
-| `004-001` | [Mobile Usability Pass](.claude/tasks/todo/004-001-mobile-usability.md)        | -          |
-| `004-001` | [Model Cost Display](.claude/tasks/todo/004-001-model-cost-display.md)         | -          |
-| `004-002` | [Model-Specific Prompts](.claude/tasks/todo/004-002-model-specific-prompts.md) | -          |
+_No tasks in progress_
 
 ---
 
-## Doing (0)
+## Todo
 
-_No tasks in progress._
-
----
-
-## Done (5)
-
-| ID        | Task                                                                                                               | Completed        |
-| --------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| `002-001` | [Setup Quality Checking Scripts and CI Pipeline](.claude/tasks/done/002-001-quality-ci-setup.md)                   | 2026-01-23 20:12 |
-| `002-002` | [Add AI Model Selection with gpt-4o-mini Default](.claude/tasks/done/002-002-ai-model-selection.md)                | 2026-01-23 20:52 |
-| `002-003` | [Chat Prompt Hardening with Schema Validation and Retry Loop](.claude/tasks/done/002-003-chat-prompt-hardening.md) | 2026-01-23 21:12 |
-| `002-004` | [Implement Supabase Backend and Authentication](.claude/tasks/done/002-004-supabase-auth-setup.md)                 | 2026-01-23 21:20 |
-| `002-005` | [User API Key Management with Required Modal](.claude/tasks/done/002-005-api-key-management.md)                    | 2026-01-23 21:47 |
-
----
-
-## Dependency Graph
-
-```
-002-004 (Supabase Auth) [DONE]
-├── 002-005 (API Key Management) [DONE]
-├── 003-001 (Save Tracks) [UNBLOCKED]
-│   ├── 003-002 (Track Revisions)
-│   ├── 003-004 (Shareable Links)
-│   └── 003-011 (Record Mode) <- also needs 003-006
-└── 003-009 (Cost Controls) [UNBLOCKED]
-
-003-006 (Tweaks UX)
-└── 003-011 (Record Mode) <- also needs 003-001
-```
+- **[003-002-track-revisions.md](.claude/tasks/todo/003-002-track-revisions.md)**
+- **[003-003-export-options.md](.claude/tasks/todo/003-003-export-options.md)**
+- **[003-004-shareable-links.md](.claude/tasks/todo/003-004-shareable-links.md)**
+- **[003-005-preset-library.md](.claude/tasks/todo/003-005-preset-library.md)**
+- **[003-006-tweaks-ux.md](.claude/tasks/todo/003-006-tweaks-ux.md)**
+- **[003-007-multi-track-support.md](.claude/tasks/todo/003-007-multi-track-support.md)**
+- **[003-008-undo-redo.md](.claude/tasks/todo/003-008-undo-redo.md)**
+- **[003-009-session-cost-controls.md](.claude/tasks/todo/003-009-session-cost-controls.md)**
+- **[003-010-observability.md](.claude/tasks/todo/003-010-observability.md)**
+- **[003-011-record-mode.md](.claude/tasks/todo/003-011-record-mode.md)**
+- **[003-012-install-vercel-analytics.md](.claude/tasks/todo/003-012-install-vercel-analytics.md)**
+- **[004-001-mobile-usability.md](.claude/tasks/todo/004-001-mobile-usability.md)**
+- **[004-001-model-cost-display.md](.claude/tasks/todo/004-001-model-cost-display.md)**
+- **[004-002-model-specific-prompts.md](.claude/tasks/todo/004-002-model-specific-prompts.md)**
 
 ---
 
-## Next Actions
+## Recently Completed (Last 10)
 
-Tasks ready to start (no blockers):
+- **[003-001-save-tracks-db.md](.claude/tasks/done/003-001-save-tracks-db.md)**
+- **[002-005-api-key-management.md](.claude/tasks/done/002-005-api-key-management.md)**
+- **[002-004-supabase-auth-setup.md](.claude/tasks/done/002-004-supabase-auth-setup.md)**
+- **[002-003-chat-prompt-hardening.md](.claude/tasks/done/002-003-chat-prompt-hardening.md)**
+- **[002-002-ai-model-selection.md](.claude/tasks/done/002-002-ai-model-selection.md)**
+- **[002-001-quality-ci-setup.md](.claude/tasks/done/002-001-quality-ci-setup.md)**
 
-1. **003-001** - Save Tracks (unlocked by 002-004)
-2. **003-003** - Export Options
-3. **003-005** - Preset Library
-4. **003-006** - Tweaks UX
-5. **003-007** - Multi-Track Support
-6. **003-008** - Undo/Redo
-7. **003-009** - Cost Controls (unlocked by 002-004)
-8. **003-010** - Observability
-9. **003-012** - Install Vercel Analytics
-10. **004-001** - Mobile Usability
-11. **004-001** - Model Cost Display
-12. **004-002** - Model-Specific Prompts
-
----
-
-_Last updated: 2026-01-23 21:47_
