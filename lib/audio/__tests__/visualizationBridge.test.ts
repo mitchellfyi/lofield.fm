@@ -1,14 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // Mock Tone.js before importing the bridge
-vi.mock("tone", () => ({
-  Transport: {
-    state: "stopped",
-    position: "0:0:0",
-    seconds: 0,
-    bpm: { value: 120 },
-  },
-}));
+vi.mock("tone", () => {
+  class MockAnalyser {
+    smoothing = 0.8;
+    getValue() {
+      return new Float32Array(64);
+    }
+  }
+
+  return {
+    Transport: {
+      state: "stopped",
+      position: "0:0:0",
+      seconds: 0,
+      bpm: { value: 120 },
+    },
+    Analyser: MockAnalyser,
+    getDestination: () => ({ connect: vi.fn() }),
+  };
+});
 
 import { getVisualizationBridge } from "../visualizationBridge";
 
