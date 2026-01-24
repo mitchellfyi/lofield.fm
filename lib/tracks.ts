@@ -5,12 +5,7 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type {
-  Project,
-  Track,
-  Revision,
-  ProjectWithTrackCount,
-} from "@/lib/types/tracks";
+import type { Project, Track, Revision, ProjectWithTrackCount } from "@/lib/types/tracks";
 
 async function createServiceClient() {
   const cookieStore = await cookies();
@@ -46,10 +41,12 @@ export async function getProjects(userId: string): Promise<ProjectWithTrackCount
 
   const { data, error } = await supabase
     .from("projects")
-    .select(`
+    .select(
+      `
       *,
       tracks:tracks(count)
-    `)
+    `
+    )
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
@@ -168,10 +165,12 @@ export async function getTrack(userId: string, trackId: string): Promise<Track |
 
   const { data, error } = await supabase
     .from("tracks")
-    .select(`
+    .select(
+      `
       *,
       project:projects!inner(user_id)
-    `)
+    `
+    )
     .eq("id", trackId)
     .single();
 
@@ -321,5 +320,75 @@ export async function createRevision(
     throw new Error(`Failed to create revision: ${error.message}`);
   }
 
+  // Prune old revisions to keep only the last 50
+  await pruneRevisions(trackId, 50);
+
   return data;
+}
+
+export async function getRevision(
+  userId: string,
+  trackId: string,
+  revisionId: string
+): Promise<Revision | null> {
+  const supabase = await createServiceClient();
+
+  // Verify track ownership
+  const track = await getTrack(userId, trackId);
+  if (!track) {
+    throw new Error("Track not found or access denied");
+  }
+
+  const { data, error } = await supabase
+    .from("revisions")
+    .select("*")
+    .eq("id", revisionId)
+    .eq("track_id", trackId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+    throw new Error(`Failed to fetch revision: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Prune old revisions for a track, keeping only the most recent N revisions.
+ * This is called automatically after creating a new revision.
+ */
+export async function pruneRevisions(trackId: string, keepCount: number = 50): Promise<number> {
+  const supabase = await createServiceClient();
+
+  // Get all revisions for this track, ordered by created_at
+  const { data: revisions, error: fetchError } = await supabase
+    .from("revisions")
+    .select("id, created_at")
+    .eq("track_id", trackId)
+    .order("created_at", { ascending: false });
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch revisions for pruning: ${fetchError.message}`);
+  }
+
+  // If we have more than keepCount revisions, delete the old ones
+  if (revisions && revisions.length > keepCount) {
+    const revisionsToDelete = revisions.slice(keepCount).map((r) => r.id);
+
+    const { error: deleteError } = await supabase
+      .from("revisions")
+      .delete()
+      .in("id", revisionsToDelete);
+
+    if (deleteError) {
+      throw new Error(`Failed to prune revisions: ${deleteError.message}`);
+    }
+
+    return revisionsToDelete.length;
+  }
+
+  return 0;
 }
