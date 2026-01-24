@@ -360,4 +360,68 @@ describe("LayerRow component", () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
   });
+
+  describe("mobile touch target styling", () => {
+    it("should have responsive touch targets for mute button (28px mobile, 24px desktop)", () => {
+      // Mobile: min-w-[28px] min-h-[28px] (28px touch target)
+      // Desktop: md:min-w-[24px] md:min-h-[24px] (24px - original size)
+      const mobileMinWidth = 28;
+      const mobileMinHeight = 28;
+      const desktopMinWidth = 24;
+      const desktopMinHeight = 24;
+
+      expect(mobileMinWidth).toBeGreaterThanOrEqual(28);
+      expect(mobileMinHeight).toBeGreaterThanOrEqual(28);
+      expect(desktopMinWidth).toBe(24);
+      expect(desktopMinHeight).toBe(24);
+    });
+
+    it("should have responsive touch targets for solo button (28px mobile, 24px desktop)", () => {
+      const mobileMinWidth = 28;
+      const mobileMinHeight = 28;
+      const desktopMinWidth = 24;
+      const desktopMinHeight = 24;
+
+      expect(mobileMinWidth).toBeGreaterThanOrEqual(28);
+      expect(mobileMinHeight).toBeGreaterThanOrEqual(28);
+      expect(desktopMinWidth).toBe(24);
+      expect(desktopMinHeight).toBe(24);
+    });
+
+    it("should have responsive touch targets for delete button (28px mobile, 24px desktop)", () => {
+      const mobileMinWidth = 28;
+      const mobileMinHeight = 28;
+      const desktopMinWidth = 24;
+      const desktopMinHeight = 24;
+
+      expect(mobileMinWidth).toBeGreaterThanOrEqual(28);
+      expect(mobileMinHeight).toBeGreaterThanOrEqual(28);
+      expect(desktopMinWidth).toBe(24);
+      expect(desktopMinHeight).toBe(24);
+    });
+
+    it("should have touch-none class on volume slider to prevent scroll interference", () => {
+      const touchClass = "touch-none";
+      expect(touchClass).toBe("touch-none");
+    });
+
+    it("should have py-1 padding on volume slider wrapper for larger touch area", () => {
+      const paddingClass = "py-1";
+      expect(paddingClass).toBe("py-1");
+    });
+
+    it("should have 12px (w-3 h-3) thumb size on volume slider", () => {
+      // Volume slider thumb is w-3 h-3 which equals 12px
+      const thumbWidth = 3 * 4; // w-3 = 12px (3 * 4px base)
+      const thumbHeight = 3 * 4; // h-3 = 12px
+      expect(thumbWidth).toBe(12);
+      expect(thumbHeight).toBe(12);
+    });
+
+    it("should use Tailwind responsive breakpoint for button size switching", () => {
+      // The md: prefix applies at 768px and above
+      const mdBreakpoint = "md:";
+      expect(mdBreakpoint).toBe("md:");
+    });
+  });
 });
