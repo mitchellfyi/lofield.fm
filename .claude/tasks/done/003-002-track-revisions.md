@@ -12,8 +12,8 @@
 | Completed   | `2026-01-24 11:32`        |
 | Blocked By  | `003-001-save-tracks-db`  |
 | Blocks      |                           |
-| Assigned To |                           |
-| Assigned At |                           |
+| Assigned To | |
+| Assigned At | |
 
 ---
 
