@@ -24,16 +24,8 @@ const DEFAULT_SAMPLE_RATE = 44100;
  * @param options - Export options
  * @returns A Blob containing the audio file
  */
-export async function renderAudio(
-  code: string,
-  options: AudioExportOptions
-): Promise<Blob> {
-  const {
-    format,
-    duration,
-    sampleRate = DEFAULT_SAMPLE_RATE,
-    onProgress,
-  } = options;
+export async function renderAudio(code: string, options: AudioExportOptions): Promise<Blob> {
+  const { format, duration, sampleRate = DEFAULT_SAMPLE_RATE, onProgress } = options;
 
   const reportProgress = (phase: ExportProgress["phase"], percent: number, message?: string) => {
     onProgress?.({ phase, percent, message });

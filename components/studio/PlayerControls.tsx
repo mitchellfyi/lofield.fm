@@ -11,7 +11,13 @@ interface PlayerControlsProps {
   exportButton?: React.ReactNode;
 }
 
-export function PlayerControls({ playerState, audioLoaded, onPlay, onStop, exportButton }: PlayerControlsProps) {
+export function PlayerControls({
+  playerState,
+  audioLoaded,
+  onPlay,
+  onStop,
+  exportButton,
+}: PlayerControlsProps) {
   const isLoading = playerState === "loading";
   const canPlay = audioLoaded && !isLoading && playerState !== "error";
   const isPlaying = playerState === "playing";

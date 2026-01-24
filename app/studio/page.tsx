@@ -599,7 +599,7 @@ Request: ${inputValue}`;
   }, []);
 
   const dismissToast = useCallback(() => {
-    setToast(prev => ({ ...prev, visible: false }));
+    setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
   // Track unsaved changes when code differs from last saved

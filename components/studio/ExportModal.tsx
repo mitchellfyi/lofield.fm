@@ -133,9 +133,7 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
         {/* Header */}
         <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800">
           <h2 className="text-xl font-bold text-cyan-300">Export Audio</h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Render your track to an audio file
-          </p>
+          <p className="text-sm text-slate-400 mt-1">Render your track to an audio file</p>
         </div>
 
         {/* Content */}
@@ -212,7 +210,8 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
 
           {/* Estimated Size */}
           <div className="text-sm text-slate-500">
-            Estimated file size: <span className="text-slate-300">{formatFileSize(estimatedSize)}</span>
+            Estimated file size:{" "}
+            <span className="text-slate-300">{formatFileSize(estimatedSize)}</span>
           </div>
 
           {/* Progress Bar */}
@@ -234,9 +233,7 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
                   style={{ width: `${progress.percent}%` }}
                 />
               </div>
-              {progress.message && (
-                <p className="text-xs text-slate-500">{progress.message}</p>
-              )}
+              {progress.message && <p className="text-xs text-slate-500">{progress.message}</p>}
             </div>
           )}
 

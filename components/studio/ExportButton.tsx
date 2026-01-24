@@ -44,9 +44,7 @@ export function ExportButton({
   };
 
   const handleDownloadJS = () => {
-    const filename = trackName
-      ? `${trackName.toLowerCase().replace(/\s+/g, "-")}.js`
-      : undefined;
+    const filename = trackName ? `${trackName.toLowerCase().replace(/\s+/g, "-")}.js` : undefined;
     downloadAsJS(code, filename);
     onToast("Downloaded as JS file", "success");
     setShowDropdown(false);

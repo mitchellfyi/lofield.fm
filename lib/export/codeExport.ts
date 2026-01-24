@@ -27,9 +27,7 @@ export async function copyToClipboard(code: string): Promise<CodeExportResult> {
     const success = document.execCommand("copy");
     document.body.removeChild(textArea);
 
-    return success
-      ? { success: true }
-      : { success: false, error: "Copy command failed" };
+    return success ? { success: true } : { success: false, error: "Copy command failed" };
   } catch (error) {
     return {
       success: false,

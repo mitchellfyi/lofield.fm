@@ -12,8 +12,10 @@ interface ToastProps {
 }
 
 const typeStyles: Record<ToastType, string> = {
-  success: "bg-gradient-to-r from-emerald-600/90 via-emerald-500/90 to-emerald-600/90 border-emerald-400/30 shadow-emerald-500/20",
-  error: "bg-gradient-to-r from-red-600/90 via-red-500/90 to-red-600/90 border-red-400/30 shadow-red-500/20",
+  success:
+    "bg-gradient-to-r from-emerald-600/90 via-emerald-500/90 to-emerald-600/90 border-emerald-400/30 shadow-emerald-500/20",
+  error:
+    "bg-gradient-to-r from-red-600/90 via-red-500/90 to-red-600/90 border-red-400/30 shadow-red-500/20",
   info: "bg-gradient-to-r from-cyan-600/90 via-cyan-500/90 to-cyan-600/90 border-cyan-400/30 shadow-cyan-500/20",
 };
 
@@ -30,7 +32,12 @@ const typeIcons: Record<ToastType, React.ReactNode> = {
   ),
   info: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   ),
 };
@@ -58,7 +65,12 @@ export function Toast({ message, type, visible, onDismiss, duration = 3000 }: To
           aria-label="Dismiss"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
