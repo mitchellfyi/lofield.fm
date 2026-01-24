@@ -18,6 +18,10 @@ interface TopBarProps {
   onOpenHistory?: () => void;
   hasRevisions?: boolean;
   hasUnsavedChanges?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 export function TopBar({
@@ -30,6 +34,10 @@ export function TopBar({
   onOpenHistory,
   hasRevisions,
   hasUnsavedChanges = false,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
 }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [showPresetBrowser, setShowPresetBrowser] = useState(false);
@@ -101,6 +109,54 @@ export function TopBar({
                 </svg>
                 <span className="hidden sm:inline">{currentTrackName || "My Tracks"}</span>
               </button>
+            )}
+
+            {/* Undo/Redo Buttons */}
+            {onUndo && onRedo && (
+              <div className="flex items-center">
+                <button
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                  className="flex items-center justify-center px-2 py-2 rounded-l-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-cyan-500/30 disabled:hover:bg-transparent"
+                  aria-label="Undo (Cmd/Ctrl+Z)"
+                  title="Undo (Cmd/Ctrl+Z)"
+                >
+                  <svg
+                    className="w-5 h-5 sm:w-4 sm:h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h10a5 5 0 015 5v2M3 10l5-5M3 10l5 5"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={onRedo}
+                  disabled={!canRedo}
+                  className="flex items-center justify-center px-2 py-2 rounded-r-sm text-sm font-medium text-cyan-300 border border-l-0 border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-cyan-500/30 disabled:hover:bg-transparent"
+                  aria-label="Redo (Cmd/Ctrl+Shift+Z)"
+                  title="Redo (Cmd/Ctrl+Shift+Z)"
+                >
+                  <svg
+                    className="w-5 h-5 sm:w-4 sm:h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 10H11a5 5 0 00-5 5v2m15-7l-5-5m5 5l-5 5"
+                    />
+                  </svg>
+                </button>
+              </div>
             )}
 
             {/* History Button */}
