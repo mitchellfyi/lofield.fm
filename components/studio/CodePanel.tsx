@@ -183,7 +183,7 @@ export function CodePanel({
           {showSequencerToggle && (
             <button
               onClick={onSequencerToggle}
-              className={`px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 ${
+              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 flex items-center justify-center ${
                 sequencerVisible
                   ? "text-cyan-400 border border-cyan-500/50 bg-cyan-500/10"
                   : "text-slate-400 border border-slate-600"
@@ -202,13 +202,13 @@ export function CodePanel({
           )}
           <button
             onClick={handleRevert}
-            className="px-2 sm:px-3 py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
+            className="min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-3 sm:py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
           >
             Revert
           </button>
           <button
             onClick={handleCopy}
-            className="px-2 sm:px-3 py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
+            className="min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-3 sm:py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
           >
             {copied ? "Copied!" : "Copy"}
           </button>
