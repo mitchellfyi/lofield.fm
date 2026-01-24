@@ -945,17 +945,40 @@ Request: ${inputValue}`;
     }
   }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code]);
 
-  // Keyboard shortcuts for save
+  // Keyboard shortcuts for save and undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+S: Save
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
+        return;
+      }
+
+      // Cmd/Ctrl+Z: Undo (without Shift)
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+
+      // Cmd/Ctrl+Shift+Z: Redo
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
+      // Cmd/Ctrl+Y: Redo (alternative shortcut)
+      if ((e.metaKey || e.ctrlKey) && e.key === "y") {
+        e.preventDefault();
+        handleRedo();
+        return;
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave]);
+  }, [handleSave, handleUndo, handleRedo]);
 
   return (
     <>
