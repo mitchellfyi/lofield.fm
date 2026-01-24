@@ -15,6 +15,8 @@ interface TopBarProps {
   onModelChange?: (model: string) => void;
   currentTrackName?: string | null;
   onOpenTracks?: () => void;
+  onOpenHistory?: () => void;
+  hasRevisions?: boolean;
 }
 
 export function TopBar({
@@ -24,6 +26,8 @@ export function TopBar({
   onModelChange,
   currentTrackName,
   onOpenTracks,
+  onOpenHistory,
+  hasRevisions,
 }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
@@ -110,9 +114,34 @@ export function TopBar({
                     d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                   />
                 </svg>
-                <span className="hidden sm:inline">
-                  {currentTrackName || "My Tracks"}
-                </span>
+                <span className="hidden sm:inline">{currentTrackName || "My Tracks"}</span>
+              </button>
+            )}
+
+            {/* History Button */}
+            {onOpenHistory && (
+              <button
+                onClick={onOpenHistory}
+                className="relative flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+                aria-label="Version History"
+              >
+                <svg
+                  className="w-5 h-5 sm:w-4 sm:h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">History</span>
+                {hasRevisions && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full" />
+                )}
               </button>
             )}
 
