@@ -54,10 +54,7 @@ export async function PUT(req: Request, context: RouteContext) {
     const result = updateTrackSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
     const updates: { name?: string; current_code?: string } = {};
