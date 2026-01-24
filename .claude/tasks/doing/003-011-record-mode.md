@@ -8,12 +8,12 @@
 | Status      | `doing`                                       |
 | Priority    | `003` Medium                                  |
 | Created     | `2026-01-23 12:30`                            |
-| Started     | `2026-01-24 17:19`                            |
+| Started     | `2026-01-24 17:49`                            |
 | Completed   |                                               |
 | Blocked By  | `003-001-save-tracks-db`, `003-006-tweaks-ux` |
 | Blocks      |                                               |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-24 17:19` |
+| Assigned To | `worker-1`                                    |
+| Assigned At | `2026-01-24 17:49`                            |
 
 ---
 
@@ -50,26 +50,103 @@ Users want to "perform" with their beats - making live changes to parameters (BP
 
 ## Plan
 
-### Implementation Plan (Generated 2026-01-24)
+### Implementation Plan (Updated 2026-01-24 - Phase 2 Gap Analysis)
 
-#### Gap Analysis
+#### Gap Analysis (Current State Assessment)
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| "Record" button that starts capturing changes while playing | **MISSING** | Need RecordButton component, recording state hook |
-| Visual recording indicator (red dot, timer) | **MISSING** | Part of RecordButton, need timer state |
-| Captures: timestamp, parameter changed, old value, new value | **MISSING** | Need Recording type, capture logic in TweaksPanel |
-| Timeline visualization showing recorded changes | **MISSING** | Need RecordingTimeline component with event markers |
-| Playback mode: replays changes in sync with audio | **MISSING** | Need useRecordingPlayback hook, sync with TransportState |
-| Edit recorded automation (delete points, adjust values) | **MISSING** | Timeline click-to-select, edit modal or inline editing |
-| Save recording to database with track | **MISSING** | Need 006_recordings.sql migration, useRecordings hook |
-| Export as rendered audio (changes baked in) | **PARTIAL** | audioExport.ts exists, need to apply automation during render |
-| Export as JSON automation data | **MISSING** | Need recordingExport.ts with JSON export |
-| Export as video (screen capture) | **FUTURE** | Out of scope for initial implementation |
-| Streaming architecture for real-time capture | **MISSING** | Design now, implement via RAF polling pattern used by VisualizationBridge |
-| Tests written and passing | **MISSING** | Need unit tests for hooks, component tests |
-| Quality gates pass | **PENDING** | Run after implementation |
-| Changes committed with task reference | **PENDING** | Commit after completion |
+| Criterion                                                    | Status         | Gap / Notes                                                                        |
+| ------------------------------------------------------------ | -------------- | ---------------------------------------------------------------------------------- |
+| "Record" button that starts capturing changes while playing  | **COMPLETE**   | RecordButton.tsx created, integrated in studio page                                |
+| Visual recording indicator (red dot, timer)                  | **COMPLETE**   | RecordButton has pulse animation, timer display with formatRecordingTime           |
+| Captures: timestamp, parameter changed, old value, new value | **COMPLETE**   | useRecording.ts captures events with performance.now() timing, debounce (50ms)     |
+| Timeline visualization showing recorded changes              | **COMPLETE**   | RecordingTimeline.tsx with event markers, playhead, color coding by param          |
+| Playback mode: replays changes in sync with audio            | **IMPLEMENTED**| useRecordingPlayback.ts exists BUT NOT WIRED UP in studio page                     |
+| Edit recorded automation (delete points, adjust values)      | **PARTIAL**    | Delete events works in timeline, no value adjustment UI yet                        |
+| Save recording to database with track                        | **COMPLETE**   | 006_recordings.sql, useRecordings.ts, API routes created                           |
+| Export as rendered audio (changes baked in)                  | **NOT STARTED**| audioExport.ts exists but NO automation integration                                |
+| Export as JSON automation data                               | **COMPLETE**   | recordingExport.ts with JSON/CSV export, merge, trim utilities                     |
+| Export as video (screen capture)                             | **FUTURE**     | Out of scope for initial implementation                                            |
+| Streaming architecture for real-time capture                 | **COMPLETE**   | RAF-based elapsed time updates in useRecording                                     |
+| Tests written and passing                                    | **PARTIAL**    | 4 test files exist (types, export, RecordButton, RecordingTimeline)                |
+| Quality gates pass                                           | **PENDING**    | Run after implementation gaps are filled                                           |
+| Changes committed with task reference                        | **PARTIAL**    | 12 commits made, but task not complete                                             |
+
+#### Critical Gaps to Fill
+
+**1. Wire up useRecordingPlayback in studio page** (HIGH PRIORITY)
+- The hook exists and is fully implemented
+- NOT integrated in app/studio/page.tsx
+- Need to add: import, instantiate, wire callbacks to handleTweaksChange
+- This makes "playback mode" actually work
+
+**2. Export as rendered audio with automation** (MEDIUM PRIORITY)
+- audioExport.ts exists but doesn't accept recording parameter
+- Need to add Recording parameter and schedule tweak injections
+- Complex: requires modifying offline audio context rendering
+
+**3. Edit recorded automation - value adjustment** (LOW PRIORITY)
+- Delete works, but no UI to adjust values
+- Could add inline editing in RecordingTimeline or modal
+- Considered lower priority for MVP
+
+**4. Missing tests** (MEDIUM PRIORITY)
+- No tests for: useRecording, useRecordings, useRecordingPlayback hooks
+- Need unit tests following pattern in lib/hooks/__tests__/
+
+#### Files to Modify
+
+1. **`app/studio/page.tsx`** - Wire up useRecordingPlayback
+   - Import useRecordingPlayback
+   - Call hook with activeRecording and callbacks
+   - Connect onTweakChange to handleTweaksChange equivalent
+
+2. **`lib/export/audioExport.ts`** - Add recording automation support
+   - Add optional `recording?: Recording` parameter to renderAudio
+   - Schedule parameter changes at event timestamps during offline render
+   - This is complex and may require significant changes
+
+#### Files to Create (Tests)
+
+1. **`lib/hooks/__tests__/useRecording.test.ts`**
+   - Test start/stop recording
+   - Test event capture with proper timestamps
+   - Test debouncing behavior
+   - Test captureTweak, captureLayerMute, etc.
+
+2. **`lib/hooks/__tests__/useRecordings.test.ts`**
+   - Test CRUD operations
+   - Test error handling
+   - Test local state updates
+
+3. **`lib/hooks/__tests__/useRecordingPlayback.test.ts`**
+   - Test play/pause/seek/reset
+   - Test event application at correct times
+   - Test recording change handling
+
+#### Test Plan Summary
+
+| Test Category | File | Status |
+|--------------|------|--------|
+| Recording types | lib/types/__tests__/recording.test.ts | ✅ EXISTS (667 lines) |
+| Recording export | lib/export/__tests__/recordingExport.test.ts | ✅ EXISTS (597 lines) |
+| RecordButton | components/studio/__tests__/RecordButton.test.ts | ✅ EXISTS (331 lines) |
+| RecordingTimeline | components/studio/__tests__/RecordingTimeline.test.ts | ✅ EXISTS (529 lines) |
+| useRecording | lib/hooks/__tests__/useRecording.test.ts | ❌ MISSING |
+| useRecordings | lib/hooks/__tests__/useRecordings.test.ts | ❌ MISSING |
+| useRecordingPlayback | lib/hooks/__tests__/useRecordingPlayback.test.ts | ❌ MISSING |
+
+#### Implementation Order (Remaining Work)
+
+1. ✅ ~~Types (lib/types/recording.ts)~~ - COMPLETE
+2. ✅ ~~Database (006_recordings.sql)~~ - COMPLETE
+3. ✅ ~~Core hooks (useRecording.ts, useRecordings.ts)~~ - COMPLETE
+4. ✅ ~~UI Components (RecordButton.tsx, RecordingTimeline.tsx, RecordingPanel.tsx)~~ - COMPLETE
+5. ✅ ~~Basic integration (studio/page.tsx)~~ - Recording capture works
+6. **🔄 Playback hook integration** - useRecordingPlayback NOT wired up
+7. **🔄 Export with automation** - recordingExport.ts JSON works, audio export needs work
+8. **🔄 Missing hook tests** - 3 test files needed
+9. Quality gates - Run after implementation
+10. Commit - After all criteria met
 
 #### Existing Infrastructure to Leverage
 
@@ -105,11 +182,12 @@ Users want to "perform" with their beats - making live changes to parameters (BP
 #### Files to Create
 
 1. **`lib/types/recording.ts`** - Type definitions
+
    ```typescript
    interface RecordingEvent {
      id: string;
      timestamp_ms: number;
-     type: 'tweak' | 'layer_mute' | 'layer_volume' | 'layer_solo';
+     type: "tweak" | "layer_mute" | "layer_volume" | "layer_solo";
      param?: keyof TweaksConfig;
      layerId?: string;
      oldValue: number | boolean;
@@ -292,6 +370,7 @@ Users want to "perform" with their beats - making live changes to parameters (BP
 ### 2026-01-24 18:15 - Implementation Complete
 
 **Files Created:**
+
 1. `lib/types/recording.ts` - Recording types, event interfaces, utility functions, color mappings
 2. `supabase/migrations/006_recordings.sql` - Database schema with RLS policies
 3. `lib/hooks/useRecording.ts` - Recording state management with debounced capture
@@ -305,12 +384,14 @@ Users want to "perform" with their beats - making live changes to parameters (BP
 11. `app/api/tracks/[id]/recordings/[recordingId]/route.ts` - API endpoints for get/update/delete
 
 **Files Modified:**
+
 1. `lib/tracks.ts` - Added recording CRUD operations
 2. `lib/schemas/tracks.ts` - Added recording validation schemas
 3. `components/studio/PlayerControls.tsx` - Added record button slot
 4. `app/studio/page.tsx` - Integrated all recording functionality
 
 **Commits Made:**
+
 - fd82bb1: Add recording types for live performance capture
 - 7101ea8: Add recordings table migration
 - ff285dc: Add useRecording hook for capturing performance events
@@ -325,11 +406,105 @@ Users want to "perform" with their beats - making live changes to parameters (BP
 - c19da00: Wire up RecordingPanel in studio page
 
 **Implementation Notes:**
+
 - Recording capture uses performance.now() for high-precision timing
 - Event debouncing implemented (50ms window) to batch rapid slider changes
 - ESLint React Compiler rules required careful state management patterns
 - useRecordingPlayback uses derived state pattern for recording changes
 - RecordingPanel includes inline rename, export to JSON/CSV, stats view
+
+### 2026-01-24 17:49 - Triage Complete (Session 2)
+
+- **Dependencies**: ✅ All clear
+  - `003-001-save-tracks-db`: Verified in done/ folder
+  - `003-006-tweaks-ux`: Verified in done/ folder
+- **Task clarity**: Clear
+  - Acceptance criteria specific and testable
+  - Implementation plan well-documented with file paths
+  - Previous session completed implementation phase
+- **Ready to proceed**: Yes
+- **Current state**:
+  - Implementation complete (12 commits made)
+  - Files created: types, hooks, components, API routes, migration
+  - Files modified: tracks.ts, schemas, PlayerControls, studio page
+  - Next phase: Testing
+- **Notes**:
+  - Task is resuming from previous session
+  - Need to run tests and verify acceptance criteria
+  - Quality gates need to be run
+
+### 2026-01-24 17:55 - Phase 2 Planning Complete
+
+**Gap Analysis Results:**
+- Reviewed ALL created files:
+  - `lib/types/recording.ts` (221 lines) - ✅ Complete
+  - `lib/hooks/useRecording.ts` (260 lines) - ✅ Complete
+  - `lib/hooks/useRecordings.ts` (189 lines) - ✅ Complete
+  - `lib/hooks/useRecordingPlayback.ts` (266 lines) - ✅ Complete but NOT WIRED UP
+  - `lib/export/recordingExport.ts` (217 lines) - ✅ Complete for JSON/CSV
+  - `components/studio/RecordButton.tsx` (101 lines) - ✅ Complete
+  - `components/studio/RecordingTimeline.tsx` (255 lines) - ✅ Complete
+  - `components/studio/RecordingPanel.tsx` (334 lines) - ✅ Complete
+  - `supabase/migrations/006_recordings.sql` (67 lines) - ✅ Complete
+  - `app/studio/page.tsx` integration - ✅ Recording capture works
+
+- Reviewed test coverage:
+  - `lib/types/__tests__/recording.test.ts` - ✅ EXISTS (667 lines)
+  - `lib/export/__tests__/recordingExport.test.ts` - ✅ EXISTS (597 lines)
+  - `components/studio/__tests__/RecordButton.test.ts` - ✅ EXISTS (331 lines)
+  - `components/studio/__tests__/RecordingTimeline.test.ts` - ✅ EXISTS (529 lines)
+  - `lib/hooks/__tests__/useRecording.test.ts` - ❌ MISSING
+  - `lib/hooks/__tests__/useRecordings.test.ts` - ❌ MISSING
+  - `lib/hooks/__tests__/useRecordingPlayback.test.ts` - ❌ MISSING
+
+**Critical Findings:**
+1. **useRecordingPlayback exists but is NOT wired up** - This is the main gap preventing "Playback mode: replays changes in sync with audio" from working
+2. **Export as rendered audio with automation** - Not implemented (JSON/CSV works, audio render doesn't apply automation)
+3. **Edit automation values** - Only delete works, no value adjustment UI
+4. **3 hook tests missing** - Need to add for complete coverage
+
+**Acceptance Criteria Assessment:**
+- ✅ Record button - COMPLETE
+- ✅ Visual indicator - COMPLETE
+- ✅ Captures events - COMPLETE
+- ✅ Timeline visualization - COMPLETE
+- ✅ Playback mode - COMPLETE (wired up in session 2)
+- ⚠️ Edit automation - PARTIAL (delete only)
+- ✅ Save to database - COMPLETE
+- ❌ Export rendered audio with automation - NOT STARTED
+- ✅ Export JSON automation - COMPLETE
+- 🔮 Export video - FUTURE
+- ✅ Streaming architecture - COMPLETE
+- ⚠️ Tests - PARTIAL (4 exist, 3 missing)
+- ⏳ Quality gates - PENDING
+- ⏳ Commit - PENDING
+
+**Recommended Next Steps:**
+1. ~~Wire up useRecordingPlayback in studio page~~ ✅ DONE
+2. Create 3 missing hook tests (MEDIUM PRIORITY - for test coverage)
+3. Consider deferring audio render with automation (COMPLEX - could be follow-up task)
+4. Run quality gates
+5. Final commit
+
+### 2026-01-24 18:05 - Implementation Progress (Session 2)
+
+**Completed: Wire up useRecordingPlayback hook**
+
+- Files modified: `app/studio/page.tsx`
+- Changes made:
+  1. Added import for `useRecordingPlayback` hook
+  2. Created `applyTweakDuringPlayback` callback to apply tweak changes during playback
+  3. Instantiated `useRecordingPlayback` hook with activeRecording and callbacks
+  4. Added playback controls (play, pause, reset, close) to RecordingTimeline section
+  5. Passed `playbackTimeMs` to RecordingTimeline for playhead visualization
+- Quality check: ESLint passed, TypeScript passed
+- Commit: 30d1f2e
+
+**What this enables:**
+- When a recording is loaded into `activeRecording`, users can click the play button to replay automation
+- The automation events are applied in sync with the audio transport
+- The playhead in RecordingTimeline shows current playback position
+- Users can pause, reset, or close the recording playback
 
 ---
 
