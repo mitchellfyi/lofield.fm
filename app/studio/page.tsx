@@ -21,8 +21,10 @@ import { useModelSelection } from "@/lib/hooks/useModelSelection";
 import { useApiKey } from "@/lib/hooks/useApiKey";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useTracks, useAutoSave } from "@/lib/hooks/useTracks";
+import { useRevisions } from "@/lib/hooks/useRevisions";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
 import { TrackBrowser } from "@/components/studio/TrackBrowser";
+import { RevisionHistory } from "@/components/studio/RevisionHistory";
 import { SaveButton } from "@/components/studio/SaveButton";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
@@ -316,23 +318,22 @@ export default function StudioPage() {
   const [saveAsName, setSaveAsName] = useState("");
   const [saving, setSaving] = useState(false);
   const lastSavedCodeRef = useRef<string>("");
+  const [showRevisionHistory, setShowRevisionHistory] = useState(false);
 
   // Project and track hooks
   const { projects, createProject } = useProjects();
   const { createTrack, updateTrack } = useTracks(selectedProjectId);
+  const { revisions, createRevision } = useRevisions(currentTrackId);
 
   // Auto-save hook
-  const { saving: autoSaving, lastSaved } = useAutoSave(
-    currentTrackId,
-    code,
-    autoSaveEnabled
-  );
+  const { saving: autoSaving, lastSaved } = useAutoSave(currentTrackId, code, autoSaveEnabled);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>("");
   const runtimeRef = useRef(getAudioRuntime());
   const liveUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPlayedCodeRef = useRef<string>("");
+  const lastUserPromptRef = useRef<string>("");
 
   // Keep global ref in sync with state for body function
   useEffect(() => {
@@ -497,7 +498,7 @@ export default function StudioPage() {
         if (extractedCode) {
           // Update the code editor live as text streams in
           // This is intentional - syncing external streaming data to state
-           
+
           setCode(extractedCode);
 
           if (isComplete) {
@@ -512,6 +513,10 @@ export default function StudioPage() {
               const runtime = runtimeRef.current;
               if (runtime.getState() === "playing" && audioLoaded) {
                 playCode(extractedCode);
+              }
+              // Auto-create revision for valid code changes (if track is saved)
+              if (currentTrackId) {
+                createRevision(extractedCode, lastUserPromptRef.current || undefined);
               }
             } else {
               // Validation failed after server-side retries
@@ -535,7 +540,7 @@ export default function StudioPage() {
         }
       }
     }
-  }, [messages, audioLoaded, playCode]);
+  }, [messages, audioLoaded, playCode, currentTrackId, createRevision]);
 
   const stop = () => {
     if (!audioLoaded) {
@@ -570,6 +575,8 @@ ${code}
 
 Request: ${inputValue}`;
 
+    // Save the user prompt for revision message
+    lastUserPromptRef.current = inputValue.trim();
     sendMessage({ text: messageWithContext });
     setInputValue("");
   };
@@ -582,7 +589,7 @@ Request: ${inputValue}`;
   useEffect(() => {
     if (currentTrackId && code !== lastSavedCodeRef.current) {
       // Intentional - tracking unsaved changes when code changes
-       
+
       setHasUnsavedChanges(true);
     }
   }, [code, currentTrackId]);
@@ -596,6 +603,19 @@ Request: ${inputValue}`;
     lastSavedCodeRef.current = track.current_code || DEFAULT_CODE;
     setHasUnsavedChanges(false);
     setShowTrackBrowser(false);
+  }, []);
+
+  // Handle reverting to a previous revision
+  const handleRevert = useCallback((newCode: string) => {
+    setCode(newCode);
+    setHasUnsavedChanges(true);
+    setShowRevisionHistory(false);
+  }, []);
+
+  // Handle previewing a revision (just load code temporarily)
+  const handlePreviewRevision = useCallback((previewCode: string) => {
+    setCode(previewCode);
+    setHasUnsavedChanges(true);
   }, []);
 
   // Handle saving the current track
@@ -690,6 +710,8 @@ Request: ${inputValue}`;
           onModelChange={setSelectedModel}
           currentTrackName={currentTrackName}
           onOpenTracks={() => setShowTrackBrowser(true)}
+          onOpenHistory={currentTrackId ? () => setShowRevisionHistory(true) : undefined}
+          hasRevisions={revisions.length > 0}
         />
 
         {/* Main Content */}
@@ -791,6 +813,16 @@ Request: ${inputValue}`;
         currentTrackId={currentTrackId}
       />
 
+      {/* Revision History Modal */}
+      <RevisionHistory
+        isOpen={showRevisionHistory}
+        onClose={() => setShowRevisionHistory(false)}
+        trackId={currentTrackId}
+        currentCode={code}
+        onRevert={handleRevert}
+        onPreview={handlePreviewRevision}
+      />
+
       {/* Save As Modal */}
       {showSaveAsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -799,9 +831,7 @@ Request: ${inputValue}`;
               <h2 className="text-xl font-bold text-cyan-300">Save Track</h2>
             </div>
             <div className="p-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Track Name
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Track Name</label>
               <input
                 type="text"
                 value={saveAsName}
