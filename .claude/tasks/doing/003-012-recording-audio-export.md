@@ -183,6 +183,40 @@ _(None required - internal feature)_
   - BPM changes log warning at scheduled time (not applied due to timing complexity)
   - Used `rampTo()` for smooth parameter transitions (50ms ramp)
 
+### 2026-01-24 18:37 - Testing Complete
+
+Tests written:
+- `lib/export/__tests__/audioExport.test.ts` - 37 examples (scheduleAutomationEvents function)
+- `components/studio/__tests__/ExportModal.test.ts` - 51 examples (added 9 for recording automation)
+
+Test results:
+- Total: 1651 examples, 0 failures
+- All 56 test files passing
+
+Quality gates:
+- ESLint: pass
+- Prettier: pass (source files)
+- TypeScript: pass
+- RSpec/Vitest: pass
+
+Commits:
+- `b951593` - test: Add tests for ExportModal recording automation feature
+
+Test Plan Coverage:
+- [x] `scheduleAutomationEvents` function is exported and callable
+- [x] Events are scheduled at correct transport times (mock transport.schedule)
+- [x] Filter frequency changes are correctly scheduled
+- [x] Reverb wet changes are correctly scheduled
+- [x] Delay wet changes are correctly scheduled
+- [x] BPM changes trigger console warning (BPM automation is complex)
+- [x] Empty recording doesn't cause errors
+- [x] `renderAudio` accepts recording option without error
+
+Additional ExportModal tests:
+- [x] Recording prop handling (events, no events, null, undefined)
+- [x] includeAutomation toggle state (initial, toggle, conditional passing)
+- [x] Event count display in automation toggle label
+
 ### 2026-01-24 18:21 - Triage Complete
 
 - **Dependencies**: ✅ `003-011-record-mode` is completed (found in `.claude/tasks/done/`)
@@ -209,14 +243,23 @@ $ npm run lint
 > eslint
 # (no errors)
 
-# Unit Tests
+# Prettier (source files)
+$ npx prettier --check "lib/**/*.ts" "components/**/*.tsx" "components/**/*.ts" "app/**/*.tsx"
+Checking formatting...
+All matched files use Prettier code style!
+
+# Unit Tests - audioExport
 $ npm run test -- lib/export/__tests__/audioExport.test.ts
- ✓ lib/export/__tests__/audioExport.test.ts (37 tests) 6ms
+ ✓ lib/export/__tests__/audioExport.test.ts (37 tests)
+
+# Unit Tests - ExportModal
+$ npm run test -- components/studio/__tests__/ExportModal.test.ts
+ ✓ components/studio/__tests__/ExportModal.test.ts (51 tests)
 
 # Full Test Suite
 $ npm run test
  Test Files  56 passed (56)
- Tests       1642 passed (1642)
+ Tests       1651 passed (1651)
 ```
 
 ---
