@@ -36,6 +36,7 @@ import { TweaksPanel } from "@/components/studio/TweaksPanel";
 import { LayersPanel } from "@/components/studio/LayersPanel";
 import { RecordButton } from "@/components/studio/RecordButton";
 import { RecordingTimeline } from "@/components/studio/RecordingTimeline";
+import { RecordingPanel } from "@/components/studio/RecordingPanel";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import type { ToastState } from "@/lib/export/types";
@@ -411,8 +412,10 @@ export default function StudioPage() {
     clearRecording,
   } = useRecording();
   const {
-    recordings: _recordings, // Will be used in RecordingPanel
+    recordings,
+    loading: recordingsLoading,
     createRecording: saveRecording,
+    updateRecording: updateRecordingApi,
     deleteRecording,
   } = useRecordings(currentTrackId);
 
@@ -1037,13 +1040,13 @@ Request: ${inputValue}`;
   ]);
 
   // Handle loading a recording for playback (used by RecordingPanel)
-  const _handleLoadRecording = useCallback((recording: Recording) => {
+  const handleLoadRecording = useCallback((recording: Recording) => {
     setActiveRecording(recording);
     showToast(`Loaded: ${recording.name || "Recording"}`, "info");
   }, [showToast]);
 
   // Handle deleting a recording (used by RecordingPanel)
-  const _handleDeleteRecording = useCallback(
+  const handleDeleteRecording = useCallback(
     async (recordingId: string) => {
       const success = await deleteRecording(recordingId);
       if (success) {
@@ -1054,6 +1057,21 @@ Request: ${inputValue}`;
       }
     },
     [deleteRecording, activeRecording, showToast]
+  );
+
+  // Handle renaming a recording (used by RecordingPanel)
+  const handleRenameRecording = useCallback(
+    async (recordingId: string, newName: string) => {
+      const result = await updateRecordingApi(recordingId, { name: newName });
+      if (result) {
+        // Update active recording if it's the one being renamed
+        if (activeRecording?.id === recordingId) {
+          setActiveRecording({ ...activeRecording, name: newName });
+        }
+        showToast("Recording renamed", "info");
+      }
+    },
+    [updateRecordingApi, activeRecording, showToast]
   );
 
   // Keyboard shortcuts for save and undo/redo
@@ -1215,6 +1233,18 @@ Request: ${inputValue}`;
                       }}
                     />
                   </div>
+                )}
+
+                {/* Recording Panel - shows saved recordings for current track */}
+                {recordings.length > 0 && (
+                  <RecordingPanel
+                    recordings={recordings}
+                    activeRecording={activeRecording}
+                    loading={recordingsLoading}
+                    onLoadRecording={handleLoadRecording}
+                    onDeleteRecording={handleDeleteRecording}
+                    onRenameRecording={handleRenameRecording}
+                  />
                 )}
 
                 <LayersPanel
