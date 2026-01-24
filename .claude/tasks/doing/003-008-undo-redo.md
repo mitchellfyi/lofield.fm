@@ -206,6 +206,26 @@ import type { TweaksConfig } from "@/lib/types/tweaks";
 
 ## Work Log
 
+### 2026-01-24 15:14 - Documentation Sync
+
+Docs updated:
+- Task file: Updated Testing Evidence, Notes, and Links sections
+- No external docs require updates (README.md doesn't document individual features)
+
+Annotations:
+- N/A - This is a Next.js project, no Ruby models to annotate
+
+Consistency checks:
+- [x] Code matches docs - useHistory.ts has comprehensive JSDoc comments
+- [x] No broken links - all file references verified
+- [x] No external documentation needed - feature is self-discoverable via UI
+
+Notes:
+- useHistory hook already has JSDoc comments for all public methods
+- TopBar tooltips provide keyboard shortcut hints to users
+- No docs/*.md directory exists in this project - documentation is in README.md only
+- Feature doesn't warrant README update (internal UX feature, not API change)
+
 ### 2026-01-24 15:13 - Testing Complete
 
 Tests written:
@@ -335,16 +355,35 @@ Tests: 1107 passed (1107)
 New test file: lib/hooks/__tests__/useHistory.test.ts (44 tests)
 ```
 
+**Manual Testing:**
+- Keyboard shortcuts: Cmd/Ctrl+Z (undo), Cmd/Ctrl+Shift+Z (redo), Cmd/Ctrl+Y (redo alternate)
+- UI buttons show disabled state appropriately
+- History persists during session, clears on track switch
+
 ---
 
 ## Notes
 
-- Consider using immer for immutable state updates
-- May want visual history timeline in future
-- Different from version history (revisions) - this is session-only
+- Consider using immer for immutable state updates if performance becomes an issue with large states
+- May want visual history timeline in future (like Figma's version history)
+- Different from version history (revisions) - this is session-only, ephemeral undo
+- useHistory uses JSON.stringify for deep equality - works well for serializable state
+- MAX_HISTORY_SIZE of 50 is a reasonable balance between memory and usability
+- History is automatically cleared on track switch to prevent confusion
+- CodeMirror has its own internal undo - our undo tracks composite state (code + layers + tweaks)
 
 ---
 
 ## Links
 
-- NPM: `use-undo`, `immer`
+**Files Created:**
+- `lib/hooks/useHistory.ts` - Core undo/redo hook (184 lines)
+- `lib/hooks/__tests__/useHistory.test.ts` - Test suite (44 tests)
+
+**Files Modified:**
+- `components/studio/TopBar.tsx` - Undo/redo buttons added
+- `app/studio/page.tsx` - History integration and keyboard shortcuts
+
+**Reference:**
+- NPM: `use-undo`, `immer` - alternative libraries (not used, custom implementation preferred)
+- Pattern: Past/Present/Future stacks (standard undo/redo architecture)
