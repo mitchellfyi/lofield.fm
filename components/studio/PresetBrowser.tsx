@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { PRESETS, type Preset } from "@/lib/audio/presets";
 import {
-  PRESETS,
-  type Preset,
   filterPresets,
   getUniqueGenres,
   getUniqueTags,
-} from "@/lib/audio/presets";
+} from "@/lib/audio/presets/utils";
 import { PresetCard } from "./PresetCard";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 

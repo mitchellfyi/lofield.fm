@@ -34,6 +34,7 @@ export function getPresetById(id: string) {
   return PRESETS.find((p) => p.id === id);
 }
 
+// Re-export utility functions
 export {
   filterPresets,
   getUniqueGenres,

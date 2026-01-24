@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { PlayerState } from "@/lib/audio/runtime";
-import { PRESETS, type Preset } from "@/lib/audio/presets";
 import { WaveformVisualizer } from "./WaveformVisualizer";
 import { ModelSelector } from "./ModelSelector";
+import { PresetBrowser } from "./PresetBrowser";
 import { UserMenu } from "@/components/auth/UserMenu";
 
 interface TopBarProps {
@@ -17,6 +17,7 @@ interface TopBarProps {
   onOpenTracks?: () => void;
   onOpenHistory?: () => void;
   hasRevisions?: boolean;
+  hasUnsavedChanges?: boolean;
 }
 
 export function TopBar({
@@ -28,26 +29,10 @@ export function TopBar({
   onOpenTracks,
   onOpenHistory,
   hasRevisions,
+  hasUnsavedChanges = false,
 }: TopBarProps) {
   const [showHelp, setShowHelp] = useState(false);
-  const [showPresets, setShowPresets] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowPresets(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSelectPreset = (preset: Preset) => {
-    onLoadPreset?.(preset.code);
-    setShowPresets(false);
-  };
+  const [showPresetBrowser, setShowPresetBrowser] = useState(false);
 
   const getStateColor = () => {
     switch (playerState) {
@@ -150,75 +135,28 @@ export function TopBar({
               <ModelSelector selectedModel={selectedModel} onModelChange={onModelChange} />
             )}
 
-            {/* Demo Songs Dropdown */}
+            {/* Preset Library Button */}
             {onLoadPreset && (
-              <div className="relative z-[100]" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowPresets(!showPresets)}
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
-                  aria-label="Demo Songs"
+              <button
+                onClick={() => setShowPresetBrowser(true)}
+                className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+                aria-label="Preset Library"
+              >
+                <svg
+                  className="w-5 h-5 sm:w-4 sm:h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5 sm:w-4 sm:h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Demo Songs</span>
-                  <svg
-                    className={`w-4 h-4 hidden sm:block transition-transform ${showPresets ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                {/* Dropdown Menu */}
-                {showPresets && (
-                  <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1rem)] bg-slate-900/95 border border-cyan-500/30 rounded-xl shadow-2xl shadow-cyan-500/10 backdrop-blur-xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-3 border-b border-cyan-500/20 bg-slate-800/50">
-                      <h3 className="text-sm font-semibold text-cyan-400">Choose a Demo</h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Load a preset to get started</p>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {PRESETS.map((preset) => (
-                        <button
-                          key={preset.id}
-                          onClick={() => handleSelectPreset(preset)}
-                          className="w-full px-4 py-3 text-left hover:bg-cyan-500/10 active:bg-cyan-500/20 transition-colors border-b border-slate-800 last:border-b-0"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-cyan-100">{preset.name}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-                              {preset.bpm} BPM
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium text-cyan-500">
-                              {preset.genre}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400">{preset.description}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Presets</span>
+              </button>
             )}
 
             {/* Settings Link */}
@@ -336,6 +274,16 @@ export function TopBar({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Preset Browser Modal */}
+      {onLoadPreset && (
+        <PresetBrowser
+          isOpen={showPresetBrowser}
+          onClose={() => setShowPresetBrowser(false)}
+          onLoadPreset={onLoadPreset}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
       )}
     </>
   );

@@ -1,10 +1,33 @@
-import { PRESETS, type Preset } from "./index";
+import type { Preset } from "./types";
+import { lofiChill } from "./lofi-chill";
+import { deepHouse } from "./deep-house";
+import { darkTechno } from "./dark-techno";
+import { ambientChill } from "./ambient-chill";
+import { rnbSoul } from "./rnb-soul";
+import { trapBeat } from "./trap-beat";
+import { pop } from "./pop";
+import { rock } from "./rock";
+import { hiphop } from "./hiphop";
+import { trance } from "./trance";
+
+const ALL_PRESETS: Preset[] = [
+  lofiChill,
+  deepHouse,
+  darkTechno,
+  ambientChill,
+  rnbSoul,
+  trapBeat,
+  pop,
+  rock,
+  hiphop,
+  trance,
+];
 
 /**
  * Get all unique genres from the preset library
  */
 export function getUniqueGenres(): string[] {
-  const genres = new Set(PRESETS.map((p) => p.genre));
+  const genres = new Set(ALL_PRESETS.map((p) => p.genre));
   return Array.from(genres).sort();
 }
 
@@ -12,7 +35,7 @@ export function getUniqueGenres(): string[] {
  * Get all unique tags from the preset library
  */
 export function getUniqueTags(): string[] {
-  const tags = new Set(PRESETS.flatMap((p) => p.tags));
+  const tags = new Set(ALL_PRESETS.flatMap((p) => p.tags));
   return Array.from(tags).sort();
 }
 
@@ -27,7 +50,7 @@ export function filterPresets(options: {
   const { genre, tag, search } = options;
   const searchLower = search?.toLowerCase().trim() || "";
 
-  return PRESETS.filter((preset) => {
+  return ALL_PRESETS.filter((preset) => {
     // Filter by genre
     if (genre && preset.genre !== genre) {
       return false;
