@@ -36,9 +36,7 @@ export function LayersPanel({
 
   const handleUpdateLayer = (layerId: string, updates: Partial<AudioLayer>) => {
     onLayersChange(
-      layers.map((layer) =>
-        layer.id === layerId ? { ...layer, ...updates } : layer
-      )
+      layers.map((layer) => (layer.id === layerId ? { ...layer, ...updates } : layer))
     );
   };
 
@@ -102,7 +100,12 @@ export function LayersPanel({
               className="flex-1 px-3 py-1.5 text-xs font-medium text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded transition-colors flex items-center justify-center gap-1"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Add Layer
             </button>

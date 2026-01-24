@@ -55,8 +55,7 @@ export function createDefaultLayer(
   code: string = "",
   colorIndex?: number
 ): AudioLayer {
-  const index =
-    colorIndex !== undefined ? colorIndex % LAYER_COLORS.length : 0;
+  const index = colorIndex !== undefined ? colorIndex % LAYER_COLORS.length : 0;
   return {
     id: generateLayerId(),
     name,
@@ -80,6 +79,4 @@ export const EMPTY_LAYER_CODE = `// Add your Tone.js code here
 /**
  * Default layers for new compositions
  */
-export const DEFAULT_LAYERS: AudioLayer[] = [
-  createDefaultLayer("main", "", 0),
-];
+export const DEFAULT_LAYERS: AudioLayer[] = [createDefaultLayer("main", "", 0)];

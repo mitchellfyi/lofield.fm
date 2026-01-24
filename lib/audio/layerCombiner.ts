@@ -53,11 +53,7 @@ export function volumeToDb(volumePercent: number): number {
  * Inject volume offset into layer code.
  * Adds a volume modifier comment at the top that the runtime can use.
  */
-export function injectLayerVolume(
-  code: string,
-  volumePercent: number,
-  layerName: string
-): string {
+export function injectLayerVolume(code: string, volumePercent: number, layerName: string): string {
   // If volume is 100%, no modification needed
   if (volumePercent === 100) {
     return code;
@@ -115,11 +111,7 @@ export function combineLayers(layers: AudioLayer[]): string {
       parts.push(applyMuteWrapper(`${header}\n${code}`, layer.name));
     } else {
       // Add header and volume-adjusted code
-      const volumeAdjustedCode = injectLayerVolume(
-        code,
-        layer.volume,
-        layer.name
-      );
+      const volumeAdjustedCode = injectLayerVolume(code, layer.volume, layer.name);
       parts.push(`${header}\n${volumeAdjustedCode}`);
     }
   }
