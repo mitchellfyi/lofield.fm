@@ -12,8 +12,8 @@
 | Completed   | `2026-01-24 17:17`      |
 | Blocked By  |                         |
 | Blocks      |                         |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                         |
+| Assigned At |                         |
 
 ---
 
@@ -50,21 +50,22 @@ To maintain and improve the app, we need visibility into errors and usage patter
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Error boundary for React errors | None | No `error.tsx`, `global-error.tsx`, or custom ErrorBoundary component exists |
-| Client-side error reporting | None | No Sentry, LogRocket, or similar. Only `console.error/warn` scattered in code |
-| Server-side error logging | Minimal | Basic try-catch with `console.error` in API routes. No structured logging |
-| Strudel/audio error capture | Partial | `RuntimeEvent` tracked in `runtime.ts` (max 10 events, ephemeral). No external reporting |
-| LLM error tracking | Partial | Retry logic exists. Validation errors tracked via headers. No persistent logging |
-| Basic event logging | None | No analytics or event tracking infrastructure |
-| Error dashboard or logging service | None | No integration with any logging/monitoring service |
-| Source maps for production | None | `next.config.ts` is empty - no source map config |
-| Tests | None | No observability-specific tests exist |
+| Criterion                          | Status  | Gap                                                                                      |
+| ---------------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| Error boundary for React errors    | None    | No `error.tsx`, `global-error.tsx`, or custom ErrorBoundary component exists             |
+| Client-side error reporting        | None    | No Sentry, LogRocket, or similar. Only `console.error/warn` scattered in code            |
+| Server-side error logging          | Minimal | Basic try-catch with `console.error` in API routes. No structured logging                |
+| Strudel/audio error capture        | Partial | `RuntimeEvent` tracked in `runtime.ts` (max 10 events, ephemeral). No external reporting |
+| LLM error tracking                 | Partial | Retry logic exists. Validation errors tracked via headers. No persistent logging         |
+| Basic event logging                | None    | No analytics or event tracking infrastructure                                            |
+| Error dashboard or logging service | None    | No integration with any logging/monitoring service                                       |
+| Source maps for production         | None    | `next.config.ts` is empty - no source map config                                         |
+| Tests                              | None    | No observability-specific tests exist                                                    |
 
 #### Approach Decision: Sentry vs. Lightweight
 
 After analysis, **Sentry** is the recommended approach because:
+
 1. First-class Next.js 16 support with `@sentry/nextjs`
 2. Handles client, server, and edge runtime errors automatically
 3. Source map upload built-in
@@ -212,15 +213,15 @@ Alternative: A lightweight custom solution could use a logger lib + database sto
 
 #### Complexity Estimate
 
-| Item | Complexity | Notes |
-|------|------------|-------|
-| Sentry setup | Low | Mostly config files |
-| Error boundaries | Low | Standard Next.js patterns |
-| Observability module | Medium | Abstraction layer with context |
-| Audio error integration | Low | Small changes to runtime.ts |
-| LLM error tracking | Medium | Need to handle streaming context |
-| Tests | Medium | Mocking Sentry, testing boundaries |
-| Source maps | Low | Config only |
+| Item                    | Complexity | Notes                              |
+| ----------------------- | ---------- | ---------------------------------- |
+| Sentry setup            | Low        | Mostly config files                |
+| Error boundaries        | Low        | Standard Next.js patterns          |
+| Observability module    | Medium     | Abstraction layer with context     |
+| Audio error integration | Low        | Small changes to runtime.ts        |
+| LLM error tracking      | Medium     | Need to handle streaming context   |
+| Tests                   | Medium     | Mocking Sentry, testing boundaries |
+| Source maps             | Low        | Config only                        |
 
 **Total estimated files**: 9 new, 7 modified
 
@@ -235,18 +236,20 @@ Status field: matches (done)
 Acceptance criteria: 11/11 checked
 
 Issues found:
+
 - none
 
 Verification details:
+
 - All 12 created files exist:
   - lib/observability/index.ts ✓
-  - lib/observability/__tests__/index.test.ts ✓
+  - lib/observability/**tests**/index.test.ts ✓
   - app/error.tsx ✓
-  - app/__tests__/error.test.ts ✓
+  - app/**tests**/error.test.ts ✓
   - app/global-error.tsx ✓
-  - app/__tests__/global-error.test.ts ✓
+  - app/**tests**/global-error.test.ts ✓
   - components/studio/ErrorFallback.tsx ✓
-  - components/studio/__tests__/ErrorFallback.test.ts ✓
+  - components/studio/**tests**/ErrorFallback.test.ts ✓
   - sentry.client.config.ts ✓
   - sentry.server.config.ts ✓
   - sentry.edge.config.ts ✓
@@ -257,6 +260,7 @@ Verification details:
 - Started and Completed timestamps set
 
 Actions taken:
+
 - Task already in done/ - no move needed
 - Verified all acceptance criteria implementations exist
 
@@ -265,6 +269,7 @@ Task verified: PASS
 ### 2026-01-24 17:17 - Review Complete
 
 Code review:
+
 - Issues found: none
 - Code follows project conventions (TypeScript, React, Next.js patterns)
 - Proper Sentry scope isolation using withScope for tagged errors
@@ -273,11 +278,13 @@ Code review:
 - All error handling appropriate with context enrichment
 
 Consistency:
+
 - All criteria met: yes
 - Test coverage adequate: yes (73 new tests covering all observability functions)
 - Docs in sync: yes (.env.example updated with Sentry vars)
 
 Quality gates:
+
 - ESLint: PASS
 - TypeScript: PASS
 - Tests: PASS (1266 total, 73 new observability tests)
@@ -289,14 +296,17 @@ Final status: COMPLETE
 ### 2026-01-24 17:14 - Documentation Sync
 
 Docs updated:
+
 - `.env.example` - Already contains Sentry configuration (added in Phase 1)
 - Task file - Updated Notes section with implementation observations
 - Task file - Updated Links section with complete file listing
 
 Annotations:
+
 - N/A (Node.js project, no model annotations)
 
 Consistency checks:
+
 - [x] Code matches docs - observability module exports match documented API
 - [x] No broken links - all file paths verified to exist
 - [x] .env.example has all required Sentry variables
@@ -450,6 +460,7 @@ $ npx tsc --noEmit
 ## Links
 
 ### Created Files
+
 - `lib/observability/index.ts` - Central observability abstraction module
 - `lib/observability/__tests__/index.test.ts` - Unit tests (22 tests)
 - `app/error.tsx` - Route-level error boundary
@@ -464,6 +475,7 @@ $ npx tsc --noEmit
 - `instrumentation.ts` - Next.js instrumentation hook
 
 ### Modified Files
+
 - `next.config.ts` - Added Sentry config wrapper and source maps
 - `lib/audio/runtime.ts` - Integrated captureAudioError
 - `app/api/chat/route.ts` - Integrated captureLLMError with request ID tracing
@@ -471,5 +483,6 @@ $ npx tsc --noEmit
 - `package.json` - Added @sentry/nextjs dependency
 
 ### External Links
+
 - Sentry Next.js: https://docs.sentry.io/platforms/javascript/guides/nextjs/
 - Vercel Analytics: https://vercel.com/analytics

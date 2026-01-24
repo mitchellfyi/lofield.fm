@@ -12,8 +12,8 @@
 | Completed   |                                 |
 | Blocked By  | `002-004-supabase-auth-setup`   |
 | Blocks      |                                 |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                                 |
+| Assigned At |                                 |
 
 ---
 
