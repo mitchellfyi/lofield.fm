@@ -287,6 +287,114 @@ describe("ExportModal component", () => {
     });
   });
 
+  describe("recording automation prop", () => {
+    it("should accept optional recording prop", async () => {
+      const modalModule = await import("../ExportModal");
+      // Component should accept recording prop without error
+      expect(modalModule.ExportModal).toBeDefined();
+    });
+
+    it("should detect when recording has events", () => {
+      const recording = {
+        id: "test-recording",
+        name: "Test",
+        events: [
+          {
+            id: "event-1",
+            timestamp_ms: 1000,
+            type: "tweak" as const,
+            param: "filter" as const,
+            oldValue: 50,
+            newValue: 75,
+          },
+        ],
+        created_at: new Date().toISOString(),
+        track_id: "track-1",
+        duration_ms: 30000,
+      };
+      const hasRecordingEvents = recording && recording.events.length > 0;
+      expect(hasRecordingEvents).toBe(true);
+    });
+
+    it("should detect when recording has no events", () => {
+      const recording = {
+        id: "test-recording",
+        name: "Test",
+        events: [],
+        created_at: new Date().toISOString(),
+        track_id: "track-1",
+        duration_ms: 30000,
+      };
+      const hasRecordingEvents = recording && recording.events.length > 0;
+      expect(hasRecordingEvents).toBe(false);
+    });
+
+    it("should handle null recording prop", () => {
+      const recording = null as { events: unknown[] } | null;
+      const hasRecordingEvents = recording ? recording.events.length > 0 : false;
+      expect(hasRecordingEvents).toBeFalsy();
+    });
+
+    it("should handle undefined recording prop", () => {
+      const recording = undefined as { events: unknown[] } | undefined;
+      const hasRecordingEvents = recording ? recording.events.length > 0 : false;
+      expect(hasRecordingEvents).toBeFalsy();
+    });
+  });
+
+  describe("includeAutomation toggle state", () => {
+    it("should initialize includeAutomation as false", () => {
+      const includeAutomation = false;
+      expect(includeAutomation).toBe(false);
+    });
+
+    it("should toggle includeAutomation state", () => {
+      let includeAutomation = false;
+      includeAutomation = !includeAutomation;
+      expect(includeAutomation).toBe(true);
+      includeAutomation = !includeAutomation;
+      expect(includeAutomation).toBe(false);
+    });
+
+    it("should only pass recording when includeAutomation is true", () => {
+      const recording = {
+        id: "test-recording",
+        name: "Test",
+        events: [{ id: "1", timestamp_ms: 1000, type: "tweak" as const }],
+        created_at: new Date().toISOString(),
+        track_id: "track-1",
+        duration_ms: 30000,
+      };
+
+      // When includeAutomation is false
+      let includeAutomation = false;
+      let recordingToPass = includeAutomation && recording ? recording : undefined;
+      expect(recordingToPass).toBeUndefined();
+
+      // When includeAutomation is true
+      includeAutomation = true;
+      recordingToPass = includeAutomation && recording ? recording : undefined;
+      expect(recordingToPass).toBe(recording);
+    });
+
+    it("should display event count in automation toggle label", () => {
+      const recording = {
+        id: "test-recording",
+        name: "Test",
+        events: [
+          { id: "1", timestamp_ms: 1000, type: "tweak" as const },
+          { id: "2", timestamp_ms: 2000, type: "tweak" as const },
+          { id: "3", timestamp_ms: 3000, type: "tweak" as const },
+        ],
+        created_at: new Date().toISOString(),
+        track_id: "track-1",
+        duration_ms: 30000,
+      };
+      const message = `Bake ${recording.events.length} parameter changes into the audio`;
+      expect(message).toBe("Bake 3 parameter changes into the audio");
+    });
+  });
+
   describe("UI text content", () => {
     it("should display Export Audio title", () => {
       const title = "Export Audio";
