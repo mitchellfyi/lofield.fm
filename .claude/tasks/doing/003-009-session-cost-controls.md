@@ -396,7 +396,55 @@ Without controls, users could abuse the API (intentionally or accidentally), lea
 
 ## Testing Evidence
 
-(To be filled during testing phase)
+### 2026-01-24 15:34 - Testing Complete
+
+**Tests written:**
+
+- lib/usage/**tests**/tokens.test.ts - 26 tests for token estimation
+  - estimateTokens returns ~4 chars per token ✅
+  - estimateRequestTokens sums message tokens correctly ✅
+  - Handles empty strings, special characters ✅
+  - getMaxTokensPerRequest env var handling ✅
+  - isRequestWithinTokenLimit validation ✅
+- lib/usage/**tests**/rate-limit.test.ts - 10 tests
+  - getRequestsPerMinuteLimit env var handling ✅
+  - Default value constant validation ✅
+- lib/usage/**tests**/quota.test.ts - 10 tests
+  - getDefaultDailyTokenLimit env var handling ✅
+  - Default value constant validation ✅
+- lib/usage/**tests**/abuse.test.ts - 6 tests
+  - ViolationType validation ✅
+  - AbuseFlag structure ✅
+  - AbuseStatus structure ✅
+- lib/usage/**tests**/types.test.ts - 14 tests
+  - Default constants validation ✅
+  - Type structure validation ✅
+- lib/**tests**/admin.test.ts - 20 tests
+  - isAdmin returns true for admin emails ✅
+  - isAdmin returns false for non-admin ✅
+  - Handles empty ADMIN_EMAILS ✅
+  - Case-insensitive comparison ✅
+
+**Test results:**
+
+- Total: 1193 examples, 0 failures
+- New tests: 86 examples
+- Coverage: Unit tests for all pure functions
+
+**Quality gates:**
+
+- RuboCop: N/A (TypeScript project)
+- ESLint: ✅ pass
+- TypeCheck: ✅ pass
+- Prettier: ✅ pass
+- Vitest: ✅ pass (1193 tests)
+
+**Commits:**
+
+- `e3fdaf2` - test: Add tests for session cost control utilities
+- `5650e9e` - style: Apply prettier formatting
+
+**Note:** The Supabase-dependent async functions (checkRateLimit, checkDailyQuota, etc.) require server-side cookies and cannot be unit tested. They should be tested via integration tests or e2e tests in a real Supabase environment.
 
 ---
 
