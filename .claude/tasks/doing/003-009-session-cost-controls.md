@@ -12,8 +12,8 @@
 | Completed   |                                 |
 | Blocked By  | `002-004-supabase-auth-setup`   |
 | Blocks      |                                 |
-| Assigned To |                                 |
-| Assigned At |                                 |
+| Assigned To | `worker-1` |
+| Assigned At | `2026-01-24 15:20` |
 
 ---
 
