@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { estimateFileSize, formatFileSize } from "../audioExport";
+import { describe, it, expect, vi } from "vitest";
+import { estimateFileSize, formatFileSize, scheduleAutomationEvents } from "../audioExport";
+import type { RecordingEvent } from "@/lib/types/recording";
 
 // Note: renderAudio function requires actual Web Audio API and Tone.js
 // which cannot be easily mocked in unit tests. Integration tests would be
@@ -174,6 +175,212 @@ describe("audioExport", () => {
       const audioExport = await import("../audioExport");
       expect(audioExport.formatFileSize).toBeDefined();
       expect(typeof audioExport.formatFileSize).toBe("function");
+    });
+
+    it("should export scheduleAutomationEvents function", async () => {
+      const audioExport = await import("../audioExport");
+      expect(audioExport.scheduleAutomationEvents).toBeDefined();
+      expect(typeof audioExport.scheduleAutomationEvents).toBe("function");
+    });
+  });
+
+  describe("scheduleAutomationEvents", () => {
+    const createMockTransport = () => ({
+      schedule: vi.fn(),
+      swing: 0,
+    });
+
+    const createMockObjects = () => ({
+      transport: null,
+      masterLowpass: null,
+      masterReverb: null,
+      tapeDelay: null,
+    });
+
+    const createTweakEvent = (
+      timestamp_ms: number,
+      param: "bpm" | "swing" | "filter" | "reverb" | "delay",
+      newValue: number
+    ): RecordingEvent => ({
+      id: `event-${timestamp_ms}`,
+      timestamp_ms,
+      type: "tweak",
+      param,
+      oldValue: 50,
+      newValue,
+    });
+
+    describe("event scheduling", () => {
+      it("should schedule events at correct transport times (ms to seconds)", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events: RecordingEvent[] = [
+          createTweakEvent(1000, "filter", 5000),
+          createTweakEvent(2500, "reverb", 60),
+        ];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).toHaveBeenCalledTimes(2);
+        // First event at 1000ms = 1 second
+        expect(transport.schedule).toHaveBeenNthCalledWith(1, expect.any(Function), 1);
+        // Second event at 2500ms = 2.5 seconds
+        expect(transport.schedule).toHaveBeenNthCalledWith(2, expect.any(Function), 2.5);
+      });
+
+      it("should sort events by timestamp before scheduling", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        // Events out of order
+        const events: RecordingEvent[] = [
+          createTweakEvent(3000, "delay", 30),
+          createTweakEvent(1000, "filter", 5000),
+          createTweakEvent(2000, "reverb", 50),
+        ];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).toHaveBeenCalledTimes(3);
+        // Should be scheduled in order: 1s, 2s, 3s
+        expect(transport.schedule).toHaveBeenNthCalledWith(1, expect.any(Function), 1);
+        expect(transport.schedule).toHaveBeenNthCalledWith(2, expect.any(Function), 2);
+        expect(transport.schedule).toHaveBeenNthCalledWith(3, expect.any(Function), 3);
+      });
+
+      it("should handle empty events array without error", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+
+        expect(() => {
+          scheduleAutomationEvents(transport as never, [], objects);
+        }).not.toThrow();
+        expect(transport.schedule).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("event filtering", () => {
+      it("should skip non-tweak events", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events: RecordingEvent[] = [
+          {
+            id: "mute-1",
+            timestamp_ms: 1000,
+            type: "layer_mute",
+            layerId: "layer-1",
+            oldValue: false,
+            newValue: true,
+          },
+          createTweakEvent(2000, "filter", 3000),
+        ];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        // Only the tweak event should be scheduled
+        expect(transport.schedule).toHaveBeenCalledTimes(1);
+        expect(transport.schedule).toHaveBeenCalledWith(expect.any(Function), 2);
+      });
+
+      it("should skip tweak events without param", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events: RecordingEvent[] = [
+          {
+            id: "no-param",
+            timestamp_ms: 1000,
+            type: "tweak",
+            param: undefined,
+            oldValue: 50,
+            newValue: 60,
+          },
+        ];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).not.toHaveBeenCalled();
+      });
+
+      it("should skip tweak events with non-number newValue", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events: RecordingEvent[] = [
+          {
+            id: "bool-value",
+            timestamp_ms: 1000,
+            type: "tweak",
+            param: "filter",
+            oldValue: false,
+            newValue: true as unknown as number,
+          },
+        ];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("parameter types", () => {
+      it("should schedule filter changes", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events = [createTweakEvent(1000, "filter", 2000)];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).toHaveBeenCalledWith(expect.any(Function), 1);
+      });
+
+      it("should schedule reverb changes", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events = [createTweakEvent(500, "reverb", 75)];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).toHaveBeenCalledWith(expect.any(Function), 0.5);
+      });
+
+      it("should schedule delay changes", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events = [createTweakEvent(1500, "delay", 40)];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).toHaveBeenCalledWith(expect.any(Function), 1.5);
+      });
+
+      it("should schedule swing changes", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events = [createTweakEvent(2000, "swing", 15)];
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        expect(transport.schedule).toHaveBeenCalledWith(expect.any(Function), 2);
+      });
+
+      it("should schedule BPM changes (warning logged, not applied)", () => {
+        const transport = createMockTransport();
+        const objects = createMockObjects();
+        const events = [createTweakEvent(1000, "bpm", 120)];
+        const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        scheduleAutomationEvents(transport as never, events, objects);
+
+        // BPM change is still scheduled (so the warning can be logged at the right time)
+        expect(transport.schedule).toHaveBeenCalledWith(expect.any(Function), 1);
+
+        // Execute the scheduled callback
+        const scheduledCallback = transport.schedule.mock.calls[0][0];
+        scheduledCallback();
+
+        // Should log warning
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("BPM change to 120"));
+
+        consoleSpy.mockRestore();
+      });
     });
   });
 });
