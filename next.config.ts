@@ -14,8 +14,10 @@ export default withSentryConfig(nextConfig, {
   // Only upload source maps if auth token is available
   silent: !process.env.CI,
 
-  // Hide source maps from users but upload them to Sentry
-  hideSourceMaps: true,
+  // Upload source maps for error tracking
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
 
   // Automatically tree-shake Sentry logger statements
   disableLogger: true,
