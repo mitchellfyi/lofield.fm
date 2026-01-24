@@ -1,11 +1,12 @@
 /**
- * Service layer for projects, tracks, and revisions
+ * Service layer for projects, tracks, revisions, and recordings
  * Handles all database operations for track management
  */
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Project, Track, Revision, ProjectWithTrackCount } from "@/lib/types/tracks";
+import type { Recording, RecordingEvent } from "@/lib/types/recording";
 
 async function createServiceClient() {
   const cookieStore = await cookies();
@@ -391,4 +392,141 @@ export async function pruneRevisions(trackId: string, keepCount: number = 50): P
   }
 
   return 0;
+}
+
+// ============================================================================
+// Recording Operations
+// ============================================================================
+
+export async function getRecordings(userId: string, trackId: string): Promise<Recording[]> {
+  const supabase = await createServiceClient();
+
+  // Verify track ownership
+  const track = await getTrack(userId, trackId);
+  if (!track) {
+    throw new Error("Track not found or access denied");
+  }
+
+  const { data, error } = await supabase
+    .from("recordings")
+    .select("*")
+    .eq("track_id", trackId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch recordings: ${error.message}`);
+  }
+
+  return data || [];
+}
+
+export async function getRecording(
+  userId: string,
+  trackId: string,
+  recordingId: string
+): Promise<Recording | null> {
+  const supabase = await createServiceClient();
+
+  // Verify track ownership
+  const track = await getTrack(userId, trackId);
+  if (!track) {
+    throw new Error("Track not found or access denied");
+  }
+
+  const { data, error } = await supabase
+    .from("recordings")
+    .select("*")
+    .eq("id", recordingId)
+    .eq("track_id", trackId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+    throw new Error(`Failed to fetch recording: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function createRecording(
+  userId: string,
+  trackId: string,
+  durationMs: number,
+  events: RecordingEvent[],
+  name?: string
+): Promise<Recording> {
+  const supabase = await createServiceClient();
+
+  // Verify track ownership
+  const track = await getTrack(userId, trackId);
+  if (!track) {
+    throw new Error("Track not found or access denied");
+  }
+
+  const { data, error } = await supabase
+    .from("recordings")
+    .insert({
+      track_id: trackId,
+      name: name ?? null,
+      duration_ms: durationMs,
+      events: events,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create recording: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function updateRecording(
+  userId: string,
+  trackId: string,
+  recordingId: string,
+  updates: { name?: string; events?: RecordingEvent[] }
+): Promise<Recording> {
+  const supabase = await createServiceClient();
+
+  // Verify recording ownership
+  const existingRecording = await getRecording(userId, trackId, recordingId);
+  if (!existingRecording) {
+    throw new Error("Recording not found or access denied");
+  }
+
+  const { data, error } = await supabase
+    .from("recordings")
+    .update(updates)
+    .eq("id", recordingId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update recording: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function deleteRecording(
+  userId: string,
+  trackId: string,
+  recordingId: string
+): Promise<void> {
+  const supabase = await createServiceClient();
+
+  // Verify recording ownership
+  const existingRecording = await getRecording(userId, trackId, recordingId);
+  if (!existingRecording) {
+    throw new Error("Recording not found or access denied");
+  }
+
+  const { error } = await supabase.from("recordings").delete().eq("id", recordingId);
+
+  if (error) {
+    throw new Error(`Failed to delete recording: ${error.message}`);
+  }
 }
