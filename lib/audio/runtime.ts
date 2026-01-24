@@ -41,10 +41,77 @@ class AudioRuntime {
   private initCallCount = 0;
   private playCallCount = 0;
   private stopCallCount = 0;
+  private iosListenerAttached = false;
 
   private constructor() {
     // Private constructor for singleton
     this.exposeTestAPI();
+    this.setupIOSAudioHandling();
+  }
+
+  /**
+   * Detect iOS/iPadOS devices
+   */
+  private isIOS(): boolean {
+    if (typeof navigator === "undefined") return false;
+    return (
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+    );
+  }
+
+  /**
+   * Setup iOS-specific audio handling
+   * iOS Safari may interrupt AudioContext (e.g., phone call, background)
+   * and requires user gesture to resume
+   */
+  private setupIOSAudioHandling(): void {
+    if (typeof window === "undefined") return;
+    if (this.iosListenerAttached) return;
+
+    // Handle visibility change (app going to background/foreground)
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && this.initialized) {
+        this.resumeAudioContext();
+      }
+    });
+
+    // On iOS, attach a touchstart listener that can resume interrupted audio
+    if (this.isIOS()) {
+      const resumeOnInteraction = async () => {
+        if (this.initialized) {
+          await this.resumeAudioContext();
+        }
+      };
+
+      // Use both touchstart and click for comprehensive coverage
+      document.addEventListener("touchstart", resumeOnInteraction, { passive: true });
+      document.addEventListener("click", resumeOnInteraction, { passive: true });
+    }
+
+    this.iosListenerAttached = true;
+  }
+
+  /**
+   * Resume AudioContext if interrupted (iOS-specific issue)
+   */
+  private async resumeAudioContext(): Promise<void> {
+    try {
+      const context = Tone.getContext();
+      const rawContext = context.rawContext;
+
+      // Check for "interrupted" state (iOS-specific)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((rawContext as any).state === "interrupted" || rawContext.state === "suspended") {
+        await rawContext.resume();
+        this.addEvent({
+          type: "init",
+          message: "AudioContext resumed after interruption",
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to resume AudioContext:", err);
+    }
   }
 
   static getInstance(): AudioRuntime {
