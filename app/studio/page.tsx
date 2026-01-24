@@ -31,9 +31,12 @@ import { ExportModal } from "@/components/studio/ExportModal";
 import { ShareButton } from "@/components/studio/ShareButton";
 import { ShareDialog } from "@/components/studio/ShareDialog";
 import { Toast } from "@/components/studio/Toast";
+import { TweaksPanel } from "@/components/studio/TweaksPanel";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import type { ToastState } from "@/lib/export/types";
+import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
+import { extractTweaks, injectTweaks } from "@/lib/audio/tweaksInjector";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
@@ -331,6 +334,9 @@ export default function StudioPage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [toast, setToast] = useState<ToastState>({ visible: false, message: "", type: "info" });
 
+  // Tweaks state
+  const [tweaks, setTweaks] = useState<TweaksConfig>(DEFAULT_TWEAKS);
+
   // Project and track hooks
   const { projects, createProject } = useProjects();
   const { createTrack, updateTrack } = useTracks(selectedProjectId);
@@ -605,6 +611,25 @@ Request: ${inputValue}`;
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  // Handle tweaks changes - inject into code and trigger live update
+  const handleTweaksChange = useCallback(
+    (newTweaks: TweaksConfig) => {
+      setTweaks(newTweaks);
+      const updatedCode = injectTweaks(code, newTweaks);
+      setCode(updatedCode);
+
+      // If playing, trigger live update
+      if (playerState === "playing") {
+        const runtime = runtimeRef.current;
+        lastPlayedCodeRef.current = updatedCode;
+        runtime.play(updatedCode, true).catch((err) => {
+          console.warn("Tweaks update error:", err);
+        });
+      }
+    },
+    [code, playerState]
+  );
+
   // Track unsaved changes when code differs from last saved
   useEffect(() => {
     if (currentTrackId && code !== lastSavedCodeRef.current) {
@@ -619,10 +644,14 @@ Request: ${inputValue}`;
     setCurrentTrackId(track.id);
     setCurrentTrackName(track.name);
     setSelectedProjectId(track.project_id);
-    setCode(track.current_code || DEFAULT_CODE);
-    lastSavedCodeRef.current = track.current_code || DEFAULT_CODE;
+    const trackCode = track.current_code || DEFAULT_CODE;
+    setCode(trackCode);
+    lastSavedCodeRef.current = trackCode;
     setHasUnsavedChanges(false);
     setShowTrackBrowser(false);
+    // Extract tweaks from loaded code
+    const loadedTweaks = extractTweaks(trackCode);
+    setTweaks(loadedTweaks || DEFAULT_TWEAKS);
   }, []);
 
   // Handle reverting to a previous revision
@@ -804,6 +833,8 @@ Request: ${inputValue}`;
                     />
                   }
                 />
+
+                <TweaksPanel tweaks={tweaks} onTweaksChange={handleTweaksChange} />
 
                 <ConsolePanel events={runtimeEvents} error={error} />
               </div>

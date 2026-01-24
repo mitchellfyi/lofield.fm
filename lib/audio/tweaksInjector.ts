@@ -16,7 +16,8 @@ const TWEAKS_COMMENT_REGEX = /^\/\/\s*TWEAKS:\s*(\{[^}]+\})\s*$/m;
 const BPM_REGEX = /Tone\.Transport\.bpm\.value\s*=\s*(\d+)/;
 const SWING_REGEX = /Tone\.Transport\.swing\s*=\s*([\d.]+)/;
 const FILTER_REGEX = /const\s+masterLowpass\s*=\s*new\s+Tone\.Filter\s*\(\s*(\d+)/;
-const REVERB_WET_REGEX = /const\s+masterReverb\s*=\s*new\s+Tone\.Reverb\s*\(\s*\{[^}]*wet:\s*([\d.]+)/;
+const REVERB_WET_REGEX =
+  /const\s+masterReverb\s*=\s*new\s+Tone\.Reverb\s*\(\s*\{[^}]*wet:\s*([\d.]+)/;
 const DELAY_WET_REGEX = /tapeDelay\.wet\.value\s*=\s*([\d.]+)/;
 
 /**
@@ -74,9 +75,8 @@ export function injectTweaks(code: string, tweaks: TweaksConfig): string {
 
   // Update reverb wet (convert from 0-100 to 0-1)
   const reverbWet = (tweaks.reverb / 100).toFixed(2);
-  result = result.replace(
-    REVERB_WET_REGEX,
-    (match) => match.replace(/wet:\s*[\d.]+/, `wet: ${reverbWet}`)
+  result = result.replace(REVERB_WET_REGEX, (match) =>
+    match.replace(/wet:\s*[\d.]+/, `wet: ${reverbWet}`)
   );
 
   // Update delay wet (convert from 0-100 to 0-1)
