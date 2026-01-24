@@ -228,6 +228,22 @@ Alternative: A lightweight custom solution could use a logger lib + database sto
 
 ## Work Log
 
+### 2026-01-24 17:14 - Documentation Sync
+
+Docs updated:
+- `.env.example` - Already contains Sentry configuration (added in Phase 1)
+- Task file - Updated Notes section with implementation observations
+- Task file - Updated Links section with complete file listing
+
+Annotations:
+- N/A (Node.js project, no model annotations)
+
+Consistency checks:
+- [x] Code matches docs - observability module exports match documented API
+- [x] No broken links - all file paths verified to exist
+- [x] .env.example has all required Sentry variables
+- [x] README not updated (observability is internal infrastructure, not user-facing)
+
 ### 2026-01-24 17:13 - Testing Phase Complete
 
 - **Tests written**:
@@ -363,12 +379,39 @@ $ npx tsc --noEmit
 ## Notes
 
 - Sentry has good Next.js integration
-- Consider Vercel Analytics for simpler setup
+- Consider Vercel Analytics for simpler setup (separate task 003-012)
 - Be careful not to log sensitive data (API keys, etc.)
+- Code truncation in audio error capture (500 chars) prevents large payloads
+- Session Replay enabled for production debugging (1% sessions, 100% on error)
+- Source maps are deleted after upload to keep them private
+- Noisy errors filtered: ResizeObserver, network errors, audio context init
+- Global error boundary uses inline styles (no CSS dependency for recovery)
 
 ---
 
 ## Links
 
+### Created Files
+- `lib/observability/index.ts` - Central observability abstraction module
+- `lib/observability/__tests__/index.test.ts` - Unit tests (22 tests)
+- `app/error.tsx` - Route-level error boundary
+- `app/__tests__/error.test.ts` - Error boundary tests (14 tests)
+- `app/global-error.tsx` - Root layout error boundary
+- `app/__tests__/global-error.test.ts` - Global error tests (21 tests)
+- `components/studio/ErrorFallback.tsx` - Reusable fallback component
+- `components/studio/__tests__/ErrorFallback.test.ts` - Fallback tests (16 tests)
+- `sentry.client.config.ts` - Client-side Sentry initialization
+- `sentry.server.config.ts` - Server-side Sentry initialization
+- `sentry.edge.config.ts` - Edge runtime Sentry initialization
+- `instrumentation.ts` - Next.js instrumentation hook
+
+### Modified Files
+- `next.config.ts` - Added Sentry config wrapper and source maps
+- `lib/audio/runtime.ts` - Integrated captureAudioError
+- `app/api/chat/route.ts` - Integrated captureLLMError with request ID tracing
+- `.env.example` - Added Sentry environment variables
+- `package.json` - Added @sentry/nextjs dependency
+
+### External Links
 - Sentry Next.js: https://docs.sentry.io/platforms/javascript/guides/nextjs/
 - Vercel Analytics: https://vercel.com/analytics
