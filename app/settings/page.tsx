@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useApiKey } from "@/lib/hooks/useApiKey";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
+import { UsageDisplay } from "@/components/usage/UsageDisplay";
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -178,6 +179,9 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Usage Section */}
+          <UsageDisplay className="mt-6" />
 
           {/* Account Info */}
           <div className="mt-6 bg-slate-900/50 border border-cyan-500/20 rounded-xl p-6">
