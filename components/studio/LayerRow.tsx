@@ -106,7 +106,7 @@ export function LayerRow({
           e.stopPropagation();
           onUpdate({ muted: !layer.muted });
         }}
-        className={`w-6 h-6 flex items-center justify-center rounded text-[10px] font-bold transition-colors ${
+        className={`min-w-[28px] min-h-[28px] md:min-w-[24px] md:min-h-[24px] flex items-center justify-center rounded text-[10px] font-bold transition-colors ${
           layer.muted
             ? "bg-cyan-500/30 text-cyan-300"
             : "bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
@@ -122,7 +122,7 @@ export function LayerRow({
           e.stopPropagation();
           onUpdate({ soloed: !layer.soloed });
         }}
-        className={`w-6 h-6 flex items-center justify-center rounded text-[10px] font-bold transition-colors ${
+        className={`min-w-[28px] min-h-[28px] md:min-w-[24px] md:min-h-[24px] flex items-center justify-center rounded text-[10px] font-bold transition-colors ${
           layer.soloed
             ? "bg-amber-500/30 text-amber-300"
             : "bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
@@ -133,14 +133,14 @@ export function LayerRow({
       </button>
 
       {/* Volume slider */}
-      <div className="w-16 relative" onClick={(e) => e.stopPropagation()}>
+      <div className="w-16 relative py-1" onClick={(e) => e.stopPropagation()}>
         <input
           type="range"
           min={0}
           max={100}
           value={layer.volume}
           onChange={(e) => onUpdate({ volume: Number(e.target.value) })}
-          className="w-full h-1 bg-slate-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2 [&::-webkit-slider-thumb]:h-2 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-2 [&::-moz-range-thumb]:h-2 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-cyan-500 [&::-moz-range-thumb]:border-none"
+          className="w-full h-1 bg-slate-700 rounded-full appearance-none cursor-pointer touch-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-cyan-500 [&::-moz-range-thumb]:border-none"
           style={{
             background: `linear-gradient(to right, rgb(34 211 238) 0%, rgb(34 211 238) ${volumePercentage}%, rgb(51 65 85) ${volumePercentage}%, rgb(51 65 85) 100%)`,
           }}
@@ -155,7 +155,7 @@ export function LayerRow({
             e.stopPropagation();
             onDelete();
           }}
-          className="w-6 h-6 flex items-center justify-center rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          className="min-w-[28px] min-h-[28px] md:min-w-[24px] md:min-h-[24px] flex items-center justify-center rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
           title="Delete layer"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
