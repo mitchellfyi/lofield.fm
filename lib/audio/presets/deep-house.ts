@@ -6,6 +6,7 @@ export const deepHouse: Preset = {
   genre: "Deep House",
   bpm: 122,
   description: "Groovy four-on-floor with warm pads and funky bass",
+  tags: ["groovy", "funky", "dance", "warm"],
   code: `// ═══════════════════════════════════════════════════════════
 // Sunset Drive - 32-bar Deep House arrangement
 // Sections: A(intro) B(build) C(drop) D(breakdown)

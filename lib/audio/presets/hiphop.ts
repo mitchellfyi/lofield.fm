@@ -6,6 +6,7 @@ export const hiphop: Preset = {
   genre: "Hip-Hop",
   bpm: 95,
   description: "Classic boom-bap with layered drums, soulful piano, and deep sub bass",
+  tags: ["boom-bap", "classic", "soulful", "drums"],
   code: `// ═══════════════════════════════════════════════════════════
 // Gold Chains - 32-bar Hip-Hop Production
 // Sections: A(intro) B(verse) C(chorus) D(bridge)

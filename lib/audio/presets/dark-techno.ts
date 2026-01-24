@@ -6,6 +6,7 @@ export const darkTechno: Preset = {
   genre: "Dark Techno",
   bpm: 132,
   description: "Hypnotic dark techno with industrial textures",
+  tags: ["dark", "industrial", "hypnotic", "intense"],
   code: `// ═══════════════════════════════════════════════════════════
 // Warehouse - 32-bar Dark Techno
 // Sections: A(intro) B(build) C(peak) D(breakdown)

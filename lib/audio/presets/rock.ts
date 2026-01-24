@@ -6,6 +6,7 @@ export const rock: Preset = {
   genre: "Rock",
   bpm: 128,
   description: "Distorted power chords with tight punchy drums and lead guitar fills",
+  tags: ["distorted", "powerful", "driving", "guitar"],
   code: `// ═══════════════════════════════════════════════════════════
 // Overdrive - 32-bar Rock Production
 // Sections: A(intro) B(verse) C(chorus) D(breakdown)

@@ -6,6 +6,7 @@ export const rnbSoul: Preset = {
   genre: "R&B / Neo-Soul",
   bpm: 75,
   description: "Smooth R&B with silky chords and laid-back groove",
+  tags: ["smooth", "soulful", "romantic", "laid-back"],
   code: `// ═══════════════════════════════════════════════════════════
 // Velvet - 32-bar R&B / Neo-Soul
 // Sections: A(intro) B(verse) C(chorus) D(outro)

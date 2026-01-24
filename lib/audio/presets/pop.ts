@@ -6,6 +6,7 @@ export const pop: Preset = {
   genre: "Pop",
   bpm: 118,
   description: "Radio-ready pop with acoustic guitar, bright piano, and polished drums",
+  tags: ["bright", "catchy", "upbeat", "radio-ready"],
   code: `// ═══════════════════════════════════════════════════════════
 // Sunlight - 32-bar Pop Production
 // Sections: A(intro) B(verse) C(chorus) D(bridge)

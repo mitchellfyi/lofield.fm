@@ -6,6 +6,7 @@ export const trapBeat: Preset = {
   genre: "Trap",
   bpm: 140,
   description: "Hard-hitting 808s with rapid hi-hats",
+  tags: ["hard", "808s", "energetic", "bass"],
   code: `// ═══════════════════════════════════════════════════════════
 // Midnight Trap - 32-bar arrangement
 // Sections: A(intro) B(build) C(drop) D(outro)

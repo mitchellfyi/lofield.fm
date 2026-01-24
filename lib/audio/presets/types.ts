@@ -8,4 +8,5 @@ export interface Preset {
   bpm: number;
   description: string;
   code: string;
+  tags: string[];
 }

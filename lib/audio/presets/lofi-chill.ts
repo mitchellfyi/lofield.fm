@@ -6,6 +6,7 @@ export const lofiChill: Preset = {
   genre: "Lofi Hip-Hop",
   bpm: 82,
   description: "Chill jazzy beats with Rhodes and vinyl warmth",
+  tags: ["chill", "jazzy", "relaxed", "study"],
   code: `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
 // Sections: A(intro) B(build) C(full) D(breakdown)

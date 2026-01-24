@@ -6,6 +6,7 @@ export const ambientChill: Preset = {
   genre: "Ambient",
   bpm: 70,
   description: "Ethereal soundscapes with gentle pulses",
+  tags: ["ambient", "ethereal", "atmospheric", "peaceful"],
   code: `// ═══════════════════════════════════════════════════════════
 // Floating - 32-bar Ambient Soundscape
 // Sections: A(sparse) B(build) C(full) D(fade)

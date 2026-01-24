@@ -6,6 +6,7 @@ export const trance: Preset = {
   genre: "Trance",
   bpm: 138,
   description: "Supersaw lead, massive reverb, sidechained pads, and euphoric builds",
+  tags: ["euphoric", "uplifting", "melodic", "builds"],
   code: `// ═══════════════════════════════════════════════════════════
 // Euphoria - 32-bar Trance Production
 // Sections: A(intro) B(build) C(drop) D(breakdown)
