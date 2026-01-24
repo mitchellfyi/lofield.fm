@@ -1,15 +1,15 @@
 # Taskboard
 
 > Auto-generated
-> Last updated: 2026-01-24 12:20
+> Last updated: 2026-01-24 12:32
 
 ## Summary
 
 | Status | Count |
 | ------ | ----- |
 | Doing  | 0     |
-| Todo   | 12    |
-| Done   | 8     |
+| Todo   | 11    |
+| Done   | 9     |
 
 ---
 
@@ -21,7 +21,6 @@ _No tasks in progress_
 
 ## Todo
 
-- **[003-004-shareable-links.md](.claude/tasks/todo/003-004-shareable-links.md)** [Medium]
 - **[003-005-preset-library.md](.claude/tasks/todo/003-005-preset-library.md)** [Medium]
 - **[003-006-tweaks-ux.md](.claude/tasks/todo/003-006-tweaks-ux.md)** [Medium]
 - **[003-007-multi-track-support.md](.claude/tasks/todo/003-007-multi-track-support.md)** [Medium]
@@ -38,6 +37,7 @@ _No tasks in progress_
 
 ## Recently Completed (Last 10)
 
+- **[003-004-shareable-links.md](.claude/tasks/done/003-004-shareable-links.md)** - Shareable Links with Public Read-Only Pages
 - **[003-003-export-options.md](.claude/tasks/done/003-003-export-options.md)** - Export Options - Copy Code, Download JS, Render Audio
 - **[003-002-track-revisions.md](.claude/tasks/done/003-002-track-revisions.md)** - Track Version History with Revert and Diff View
 - **[003-001-save-tracks-db.md](.claude/tasks/done/003-001-save-tracks-db.md)** - Save Tracks to Database
