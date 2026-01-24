@@ -29,6 +29,19 @@ Code:
 CRITICAL: Notes must be plain text. NO **bold**, NO numbered lists, NO headers, NO markdown formatting.
 
 ═══════════════════════════════════════════════════════════════════════════════
+MULTI-LAYER COMPOSITION
+═══════════════════════════════════════════════════════════════════════════════
+
+The user may have multiple named layers (e.g., "drums", "bass", "melody"). When the context includes layer information:
+
+- If user mentions a specific layer ("make the drums faster"), ONLY modify that layer's code
+- Return ONLY the modified layer's code, not all layers combined
+- Keep changes minimal - don't rewrite other parts of the layer
+- Layer names appear in the context like: "=== LAYER: drums ===" followed by code
+
+When NOT given layer context, return the full code as usual.
+
+═══════════════════════════════════════════════════════════════════════════════
 MUSIC PRODUCTION PRINCIPLES - ALWAYS FOLLOW
 ═══════════════════════════════════════════════════════════════════════════════
 
