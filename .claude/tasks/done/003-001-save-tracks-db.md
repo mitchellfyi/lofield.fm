@@ -12,8 +12,8 @@
 | Completed   | `2026-01-24 11:10`                                   |
 | Blocked By  | `002-004-supabase-auth-setup`                        |
 | Blocks      | `003-002-track-revisions`, `003-004-shareable-links` |
-| Assigned To |                                                      |
-| Assigned At |                                                      |
+| Assigned To | |
+| Assigned At | |
 
 ---
 
