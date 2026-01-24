@@ -12,8 +12,8 @@
 | Completed   |                               |
 | Blocked By  |                               |
 | Blocks      |                               |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-24 14:33` |
+| Assigned To | `worker-1`                    |
+| Assigned At | `2026-01-24 14:33`            |
 
 ---
 
@@ -52,21 +52,21 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Track list UI showing all tracks | **No** | Need to create `LayersPanel` component |
-| Add/remove/rename tracks | **No** | Need UI controls and state management |
-| Each track has: name, code, mute, solo, volume | **No** | Need new `AudioLayer` type (not existing Track model) |
-| Mute: silences track | **No** | Need mute logic - inject comment prefix to disable code |
-| Solo: only play solo'd tracks | **No** | Need solo logic - mute non-solo'd tracks when any is solo'd |
-| Volume: per-track gain | **No** | Need volume multiplier injected into track code |
-| Tracks combine using Strudel's stack() | **Clarification** | This app uses Tone.js, not Strudel. Code concatenation is equivalent |
-| Chat can reference track by name | **No** | Need to update system prompt and include layer context |
-| Visual track indicators (playing, muted, etc.) | **No** | Need status icons in LayerRow |
-| Drag to reorder tracks | **Defer** | Nice-to-have, can add later with react-beautiful-dnd |
-| Tests written and passing | **No** | Need unit tests for new components and logic |
-| Quality gates pass | **Pending** | Will verify at completion |
-| Changes committed with task reference | **Pending** | Will commit at completion |
+| Criterion                                      | Status            | Gap                                                                  |
+| ---------------------------------------------- | ----------------- | -------------------------------------------------------------------- |
+| Track list UI showing all tracks               | **No**            | Need to create `LayersPanel` component                               |
+| Add/remove/rename tracks                       | **No**            | Need UI controls and state management                                |
+| Each track has: name, code, mute, solo, volume | **No**            | Need new `AudioLayer` type (not existing Track model)                |
+| Mute: silences track                           | **No**            | Need mute logic - inject comment prefix to disable code              |
+| Solo: only play solo'd tracks                  | **No**            | Need solo logic - mute non-solo'd tracks when any is solo'd          |
+| Volume: per-track gain                         | **No**            | Need volume multiplier injected into track code                      |
+| Tracks combine using Strudel's stack()         | **Clarification** | This app uses Tone.js, not Strudel. Code concatenation is equivalent |
+| Chat can reference track by name               | **No**            | Need to update system prompt and include layer context               |
+| Visual track indicators (playing, muted, etc.) | **No**            | Need status icons in LayerRow                                        |
+| Drag to reorder tracks                         | **Defer**         | Nice-to-have, can add later with react-beautiful-dnd                 |
+| Tests written and passing                      | **No**            | Need unit tests for new components and logic                         |
+| Quality gates pass                             | **Pending**       | Will verify at completion                                            |
+| Changes committed with task reference          | **Pending**       | Will commit at completion                                            |
 
 #### Key Architecture Decisions
 
@@ -81,6 +81,7 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 #### Files to Create
 
 1. **`lib/types/audioLayer.ts`** - New type definition
+
    ```typescript
    export interface AudioLayer {
      id: string;
@@ -92,6 +93,7 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
      color: string; // For visual identification
    }
    ```
+
    - Also export: `DEFAULT_LAYERS`, `createDefaultLayer()`, `LAYER_COLORS`
 
 2. **`components/studio/LayersPanel.tsx`** - Main layers container
@@ -172,27 +174,32 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 #### Implementation Order
 
 **Phase 1: Core Types & Logic** (no UI yet)
+
 1. Create `lib/types/audioLayer.ts`
 2. Create `lib/audio/layerCombiner.ts`
 3. Write tests for both
 
 **Phase 2: UI Components** (isolated)
+
 1. Create `components/studio/LayerRow.tsx`
 2. Create `components/studio/LayersPanel.tsx`
 3. Write component tests
 
 **Phase 3: Integration** (connect everything)
+
 1. Update `app/studio/page.tsx` state management
 2. Connect LayersPanel to studio page
 3. Update playCode to use combined layers
 4. Verify basic playback works
 
 **Phase 4: Chat Integration** (AI awareness)
+
 1. Update `prompts/system-prompt.md`
 2. Update `app/api/chat/route.ts` to include layer context
 3. Test AI responses to layer-specific requests
 
 **Phase 5: Quality & Cleanup**
+
 1. Run full test suite
 2. Run `./bin/quality`
 3. Fix any issues
@@ -200,13 +207,13 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 
 #### Complexity Estimate
 
-| Phase | Files | Complexity | Est. LOC |
-|-------|-------|------------|----------|
-| Phase 1 | 2 new, 2 tests | Low | ~200 |
-| Phase 2 | 2 new, 1 test | Medium | ~350 |
-| Phase 3 | 1 modify | High | ~150 changes |
-| Phase 4 | 2 modify | Medium | ~100 changes |
-| Phase 5 | - | Low | - |
+| Phase   | Files          | Complexity | Est. LOC     |
+| ------- | -------------- | ---------- | ------------ |
+| Phase 1 | 2 new, 2 tests | Low        | ~200         |
+| Phase 2 | 2 new, 1 test  | Medium     | ~350         |
+| Phase 3 | 1 modify       | High       | ~150 changes |
+| Phase 4 | 2 modify       | Medium     | ~100 changes |
+| Phase 5 | -              | Low        | -            |
 
 **Total**: ~800 new/modified lines of code
 
@@ -217,6 +224,7 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 ### 2026-01-24 - Implementation Progress
 
 **Commits Made:**
+
 1. `ce80d9a` - feat: Add AudioLayer type for multi-track support
 2. `d411b4a` - feat: Add layerCombiner for multi-track code combination
 3. `0469bd8` - feat: Add LayerRow component for layer controls
@@ -226,21 +234,25 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 7. `7fc5775` - feat: Include layer context in chat API messages
 
 **Files Created:**
+
 - `lib/types/audioLayer.ts` - AudioLayer interface, colors, helpers
 - `lib/audio/layerCombiner.ts` - combineLayers, applySoloLogic, volumeToDb
 - `components/studio/LayerRow.tsx` - Individual layer row with mute/solo/volume
 - `components/studio/LayersPanel.tsx` - Container panel with add/reset
 
 **Files Modified:**
+
 - `app/studio/page.tsx` - Added layers state, LayersPanel UI, updated playCode
 - `prompts/system-prompt.md` - Added multi-layer composition instructions
 
 **Quality Checks:**
+
 - All files pass ESLint
 - No TypeScript errors
 - Commits made incrementally after each logical change
 
 **Next Steps:**
+
 - Testing phase will verify functionality
 - May need to handle AI responses that return modified layer code
 
@@ -285,7 +297,36 @@ Real music production uses multiple tracks (drums, bass, melody, etc.). Users sh
 
 ## Testing Evidence
 
-(To be filled during execution)
+### 2026-01-24 - Testing Phase Complete
+
+**Tests Written:**
+- `lib/types/__tests__/audioLayer.test.ts` - 35 tests
+  - Module exports, LAYER_COLORS, generateLayerId, createDefaultLayer, EMPTY_LAYER_CODE, DEFAULT_LAYERS
+- `lib/audio/__tests__/layerCombiner.test.ts` - 56 tests
+  - applySoloLogic, applyMuteWrapper, volumeToDb, injectLayerVolume, generateLayerHeader, combineLayers, extractLayerNames
+- `components/studio/__tests__/LayerRow.test.ts` - 46 tests
+  - Props interface, mute/solo/volume controls, delete button, selection, playing indicator, name editing
+- `components/studio/__tests__/LayersPanel.test.ts` - 43 tests
+  - Expand/collapse, add/update/delete layer, reset, layer selection, integration with audioLayer types
+
+**Test Results:**
+```
+Test Files: 38 passed (38)
+Tests: 1063 passed (1063)
+Duration: 5.06s
+```
+
+**New Tests Added:** 180 (35 + 56 + 46 + 43)
+
+**Quality Gates:**
+- ESLint: PASS
+- TypeScript: PASS
+- Prettier: PASS
+- Vitest: PASS (1063 tests)
+
+**Commits:**
+- `0791c0c` - test: Add specs for multi-track layer support
+- `1f462cf` - style: Apply prettier formatting to layer components
 
 ---
 
