@@ -27,6 +27,7 @@ import { TrackBrowser } from "@/components/studio/TrackBrowser";
 import { RevisionHistory } from "@/components/studio/RevisionHistory";
 import { SaveButton } from "@/components/studio/SaveButton";
 import { ExportButton } from "@/components/studio/ExportButton";
+import { ExportModal } from "@/components/studio/ExportModal";
 import { Toast } from "@/components/studio/Toast";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
@@ -893,6 +894,15 @@ Request: ${inputValue}`;
           </div>
         </div>
       )}
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        code={code}
+        trackName={currentTrackName ?? undefined}
+        onClose={() => setShowExportModal(false)}
+        onSuccess={() => showToast("Audio exported successfully", "success")}
+      />
 
       {/* Toast Notifications */}
       <Toast
