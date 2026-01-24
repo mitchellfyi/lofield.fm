@@ -12,8 +12,8 @@
 | Completed   |                                               |
 | Blocked By  | `003-001-save-tracks-db`, `003-006-tweaks-ux` |
 | Blocks      |                                               |
-| Assigned To |                                               |
-| Assigned At |                                               |
+| Assigned To | `worker-1` |
+| Assigned At | `2026-01-24 17:19` |
 
 ---
 
