@@ -64,12 +64,8 @@ export function filterPresets(options: {
     // Filter by search query (name, description, or tags)
     if (searchLower) {
       const matchesName = preset.name.toLowerCase().includes(searchLower);
-      const matchesDescription = preset.description
-        .toLowerCase()
-        .includes(searchLower);
-      const matchesTags = preset.tags.some((t) =>
-        t.toLowerCase().includes(searchLower)
-      );
+      const matchesDescription = preset.description.toLowerCase().includes(searchLower);
+      const matchesTags = preset.tags.some((t) => t.toLowerCase().includes(searchLower));
       const matchesGenre = preset.genre.toLowerCase().includes(searchLower);
 
       if (!matchesName && !matchesDescription && !matchesTags && !matchesGenre) {

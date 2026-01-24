@@ -2,11 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { PRESETS, type Preset } from "@/lib/audio/presets";
-import {
-  filterPresets,
-  getUniqueGenres,
-  getUniqueTags,
-} from "@/lib/audio/presets/utils";
+import { filterPresets, getUniqueGenres, getUniqueTags } from "@/lib/audio/presets/utils";
 import { PresetCard } from "./PresetCard";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 
@@ -23,15 +19,11 @@ export function PresetBrowser({
   onLoadPreset,
   hasUnsavedChanges,
 }: PresetBrowserProps) {
-  const [selectedGenre, setSelectedGenre] = useState<string | undefined>(
-    undefined
-  );
+  const [selectedGenre, setSelectedGenre] = useState<string | undefined>(undefined);
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [previewingPreset, setPreviewingPreset] = useState<Preset | null>(null);
-  const [pendingLoadPreset, setPendingLoadPreset] = useState<Preset | null>(
-    null
-  );
+  const [pendingLoadPreset, setPendingLoadPreset] = useState<Preset | null>(null);
 
   const genres = getUniqueGenres();
   const tags = getUniqueTags();
@@ -43,9 +35,7 @@ export function PresetBrowser({
   });
 
   const handlePreview = useCallback((preset: Preset) => {
-    setPreviewingPreset((current) =>
-      current?.id === preset.id ? null : preset
-    );
+    setPreviewingPreset((current) => (current?.id === preset.id ? null : preset));
     // TODO: Implement actual audio preview when runtime supports it
   }, []);
 
@@ -91,9 +81,7 @@ export function PresetBrowser({
           <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-cyan-300">
-                  Preset Library
-                </h2>
+                <h2 className="text-xl font-bold text-cyan-300">Preset Library</h2>
                 <p className="text-sm text-slate-400 mt-1">
                   Choose from {PRESETS.length} curated presets
                 </p>
@@ -102,12 +90,7 @@ export function PresetBrowser({
                 onClick={onClose}
                 className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -147,9 +130,7 @@ export function PresetBrowser({
           <div className="px-6 py-3 border-b border-slate-700/50 flex-shrink-0 space-y-3">
             {/* Genre Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="text-xs font-medium text-slate-500 mr-1 flex-shrink-0">
-                Genre:
-              </span>
+              <span className="text-xs font-medium text-slate-500 mr-1 flex-shrink-0">Genre:</span>
               <button
                 onClick={() => setSelectedGenre(undefined)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex-shrink-0 ${
@@ -163,9 +144,7 @@ export function PresetBrowser({
               {genres.map((genre) => (
                 <button
                   key={genre}
-                  onClick={() =>
-                    setSelectedGenre((g) => (g === genre ? undefined : genre))
-                  }
+                  onClick={() => setSelectedGenre((g) => (g === genre ? undefined : genre))}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex-shrink-0 ${
                     selectedGenre === genre
                       ? "bg-cyan-600/30 text-cyan-300 border border-cyan-500/50"
@@ -179,15 +158,11 @@ export function PresetBrowser({
 
             {/* Tag Chips */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="text-xs font-medium text-slate-500 mr-1 flex-shrink-0">
-                Mood:
-              </span>
+              <span className="text-xs font-medium text-slate-500 mr-1 flex-shrink-0">Mood:</span>
               {tags.slice(0, 12).map((tag) => (
                 <button
                   key={tag}
-                  onClick={() =>
-                    setSelectedTag((t) => (t === tag ? undefined : tag))
-                  }
+                  onClick={() => setSelectedTag((t) => (t === tag ? undefined : tag))}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all duration-200 flex-shrink-0 ${
                     selectedTag === tag
                       ? "bg-amber-600/30 text-amber-300 border border-amber-500/50"
@@ -244,9 +219,7 @@ export function PresetBrowser({
                     d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <p className="text-slate-400 text-sm">
-                  No presets match your filters
-                </p>
+                <p className="text-slate-400 text-sm">No presets match your filters</p>
                 <button
                   onClick={clearFilters}
                   className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"

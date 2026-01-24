@@ -71,9 +71,7 @@ export function ConfirmationDialog({
           </div>
 
           {/* Title */}
-          <h3 className="text-lg font-semibold text-white text-center">
-            {title}
-          </h3>
+          <h3 className="text-lg font-semibold text-white text-center">{title}</h3>
 
           {/* Message */}
           <p className="text-sm text-slate-400 text-center">{message}</p>

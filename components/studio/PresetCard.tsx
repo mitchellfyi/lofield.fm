@@ -9,12 +9,7 @@ interface PresetCardProps {
   isPlaying?: boolean;
 }
 
-export function PresetCard({
-  preset,
-  onPreview,
-  onLoad,
-  isPlaying = false,
-}: PresetCardProps) {
+export function PresetCard({ preset, onPreview, onLoad, isPlaying = false }: PresetCardProps) {
   return (
     <div className="group relative bg-slate-800/50 border border-slate-700 hover:border-cyan-500/50 rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/5">
       {/* Header */}
@@ -57,22 +52,14 @@ export function PresetCard({
         >
           {isPlaying ? (
             <>
-              <svg
-                className="w-3.5 h-3.5"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
               </svg>
               Stop
             </>
           ) : (
             <>
-              <svg
-                className="w-3.5 h-3.5"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
               Preview

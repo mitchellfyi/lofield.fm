@@ -35,9 +35,4 @@ export function getPresetById(id: string) {
 }
 
 // Re-export utility functions
-export {
-  filterPresets,
-  getUniqueGenres,
-  getUniqueTags,
-  searchPresets,
-} from "./utils";
+export { filterPresets, getUniqueGenres, getUniqueTags, searchPresets } from "./utils";
