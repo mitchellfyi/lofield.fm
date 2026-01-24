@@ -1472,6 +1472,7 @@ Request: ${inputValue}`;
         trackName={currentTrackName ?? undefined}
         onClose={() => setShowExportModal(false)}
         onSuccess={() => showToast("Audio exported successfully", "success")}
+        recording={activeRecording}
       />
 
       {/* Share Dialog */}
