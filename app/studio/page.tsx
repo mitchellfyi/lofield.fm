@@ -19,8 +19,13 @@ import { TimelineBar } from "@/components/studio/TimelineBar";
 import { ApiKeyPrompt } from "@/components/studio/ApiKeyPrompt";
 import { useModelSelection } from "@/lib/hooks/useModelSelection";
 import { useApiKey } from "@/lib/hooks/useApiKey";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { useTracks, useAutoSave } from "@/lib/hooks/useTracks";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
+import { TrackBrowser } from "@/components/studio/TrackBrowser";
+import { SaveButton } from "@/components/studio/SaveButton";
 import type { UIMessage } from "@ai-sdk/react";
+import type { Track } from "@/lib/types/tracks";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
@@ -299,6 +304,30 @@ export default function StudioPage() {
   const [selectedModel, setSelectedModel] = useModelSelection();
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const { hasKey, loading: apiKeyLoading, refresh: refreshApiKey } = useApiKey();
+
+  // Track management state
+  const [showTrackBrowser, setShowTrackBrowser] = useState(false);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [showSaveAsModal, setShowSaveAsModal] = useState(false);
+  const [saveAsName, setSaveAsName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const lastSavedCodeRef = useRef<string>("");
+
+  // Project and track hooks
+  const { projects, createProject } = useProjects();
+  const { createTrack, updateTrack } = useTracks(selectedProjectId);
+
+  // Auto-save hook
+  const { saving: autoSaving, lastSaved } = useAutoSave(
+    currentTrackId,
+    code,
+    autoSaveEnabled
+  );
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>("");
   const runtimeRef = useRef(getAudioRuntime());
@@ -468,7 +497,7 @@ export default function StudioPage() {
         if (extractedCode) {
           // Update the code editor live as text streams in
           // This is intentional - syncing external streaming data to state
-          // eslint-disable-next-line react-hooks/set-state-in-effect
+           
           setCode(extractedCode);
 
           if (isComplete) {
@@ -549,6 +578,100 @@ Request: ${inputValue}`;
     await refreshApiKey();
   };
 
+  // Track unsaved changes when code differs from last saved
+  useEffect(() => {
+    if (currentTrackId && code !== lastSavedCodeRef.current) {
+      // Intentional - tracking unsaved changes when code changes
+       
+      setHasUnsavedChanges(true);
+    }
+  }, [code, currentTrackId]);
+
+  // Handle selecting a track from the browser
+  const handleSelectTrack = useCallback((track: Track) => {
+    setCurrentTrackId(track.id);
+    setCurrentTrackName(track.name);
+    setSelectedProjectId(track.project_id);
+    setCode(track.current_code || DEFAULT_CODE);
+    lastSavedCodeRef.current = track.current_code || DEFAULT_CODE;
+    setHasUnsavedChanges(false);
+    setShowTrackBrowser(false);
+  }, []);
+
+  // Handle saving the current track
+  const handleSave = useCallback(async () => {
+    if (!currentTrackId) {
+      // No track selected, open save-as modal
+      setShowSaveAsModal(true);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const result = await updateTrack(currentTrackId, { current_code: code });
+      if (result) {
+        lastSavedCodeRef.current = code;
+        setHasUnsavedChanges(false);
+      }
+    } catch {
+      setError("Failed to save track");
+    } finally {
+      setSaving(false);
+    }
+  }, [currentTrackId, code, updateTrack]);
+
+  // Handle save-as (create new track)
+  const handleSaveAs = useCallback(async () => {
+    if (!saveAsName.trim()) return;
+
+    try {
+      setSaving(true);
+
+      // Create a default project if none exists
+      let projectId = selectedProjectId;
+      if (!projectId) {
+        if (projects.length === 0) {
+          const newProject = await createProject("My Tracks");
+          if (!newProject) {
+            setError("Failed to create project");
+            return;
+          }
+          projectId = newProject.id;
+          setSelectedProjectId(projectId);
+        } else {
+          projectId = projects[0].id;
+          setSelectedProjectId(projectId);
+        }
+      }
+
+      const newTrack = await createTrack(projectId, saveAsName.trim(), code);
+      if (newTrack) {
+        setCurrentTrackId(newTrack.id);
+        setCurrentTrackName(newTrack.name);
+        lastSavedCodeRef.current = code;
+        setHasUnsavedChanges(false);
+        setShowSaveAsModal(false);
+        setSaveAsName("");
+      }
+    } catch {
+      setError("Failed to create track");
+    } finally {
+      setSaving(false);
+    }
+  }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code]);
+
+  // Keyboard shortcuts for save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
+
   return (
     <>
       <div
@@ -565,6 +688,8 @@ Request: ${inputValue}`;
           onLoadPreset={setCode}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
+          currentTrackName={currentTrackName}
+          onOpenTracks={() => setShowTrackBrowser(true)}
         />
 
         {/* Main Content */}
@@ -599,6 +724,18 @@ Request: ${inputValue}`;
                   defaultCode={DEFAULT_CODE}
                   liveMode={liveMode}
                   onLiveModeChange={setLiveMode}
+                  actionSlot={
+                    <SaveButton
+                      onSave={handleSave}
+                      onSaveAs={() => setShowSaveAsModal(true)}
+                      disabled={!hasKey}
+                      hasUnsavedChanges={hasUnsavedChanges}
+                      saving={saving || autoSaving}
+                      autoSaveEnabled={autoSaveEnabled}
+                      onAutoSaveToggle={setAutoSaveEnabled}
+                      lastSaved={lastSaved}
+                    />
+                  }
                 />
               </div>
 
@@ -645,6 +782,63 @@ Request: ${inputValue}`;
         onClose={() => setShowApiKeyModal(false)}
         onSuccess={handleApiKeySuccess}
       />
+
+      {/* Track Browser Modal */}
+      <TrackBrowser
+        isOpen={showTrackBrowser}
+        onClose={() => setShowTrackBrowser(false)}
+        onSelectTrack={handleSelectTrack}
+        currentTrackId={currentTrackId}
+      />
+
+      {/* Save As Modal */}
+      {showSaveAsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden">
+            <div className="px-6 py-4 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800">
+              <h2 className="text-xl font-bold text-cyan-300">Save Track</h2>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Track Name
+              </label>
+              <input
+                type="text"
+                value={saveAsName}
+                onChange={(e) => setSaveAsName(e.target.value)}
+                placeholder="Enter track name..."
+                className="w-full px-4 py-3 bg-slate-700 border border-cyan-500/30 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && saveAsName.trim()) handleSaveAs();
+                  if (e.key === "Escape") {
+                    setShowSaveAsModal(false);
+                    setSaveAsName("");
+                  }
+                }}
+              />
+            </div>
+            <div className="px-6 py-4 border-t border-cyan-500/30 bg-gradient-to-r from-slate-900 to-slate-800 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowSaveAsModal(false);
+                  setSaveAsName("");
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAs}
+                disabled={!saveAsName.trim() || saving}
+                className="px-6 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white transition-all duration-200 shadow-lg shadow-cyan-500/20"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

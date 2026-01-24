@@ -25,6 +25,8 @@ interface CodePanelProps {
   showSequencerToggle?: boolean;
   sequencerVisible?: boolean;
   onSequencerToggle?: () => void;
+  // Optional slot for rendering additional action buttons
+  actionSlot?: React.ReactNode;
 }
 
 // Syntax highlighting with high contrast colors
@@ -120,6 +122,7 @@ export function CodePanel({
   showSequencerToggle,
   sequencerVisible,
   onSequencerToggle,
+  actionSlot,
 }: CodePanelProps) {
   const [copied, setCopied] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
@@ -174,6 +177,8 @@ export function CodePanel({
           )}
         </div>
         <div className="flex gap-1.5 sm:gap-2">
+          {/* Custom action slot */}
+          {actionSlot}
           {/* Sequencer toggle - mobile only */}
           {showSequencerToggle && (
             <button
