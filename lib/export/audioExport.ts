@@ -6,6 +6,8 @@
 import * as Tone from "tone";
 import { encodeWav } from "./wavEncoder";
 import type { ExportFormat, ExportProgress } from "./types";
+import type { Recording, RecordingEvent } from "@/lib/types/recording";
+import type { TweaksConfig } from "@/lib/types/tweaks";
 
 /** Options for audio export */
 export interface AudioExportOptions {
@@ -13,10 +15,104 @@ export interface AudioExportOptions {
   duration: number; // in seconds
   sampleRate?: number;
   onProgress?: (progress: ExportProgress) => void;
+  /** Optional recording containing automation events to render */
+  recording?: Recording;
 }
 
 /** Default sample rate for exports */
 const DEFAULT_SAMPLE_RATE = 44100;
+
+/** Transport type from Tone.js (using ReturnType since Transport isn't exported as a type) */
+type ToneTransport = ReturnType<typeof Tone.getTransport>;
+
+/**
+ * Tracked Tone.js objects for automation scheduling
+ * These are captured during code execution to allow parameter changes during render
+ */
+interface TrackedObjects {
+  transport: ToneTransport | null;
+  masterLowpass: Tone.Filter | null;
+  masterReverb: Tone.Reverb | null;
+  tapeDelay: Tone.FeedbackDelay | null;
+}
+
+/**
+ * Schedule automation events from a recording to play during offline render
+ * Uses Tone.js parameter automation to change values at specific times
+ *
+ * @param transport - The offline transport to schedule events on
+ * @param events - Recording events to schedule
+ * @param objects - Tracked Tone.js objects to apply automation to
+ */
+export function scheduleAutomationEvents(
+  transport: ToneTransport,
+  events: RecordingEvent[],
+  objects: TrackedObjects
+): void {
+  // Sort events by timestamp
+  const sortedEvents = [...events].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
+
+  for (const event of sortedEvents) {
+    if (event.type !== "tweak" || !event.param || typeof event.newValue !== "number") {
+      continue;
+    }
+
+    // Convert ms to seconds for transport scheduling
+    const timeSeconds = event.timestamp_ms / 1000;
+    const param = event.param as keyof TweaksConfig;
+    const value = event.newValue;
+
+    // Schedule the parameter change at the event time
+    transport.schedule(() => {
+      applyTweakToObjects(param, value, objects);
+    }, timeSeconds);
+  }
+}
+
+/**
+ * Apply a tweak parameter value to the appropriate Tone.js object
+ */
+function applyTweakToObjects(
+  param: keyof TweaksConfig,
+  value: number,
+  objects: TrackedObjects
+): void {
+  switch (param) {
+    case "bpm":
+      // BPM changes mid-render are complex - log warning and skip
+      // Changing BPM affects transport timing which can desync events
+      console.warn(
+        `[audioExport] BPM change to ${value} at runtime skipped - BPM automation not supported in export`
+      );
+      break;
+
+    case "swing":
+      // Swing changes also affect transport timing
+      if (objects.transport) {
+        objects.transport.swing = value / 100;
+      }
+      break;
+
+    case "filter":
+      if (objects.masterLowpass) {
+        // Use rampTo for smooth transitions
+        objects.masterLowpass.frequency.rampTo(value, 0.05);
+      }
+      break;
+
+    case "reverb":
+      if (objects.masterReverb) {
+        objects.masterReverb.wet.rampTo(value / 100, 0.05);
+      }
+      break;
+
+    case "delay":
+      if (objects.tapeDelay) {
+        objects.tapeDelay.wet.rampTo(value / 100, 0.05);
+      }
+      break;
+  }
+}
 
 /**
  * Render Tone.js code to an audio file
@@ -25,7 +121,7 @@ const DEFAULT_SAMPLE_RATE = 44100;
  * @returns A Blob containing the audio file
  */
 export async function renderAudio(code: string, options: AudioExportOptions): Promise<Blob> {
-  const { format, duration, sampleRate = DEFAULT_SAMPLE_RATE, onProgress } = options;
+  const { format, duration, sampleRate = DEFAULT_SAMPLE_RATE, onProgress, recording } = options;
 
   const reportProgress = (phase: ExportProgress["phase"], percent: number, message?: string) => {
     onProgress?.({ phase, percent, message });
@@ -47,10 +143,18 @@ export async function renderAudio(code: string, options: AudioExportOptions): Pr
   // Store disposables for cleanup
   const disposables: Array<{ dispose: () => void }> = [];
 
+  // Track named objects for automation (populated by code evaluation)
+  const trackedObjects: TrackedObjects = {
+    transport: null,
+    masterLowpass: null,
+    masterReverb: null,
+    tapeDelay: null,
+  };
+
   try {
     // Create a proxy that tracks all new Tone.js object instantiations
     // and binds them to the offline context
-    const createOfflineTrackedTone = () => {
+    const createOfflineTrackedTone = (objectTracker: TrackedObjects) => {
       return new Proxy(Tone, {
         get(target, prop: string) {
           const value = (target as Record<string, unknown>)[prop];
@@ -79,6 +183,7 @@ export async function renderAudio(code: string, options: AudioExportOptions): Pr
           // If it's a constructor (starts with capital letter), wrap it to track instances
           // and set the context to offline
           if (typeof value === "function" && /^[A-Z]/.test(prop)) {
+            const constructorName = prop;
             return new Proxy(value, {
               construct(constructorTarget, args): object {
                 // Create instance with offline context
@@ -109,6 +214,17 @@ export async function renderAudio(code: string, options: AudioExportOptions): Pr
                 ) {
                   disposables.push(instance as { dispose: () => void });
                 }
+
+                // Capture specific object types for automation
+                // We capture the first instance of each type as the "master" effect
+                if (constructorName === "Filter" && !objectTracker.masterLowpass) {
+                  objectTracker.masterLowpass = instance as Tone.Filter;
+                } else if (constructorName === "Reverb" && !objectTracker.masterReverb) {
+                  objectTracker.masterReverb = instance as Tone.Reverb;
+                } else if (constructorName === "FeedbackDelay" && !objectTracker.tapeDelay) {
+                  objectTracker.tapeDelay = instance as Tone.FeedbackDelay;
+                }
+
                 return instance;
               },
             });
@@ -120,7 +236,7 @@ export async function renderAudio(code: string, options: AudioExportOptions): Pr
 
     reportProgress("preparing", 25, "Evaluating code...");
 
-    const trackedTone = createOfflineTrackedTone();
+    const trackedTone = createOfflineTrackedTone(trackedObjects);
 
     // Execute the code with tracked Tone
     const playFunction = new Function("Tone", code);
@@ -140,6 +256,16 @@ export async function renderAudio(code: string, options: AudioExportOptions): Pr
     const transport = offlineToneContext.transport;
     transport.loop = false; // Don't loop for export
     transport.position = 0;
+
+    // Set transport reference for automation
+    trackedObjects.transport = transport;
+
+    // Schedule automation events from recording if provided
+    if (recording && recording.events.length > 0) {
+      reportProgress("preparing", 52, "Scheduling automation events...");
+      scheduleAutomationEvents(transport, recording.events, trackedObjects);
+    }
+
     transport.start(0);
 
     // Schedule transport stop at duration
