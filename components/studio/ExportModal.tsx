@@ -228,9 +228,7 @@ export function ExportModal({
           {hasRecordingEvents && (
             <div className="flex items-center justify-between p-3 rounded-lg bg-violet-500/10 border border-violet-500/30">
               <div>
-                <label className="text-sm font-medium text-violet-300">
-                  Include Automation
-                </label>
+                <label className="text-sm font-medium text-violet-300">Include Automation</label>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Bake {recording!.events.length} parameter changes into the audio
                 </p>
