@@ -6,6 +6,7 @@
 import * as Tone from "tone";
 import { getVisualizationBridge } from "./visualizationBridge";
 import { wrapCodeForVisualization } from "./codeTransformer";
+import { captureAudioError } from "@/lib/observability";
 
 export type PlayerState = "idle" | "loading" | "ready" | "playing" | "error";
 
@@ -149,6 +150,13 @@ class AudioRuntime {
         message: "Failed to initialize audio",
         error: errorMsg,
       });
+
+      // Report to observability
+      captureAudioError(err instanceof Error ? err : new Error(errorMsg), {
+        action: "init",
+        audioContextState: Tone.getContext().state,
+      });
+
       this.notifyListeners();
       throw err;
     }
@@ -303,6 +311,14 @@ class AudioRuntime {
         message: "Code evaluation failed",
         error: errorMsg,
       });
+
+      // Report to observability (truncate code for privacy)
+      captureAudioError(err instanceof Error ? err : new Error(errorMsg), {
+        action: "play",
+        code: code.slice(0, 500),
+        audioContextState: Tone.getContext().state,
+      });
+
       this.notifyListeners();
       throw err;
     }

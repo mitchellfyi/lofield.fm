@@ -125,6 +125,7 @@ export function captureLLMError(error: Error, context?: LLMErrorContext): void {
         requestId: context.requestId,
         retryCount: context.retryCount,
         isValidationError: context.isValidationError,
+        ...context.extra,
       });
     }
 

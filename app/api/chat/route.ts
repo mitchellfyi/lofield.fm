@@ -15,6 +15,7 @@ import {
   estimateTokens,
   type RateLimitHeaders,
 } from "@/lib/usage";
+import { captureLLMError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
@@ -27,31 +28,45 @@ interface GenerationContext {
   userId: string;
   rateLimitHeaders: RateLimitHeaders;
   retryCount?: number;
+  requestId?: string;
 }
 
 async function generateWithValidation(ctx: GenerationContext): Promise<Response> {
-  const { messages, modelName, openai, userId, rateLimitHeaders, retryCount = 0 } = ctx;
+  const { messages, modelName, openai, userId, rateLimitHeaders, retryCount = 0, requestId } = ctx;
   const systemPrompt = loadSystemPrompt();
-  const result = streamText({
-    model: openai(modelName),
-    system: systemPrompt,
-    messages,
-  });
 
-  // For streaming responses, we need to validate after generation.
-  // Note: We buffer the full response to enable retry logic. For typical Tone.js code
-  // (usually < 1KB), this is acceptable. The streaming experience is preserved for the
-  // client, and validation happens after the stream completes.
-  const reader = result.textStream.getReader();
   let fullText = "";
   const chunks: string[] = [];
 
-  // Read the entire stream
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    fullText += value;
+  try {
+    const result = streamText({
+      model: openai(modelName),
+      system: systemPrompt,
+      messages,
+    });
+
+    // For streaming responses, we need to validate after generation.
+    // Note: We buffer the full response to enable retry logic. For typical Tone.js code
+    // (usually < 1KB), this is acceptable. The streaming experience is preserved for the
+    // client, and validation happens after the stream completes.
+    const reader = result.textStream.getReader();
+
+    // Read the entire stream
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      fullText += value;
+    }
+  } catch (err) {
+    // Capture LLM API errors
+    captureLLMError(err instanceof Error ? err : new Error(String(err)), {
+      action: "streamText",
+      model: modelName,
+      requestId,
+      retryCount,
+    });
+    throw err;
   }
 
   // Track token usage for the response
@@ -81,6 +96,18 @@ async function generateWithValidation(ctx: GenerationContext): Promise<Response>
     });
   }
 
+  // If still invalid after max retries, report to observability
+  if (!validation.valid) {
+    captureLLMError(new Error(`Validation failed after ${MAX_RETRIES} retries`), {
+      action: "validate",
+      model: modelName,
+      requestId,
+      retryCount,
+      isValidationError: true,
+      extra: { errorTypes: validation.errors.map((e) => e.type) },
+    });
+  }
+
   // Return the response (either valid or max retries reached)
   const stream = new ReadableStream({
     start(controller) {
@@ -101,6 +128,7 @@ async function generateWithValidation(ctx: GenerationContext): Promise<Response>
       "X-Retry-Count": retryCount.toString(),
       "X-Max-Retries": MAX_RETRIES.toString(),
       "X-Validation-Errors": errorTypes || "",
+      "X-Request-Id": requestId || "",
       ...rateLimitHeaders,
     },
   });
@@ -232,11 +260,15 @@ export async function POST(req: Request) {
     "X-Quota-Remaining": quota.tokensRemaining.toString(),
   };
 
+  // Generate a request ID for tracing
+  const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
   return generateWithValidation({
     messages: contextMessages,
     modelName,
     openai,
     userId: user.id,
     rateLimitHeaders,
+    requestId,
   });
 }
