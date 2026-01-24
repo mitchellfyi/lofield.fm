@@ -3,6 +3,8 @@
  * These map directly to the database schema in 003_tracks.sql
  */
 
+import { PrivacyLevel } from "./share";
+
 export interface Project {
   id: string;
   user_id: string;
@@ -18,6 +20,10 @@ export interface Track {
   current_code: string;
   created_at: string;
   updated_at: string;
+  // Optional share fields (present when fetched with share data)
+  share_token?: string | null;
+  privacy?: PrivacyLevel;
+  shared_at?: string | null;
 }
 
 export interface Revision {
