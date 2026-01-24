@@ -46,6 +46,7 @@ import { type AudioLayer, DEFAULT_LAYERS } from "@/lib/types/audioLayer";
 import { combineLayers } from "@/lib/audio/layerCombiner";
 import { useRecording } from "@/lib/hooks/useRecording";
 import { useRecordings } from "@/lib/hooks/useRecordings";
+import { useRecordingPlayback } from "@/lib/hooks/useRecordingPlayback";
 import type { Recording } from "@/lib/types/recording";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
@@ -421,6 +422,42 @@ export default function StudioPage() {
 
   // Active recording for playback/visualization
   const [activeRecording, setActiveRecording] = useState<Recording | null>(null);
+
+  // Callback to apply a single tweak change during playback
+  // This is used by useRecordingPlayback to replay automation
+  const applyTweakDuringPlayback = useCallback(
+    (param: keyof TweaksConfig, value: number) => {
+      // Update tweaks state
+      setTweaks((prev) => ({ ...prev, [param]: value }));
+      // Inject into code and update playback
+      setCode((prevCode) => {
+        const updatedCode = injectTweaks(prevCode, { ...tweaks, [param]: value });
+        // If playing, apply the change live
+        if (playerState === "playing") {
+          const runtime = runtimeRef.current;
+          lastPlayedCodeRef.current = updatedCode;
+          runtime.play(updatedCode, true).catch((err) => {
+            console.warn("Playback automation error:", err);
+          });
+        }
+        return updatedCode;
+      });
+    },
+    [tweaks, playerState]
+  );
+
+  // Recording playback hook - replays automation in sync with transport
+  const {
+    isPlaying: isPlaybackActive,
+    currentTimeMs: playbackTimeMs,
+    play: startPlayback,
+    pause: pausePlayback,
+    reset: resetPlayback,
+  } = useRecordingPlayback({
+    recording: activeRecording,
+    enabled: playerState === "playing",
+    onTweakChange: applyTweakDuringPlayback,
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>("");
@@ -1040,10 +1077,13 @@ Request: ${inputValue}`;
   ]);
 
   // Handle loading a recording for playback (used by RecordingPanel)
-  const handleLoadRecording = useCallback((recording: Recording) => {
-    setActiveRecording(recording);
-    showToast(`Loaded: ${recording.name || "Recording"}`, "info");
-  }, [showToast]);
+  const handleLoadRecording = useCallback(
+    (recording: Recording) => {
+      setActiveRecording(recording);
+      showToast(`Loaded: ${recording.name || "Recording"}`, "info");
+    },
+    [showToast]
+  );
 
   // Handle deleting a recording (used by RecordingPanel)
   const handleDeleteRecording = useCallback(
@@ -1221,11 +1261,57 @@ Request: ${inputValue}`;
                 {/* Recording Timeline - shows when there's an active recording */}
                 {activeRecording && (
                   <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm p-3">
-                    <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider mb-2">
-                      Recording: {activeRecording.name || "Untitled"}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
+                        Recording: {activeRecording.name || "Untitled"}
+                      </div>
+                      {/* Playback controls for recorded automation */}
+                      <div className="flex items-center gap-2">
+                        {isPlaybackActive ? (
+                          <button
+                            onClick={pausePlayback}
+                            className="p-1 rounded hover:bg-cyan-500/20 text-cyan-400 transition-colors"
+                            title="Pause automation playback"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={startPlayback}
+                            disabled={playerState !== "playing"}
+                            className="p-1 rounded hover:bg-cyan-500/20 text-cyan-400 disabled:text-slate-600 disabled:hover:bg-transparent transition-colors"
+                            title={playerState === "playing" ? "Play automation" : "Start audio playback first"}
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          onClick={resetPlayback}
+                          className="p-1 rounded hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-colors"
+                          title="Reset automation to start"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setActiveRecording(null)}
+                          className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                          title="Close recording"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                     <RecordingTimeline
                       recording={activeRecording}
+                      currentTimeMs={isPlaybackActive ? playbackTimeMs : undefined}
                       onDeleteEvent={(eventId) => {
                         // Update active recording by removing the event
                         const newEvents = activeRecording.events.filter((e) => e.id !== eventId);
