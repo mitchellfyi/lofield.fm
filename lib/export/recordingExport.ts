@@ -212,43 +212,5 @@ export function trimRecording(
   };
 }
 
-/**
- * Get recording statistics for display
- */
-export interface RecordingStats {
-  totalEvents: number;
-  eventsByType: Record<string, number>;
-  eventsByParam: Record<string, number>;
-  averageEventsPerSecond: number;
-  firstEventMs: number | null;
-  lastEventMs: number | null;
-}
-
-export function getRecordingStats(recording: Recording): RecordingStats {
-  const events = recording.events;
-  const eventsByType: Record<string, number> = {};
-  const eventsByParam: Record<string, number> = {};
-
-  for (const event of events) {
-    eventsByType[event.type] = (eventsByType[event.type] || 0) + 1;
-    if (event.param) {
-      eventsByParam[event.param] = (eventsByParam[event.param] || 0) + 1;
-    }
-  }
-
-  const sortedTimestamps = [...events].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
-  const firstEventMs = sortedTimestamps[0]?.timestamp_ms ?? null;
-  const lastEventMs = sortedTimestamps[sortedTimestamps.length - 1]?.timestamp_ms ?? null;
-
-  const durationSeconds = recording.duration_ms / 1000;
-  const averageEventsPerSecond = durationSeconds > 0 ? events.length / durationSeconds : 0;
-
-  return {
-    totalEvents: events.length,
-    eventsByType,
-    eventsByParam,
-    averageEventsPerSecond,
-    firstEventMs,
-    lastEventMs,
-  };
-}
+// Re-export getRecordingStats from types for convenience
+export { getRecordingStats, type RecordingStats } from "@/lib/types/recording";
