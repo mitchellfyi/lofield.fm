@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { estimateFileSize, formatFileSize } from "../audioExport";
 
 // Note: renderAudio function requires actual Web Audio API and Tone.js

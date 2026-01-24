@@ -4,7 +4,8 @@ import { copyToClipboard, downloadAsJS, downloadBlob } from "../codeExport";
 describe("codeExport", () => {
   describe("copyToClipboard", () => {
     const originalNavigator = global.navigator;
-    const originalDocument = global.document;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _originalDocument = global.document;
 
     beforeEach(() => {
       // Reset mocks
@@ -94,7 +95,8 @@ describe("codeExport", () => {
       vi.spyOn(document.body, "appendChild").mockImplementation(appendChildMock);
       vi.spyOn(document.body, "removeChild").mockImplementation(removeChildMock);
       // execCommand is deprecated but we need to mock it for the fallback path
-      (document as Document & { execCommand: typeof execCommandMock }).execCommand = execCommandMock;
+      (document as Document & { execCommand: typeof execCommandMock }).execCommand =
+        execCommandMock;
 
       const result = await copyToClipboard("fallback code");
 
@@ -124,11 +126,14 @@ describe("codeExport", () => {
 
       const execCommandMock = vi.fn().mockReturnValue(false);
 
-      vi.spyOn(document, "createElement").mockReturnValue(mockTextArea as unknown as HTMLTextAreaElement);
+      vi.spyOn(document, "createElement").mockReturnValue(
+        mockTextArea as unknown as HTMLTextAreaElement
+      );
       vi.spyOn(document.body, "appendChild").mockImplementation(vi.fn());
       vi.spyOn(document.body, "removeChild").mockImplementation(vi.fn());
       // execCommand is deprecated but we need to mock it for the fallback path
-      (document as Document & { execCommand: typeof execCommandMock }).execCommand = execCommandMock;
+      (document as Document & { execCommand: typeof execCommandMock }).execCommand =
+        execCommandMock;
 
       const result = await copyToClipboard("test code");
 
@@ -149,23 +154,27 @@ describe("codeExport", () => {
       mockClick = vi.fn();
       createdLink = null;
 
-      global.URL.createObjectURL = mockCreateObjectURL;
-      global.URL.revokeObjectURL = mockRevokeObjectURL;
+      global.URL.createObjectURL = mockCreateObjectURL as typeof URL.createObjectURL;
+      global.URL.revokeObjectURL = mockRevokeObjectURL as typeof URL.revokeObjectURL;
 
       vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
         if (tag === "a") {
           createdLink = {
             href: "",
             download: "",
-            click: mockClick,
+            click: mockClick as () => void,
           };
           return createdLink as unknown as HTMLAnchorElement;
         }
         return document.createElement(tag);
       });
 
-      vi.spyOn(document.body, "appendChild").mockImplementation(vi.fn() as unknown as typeof document.body.appendChild);
-      vi.spyOn(document.body, "removeChild").mockImplementation(vi.fn() as unknown as typeof document.body.removeChild);
+      vi.spyOn(document.body, "appendChild").mockImplementation(
+        vi.fn() as unknown as typeof document.body.appendChild
+      );
+      vi.spyOn(document.body, "removeChild").mockImplementation(
+        vi.fn() as unknown as typeof document.body.removeChild
+      );
     });
 
     afterEach(() => {
@@ -224,23 +233,27 @@ describe("codeExport", () => {
       mockClick = vi.fn();
       createdLink = null;
 
-      global.URL.createObjectURL = mockCreateObjectURL;
-      global.URL.revokeObjectURL = mockRevokeObjectURL;
+      global.URL.createObjectURL = mockCreateObjectURL as typeof URL.createObjectURL;
+      global.URL.revokeObjectURL = mockRevokeObjectURL as typeof URL.revokeObjectURL;
 
       vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
         if (tag === "a") {
           createdLink = {
             href: "",
             download: "",
-            click: mockClick,
+            click: mockClick as () => void,
           };
           return createdLink as unknown as HTMLAnchorElement;
         }
         return document.createElement(tag);
       });
 
-      vi.spyOn(document.body, "appendChild").mockImplementation(vi.fn() as unknown as typeof document.body.appendChild);
-      vi.spyOn(document.body, "removeChild").mockImplementation(vi.fn() as unknown as typeof document.body.removeChild);
+      vi.spyOn(document.body, "appendChild").mockImplementation(
+        vi.fn() as unknown as typeof document.body.appendChild
+      );
+      vi.spyOn(document.body, "removeChild").mockImplementation(
+        vi.fn() as unknown as typeof document.body.removeChild
+      );
     });
 
     afterEach(() => {

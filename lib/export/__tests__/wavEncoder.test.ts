@@ -348,10 +348,7 @@ describe("wavEncoder", () => {
 
       it("should correctly interleave stereo channels", async () => {
         // Left channel: [0.5, 0.25], Right channel: [-0.5, -0.25]
-        const channelData = [
-          new Float32Array([0.5, 0.25]),
-          new Float32Array([-0.5, -0.25]),
-        ];
+        const channelData = [new Float32Array([0.5, 0.25]), new Float32Array([-0.5, -0.25])];
         const buffer = createMockAudioBuffer(2, 2, 44100, channelData);
         const blob = encodeWav(buffer);
         const arrayBuffer = await blobToArrayBuffer(blob);

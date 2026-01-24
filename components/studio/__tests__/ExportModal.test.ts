@@ -226,13 +226,15 @@ describe("ExportModal component", () => {
     });
 
     it("should generate timestamp filename without track name", () => {
-      const trackName = undefined;
-      const format = "wav";
-      const extension = format === "wav" ? "wav" : "mp3";
-      const filename = trackName
-        ? `${trackName.toLowerCase().replace(/\s+/g, "-")}.${extension}`
-        : `track-${Date.now()}.${extension}`;
-      expect(filename).toMatch(/^track-\d+\.wav$/);
+      // When trackName is empty/falsy, a timestamp-based filename is generated
+      const generateFilename = (trackName: string | undefined) => {
+        const extension = "wav";
+        return trackName
+          ? `${trackName.toLowerCase().replace(/\s+/g, "-")}.${extension}`
+          : `track-${Date.now()}.${extension}`;
+      };
+      expect(generateFilename(undefined)).toMatch(/^track-\d+\.wav$/);
+      expect(generateFilename("")).toMatch(/^track-\d+\.wav$/);
     });
   });
 
@@ -321,15 +323,17 @@ describe("ExportModal component", () => {
     });
 
     it("should show Cancel button when rendering", () => {
-      const exportState = "rendering";
-      const buttonText = exportState === "rendering" ? "Cancel" : "Close";
-      expect(buttonText).toBe("Cancel");
+      // Rendering state shows Cancel button
+      type ExportState = "idle" | "rendering" | "complete" | "error";
+      const getButtonText = (state: ExportState) => (state === "rendering" ? "Cancel" : "Close");
+      expect(getButtonText("rendering")).toBe("Cancel");
     });
 
     it("should show Close button when not rendering", () => {
-      const exportState = "idle";
-      const buttonText = exportState === "rendering" ? "Cancel" : "Close";
-      expect(buttonText).toBe("Close");
+      // Non-rendering states show Close button
+      type ExportState = "idle" | "rendering" | "complete" | "error";
+      const getButtonText = (state: ExportState) => (state === "rendering" ? "Cancel" : "Close");
+      expect(getButtonText("idle")).toBe("Close");
     });
   });
 });

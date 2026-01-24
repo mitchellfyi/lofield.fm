@@ -115,12 +115,8 @@ describe("ExportButton component", () => {
       const { downloadAsJS } = await import("@/lib/export/codeExport");
       const mockDownloadAsJS = vi.mocked(downloadAsJS);
 
-      const trackName = undefined;
-      const filename = trackName
-        ? `${trackName.toLowerCase().replace(/\s+/g, "-")}.js`
-        : undefined;
-
-      mockDownloadAsJS("code", filename);
+      // When no trackName is provided, downloadAsJS is called with undefined filename
+      mockDownloadAsJS("code", undefined);
 
       expect(mockDownloadAsJS).toHaveBeenCalledWith("code", undefined);
     });
