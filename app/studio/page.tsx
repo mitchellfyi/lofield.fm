@@ -34,6 +34,8 @@ import { ShareDialog } from "@/components/studio/ShareDialog";
 import { Toast } from "@/components/studio/Toast";
 import { TweaksPanel } from "@/components/studio/TweaksPanel";
 import { LayersPanel } from "@/components/studio/LayersPanel";
+import { RecordButton } from "@/components/studio/RecordButton";
+import { RecordingTimeline } from "@/components/studio/RecordingTimeline";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import type { ToastState } from "@/lib/export/types";
@@ -41,6 +43,9 @@ import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
 import { extractTweaks, injectTweaks } from "@/lib/audio/tweaksInjector";
 import { type AudioLayer, DEFAULT_LAYERS } from "@/lib/types/audioLayer";
 import { combineLayers } from "@/lib/audio/layerCombiner";
+import { useRecording } from "@/lib/hooks/useRecording";
+import { useRecordings } from "@/lib/hooks/useRecordings";
+import type { Recording } from "@/lib/types/recording";
 
 const DEFAULT_CODE = `// ═══════════════════════════════════════════════════════════
 // Midnight Lofi - 32-bar arrangement with variation
@@ -394,6 +399,25 @@ export default function StudioPage() {
 
   // Auto-save hook
   const { saving: autoSaving, lastSaved } = useAutoSave(currentTrackId, code, autoSaveEnabled);
+
+  // Recording hooks
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    captureTweak,
+    elapsedMs: recordingElapsedMs,
+    getRecordingForSave,
+    clearRecording,
+  } = useRecording();
+  const {
+    recordings: _recordings, // Will be used in RecordingPanel
+    createRecording: saveRecording,
+    deleteRecording,
+  } = useRecordings(currentTrackId);
+
+  // Active recording for playback/visualization
+  const [activeRecording, setActiveRecording] = useState<Recording | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastProcessedMessageRef = useRef<string>("");
@@ -759,6 +783,15 @@ Request: ${inputValue}`;
         pushHistoryDebounced(createSnapshot());
       }
 
+      // Capture tweak changes when recording
+      if (isRecording) {
+        for (const key of Object.keys(newTweaks) as Array<keyof TweaksConfig>) {
+          if (newTweaks[key] !== tweaks[key]) {
+            captureTweak(key, tweaks[key], newTweaks[key]);
+          }
+        }
+      }
+
       setTweaks(newTweaks);
       const updatedCode = injectTweaks(code, newTweaks);
       setCode(updatedCode);
@@ -772,7 +805,7 @@ Request: ${inputValue}`;
         });
       }
     },
-    [code, playerState, createSnapshot, pushHistoryDebounced]
+    [code, playerState, createSnapshot, pushHistoryDebounced, isRecording, tweaks, captureTweak]
   );
 
   // Handle layer changes
@@ -945,6 +978,84 @@ Request: ${inputValue}`;
     }
   }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code]);
 
+  // Handle starting a recording
+  const handleStartRecording = useCallback(() => {
+    if (playerState !== "playing") {
+      showToast("Start playback before recording", "error");
+      return;
+    }
+    startRecording();
+    showToast("Recording started", "info");
+  }, [playerState, startRecording, showToast]);
+
+  // Handle stopping a recording
+  const handleStopRecording = useCallback(async () => {
+    const events = stopRecording();
+    if (events.length === 0) {
+      showToast("No events recorded", "info");
+      clearRecording();
+      return;
+    }
+
+    // If no track is selected, just show the recording in the timeline
+    if (!currentTrackId) {
+      const tempRecording = getRecordingForSave("temp");
+      setActiveRecording({
+        ...tempRecording,
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Recording);
+      showToast(`Recorded ${events.length} events. Save track to persist.`, "success");
+      clearRecording();
+      return;
+    }
+
+    // Save to database
+    const recordingData = getRecordingForSave(currentTrackId);
+    const saved = await saveRecording(
+      recordingData.duration_ms,
+      recordingData.events,
+      `Recording ${new Date().toLocaleTimeString()}`
+    );
+
+    if (saved) {
+      setActiveRecording(saved);
+      showToast(`Saved recording with ${events.length} events`, "success");
+    } else {
+      showToast("Failed to save recording", "error");
+    }
+
+    clearRecording();
+  }, [
+    stopRecording,
+    currentTrackId,
+    getRecordingForSave,
+    saveRecording,
+    clearRecording,
+    showToast,
+  ]);
+
+  // Handle loading a recording for playback (used by RecordingPanel)
+  const _handleLoadRecording = useCallback((recording: Recording) => {
+    setActiveRecording(recording);
+    showToast(`Loaded: ${recording.name || "Recording"}`, "info");
+  }, [showToast]);
+
+  // Handle deleting a recording (used by RecordingPanel)
+  const _handleDeleteRecording = useCallback(
+    async (recordingId: string) => {
+      const success = await deleteRecording(recordingId);
+      if (success) {
+        if (activeRecording?.id === recordingId) {
+          setActiveRecording(null);
+        }
+        showToast("Recording deleted", "info");
+      }
+    },
+    [deleteRecording, activeRecording, showToast]
+  );
+
   // Keyboard shortcuts for save and undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1061,6 +1172,16 @@ Request: ${inputValue}`;
                   audioLoaded={audioLoaded}
                   onPlay={() => playCode(combineLayers(layers))}
                   onStop={stop}
+                  recordButton={
+                    <RecordButton
+                      isRecording={isRecording}
+                      onStartRecording={handleStartRecording}
+                      onStopRecording={handleStopRecording}
+                      elapsedMs={recordingElapsedMs}
+                      disabled={playerState !== "playing" && !isRecording}
+                      disabledReason="Start playback to record"
+                    />
+                  }
                   shareButton={
                     <ShareButton
                       disabled={!currentTrackId}
@@ -1078,6 +1199,23 @@ Request: ${inputValue}`;
                 />
 
                 <TweaksPanel tweaks={tweaks} onTweaksChange={handleTweaksChange} />
+
+                {/* Recording Timeline - shows when there's an active recording */}
+                {activeRecording && (
+                  <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm p-3">
+                    <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider mb-2">
+                      Recording: {activeRecording.name || "Untitled"}
+                    </div>
+                    <RecordingTimeline
+                      recording={activeRecording}
+                      onDeleteEvent={(eventId) => {
+                        // Update active recording by removing the event
+                        const newEvents = activeRecording.events.filter((e) => e.id !== eventId);
+                        setActiveRecording({ ...activeRecording, events: newEvents });
+                      }}
+                    />
+                  </div>
+                )}
 
                 <LayersPanel
                   layers={layers}
