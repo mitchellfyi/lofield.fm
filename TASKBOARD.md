@@ -1,27 +1,26 @@
 # Taskboard
 
 > Auto-generated
-> Last updated: 2026-01-24 18:10:00
+> Last updated: 2026-01-24 18:18:00
 
 ## Summary
 
 | Status | Count |
 | ------ | ----- |
-| Doing  | 1     |
-| Todo   | 7     |
-| Done   | 15    |
+| Doing  | 0     |
+| Todo   | 6     |
+| Done   | 16    |
 
 ---
 
 ## In Progress
 
-- **[003-009-session-cost-controls.md](.claude/tasks/doing/003-009-session-cost-controls.md)** - Session Cost Controls - Rate Limits and Quotas [Medium]
+(none)
 
 ---
 
 ## Todo
 
-- **[003-012-install-vercel-analytics.md](.claude/tasks/todo/003-012-install-vercel-analytics.md)** - Install Vercel Analytics [Medium]
 - **[003-012-recording-audio-export.md](.claude/tasks/todo/003-012-recording-audio-export.md)** - Export Recording as Rendered Audio [Medium]
 - **[004-001-mobile-usability.md](.claude/tasks/todo/004-001-mobile-usability.md)** - Mobile Usability Pass [Low]
 - **[004-001-model-cost-display.md](.claude/tasks/todo/004-001-model-cost-display.md)** - Show Estimated Cost Per Model [Low]
@@ -33,6 +32,7 @@
 
 ## Recently Completed (Last 10)
 
+- **[003-012-install-vercel-analytics.md](.claude/tasks/done/003-012-install-vercel-analytics.md)** - Install Vercel Analytics [Medium]
 - **[003-011-record-mode.md](.claude/tasks/done/003-011-record-mode.md)** - Record Mode - Capture Live Performance Changes
 - **[003-010-observability.md](.claude/tasks/done/003-010-observability.md)** - Observability - Error Tracking and Event Logging
 - **[003-008-undo-redo.md](.claude/tasks/done/003-008-undo-redo.md)** - Undo/Redo Across Chat and Code Edits

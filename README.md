@@ -74,6 +74,17 @@ The Strudel audio engine has been enhanced with a reliable state machine to prov
 - The runtime maintains a singleton instance to prevent multiple initializations
 - Strudel library is loaded from CDN and must complete loading before use
 
-### Use with Claude
+### Analytics
 
-`claude  --allow-dangerously-skip-permissions   --chrome  --dangerously-skip-permissions --model opus --permission-mode dontAsk`
+LoField Music Lab uses [Vercel Analytics](https://vercel.com/docs/analytics) to understand how users interact with the application.
+
+- **Privacy-friendly**: No cookies used; visitors identified via privacy-preserving hashed IDs
+- **What's tracked**: Page views, top pages, referrers, device types, and geographic regions
+- **Data access**: View analytics in the [Vercel Dashboard](https://vercel.com/dashboard) under your project's Analytics tab
+- **Production only**: Analytics are automatically enabled when deployed to Vercel; no data is collected in local development
+
+The Analytics component is loaded in the root layout (`app/layout.tsx`) and requires no additional configuration.
+
+### Use with Claude
+
+`claude --dangerously-skip-permissions --model opus --permission-mode bypassPermissions`
