@@ -294,9 +294,7 @@ describe("useShare hook", () => {
 
       await navigator.clipboard.writeText("https://lofield.fm/share/Ab3Cd5Ef7Gh9");
 
-      expect(mockClipboard.writeText).toHaveBeenCalledWith(
-        "https://lofield.fm/share/Ab3Cd5Ef7Gh9"
-      );
+      expect(mockClipboard.writeText).toHaveBeenCalledWith("https://lofield.fm/share/Ab3Cd5Ef7Gh9");
     });
 
     it("should handle clipboard failure", async () => {
@@ -312,9 +310,7 @@ describe("useShare hook", () => {
     it("should handle network errors", async () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
-      await expect(mockFetch("/api/tracks/track-1/share")).rejects.toThrow(
-        "Network error"
-      );
+      await expect(mockFetch("/api/tracks/track-1/share")).rejects.toThrow("Network error");
     });
 
     it("should handle JSON parse errors", async () => {

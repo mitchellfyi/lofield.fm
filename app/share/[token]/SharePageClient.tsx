@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import {
-  validateRawToneCode,
-} from "@/lib/audio/llmContract";
+import { validateRawToneCode } from "@/lib/audio/llmContract";
 import { getAudioRuntime, type PlayerState, type RuntimeEvent } from "@/lib/audio/runtime";
 import { ReadonlyCodePanel } from "@/components/studio/ReadonlyCodePanel";
 import { ConsolePanel } from "@/components/studio/ConsolePanel";
@@ -77,9 +75,7 @@ export function SharePageClient({ track }: SharePageClientProps) {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-cyan-300">{track.name}</h1>
-            {track.author_name && (
-              <p className="text-sm text-slate-400">by {track.author_name}</p>
-            )}
+            {track.author_name && <p className="text-sm text-slate-400">by {track.author_name}</p>}
           </div>
           <Link
             href="/"

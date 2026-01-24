@@ -18,13 +18,7 @@ const PRIVACY_OPTIONS: { value: PrivacyLevel; label: string; description: string
   { value: "public", label: "Public", description: "Discoverable by anyone" },
 ];
 
-export function ShareDialog({
-  isOpen,
-  trackId,
-  trackName,
-  onClose,
-  onToast,
-}: ShareDialogProps) {
+export function ShareDialog({ isOpen, trackId, trackName, onClose, onToast }: ShareDialogProps) {
   const { shareInfo, loading, error, generateShare, updatePrivacy, revokeShare, copyShareUrl } =
     useShare(trackId);
 
@@ -177,11 +171,7 @@ export function ShareDialog({
               disabled={loading}
               className="w-full py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white transition-all duration-200 shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading
-                ? "Processing..."
-                : hasShareLink
-                  ? "Regenerate Link"
-                  : "Generate Share Link"}
+              {loading ? "Processing..." : hasShareLink ? "Regenerate Link" : "Generate Share Link"}
             </button>
           )}
 

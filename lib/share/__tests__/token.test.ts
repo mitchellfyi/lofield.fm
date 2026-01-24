@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  generateShareToken,
-  isValidShareToken,
-  buildShareUrl,
-} from "../token";
+import { generateShareToken, isValidShareToken, buildShareUrl } from "../token";
 
 describe("share token utilities", () => {
   describe("generateShareToken", () => {

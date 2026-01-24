@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getTrackShareInfo,
-  generateShare,
-  updateSharePrivacy,
-  revokeShare,
-} from "@/lib/share";
+import { getTrackShareInfo, generateShare, updateSharePrivacy, revokeShare } from "@/lib/share";
 import { buildShareUrl } from "@/lib/share/token";
 import { updateShareSchema } from "@/lib/schemas/share";
 

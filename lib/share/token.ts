@@ -41,7 +41,6 @@ export function isValidShareToken(token: string): boolean {
  * @returns The full share URL
  */
 export function buildShareUrl(token: string, baseUrl?: string): string {
-  const base =
-    baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
+  const base = baseUrl || (typeof window !== "undefined" ? window.location.origin : "");
   return `${base}/share/${token}`;
 }

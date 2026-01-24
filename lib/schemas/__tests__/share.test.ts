@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  privacyLevelSchema,
-  shareTokenSchema,
-  updateShareSchema,
-} from "../share";
+import { privacyLevelSchema, shareTokenSchema, updateShareSchema } from "../share";
 
 describe("share schemas", () => {
   describe("privacyLevelSchema", () => {
