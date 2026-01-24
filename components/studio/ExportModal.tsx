@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { renderAudio, estimateFileSize, formatFileSize } from "@/lib/export/audioExport";
 import { downloadBlob } from "@/lib/export/codeExport";
 import type { ExportFormat, ExportProgress } from "@/lib/export/types";
+import type { Recording } from "@/lib/types/recording";
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface ExportModalProps {
   trackName?: string;
   onClose: () => void;
   onSuccess?: () => void;
+  /** Optional recording with automation events to bake into export */
+  recording?: Recording | null;
 }
 
 const DURATION_PRESETS = [
@@ -23,7 +26,14 @@ const DURATION_PRESETS = [
 
 type ExportState = "idle" | "rendering" | "complete" | "error";
 
-export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: ExportModalProps) {
+export function ExportModal({
+  isOpen,
+  code,
+  trackName,
+  onClose,
+  onSuccess,
+  recording,
+}: ExportModalProps) {
   const [format, setFormat] = useState<ExportFormat>("wav");
   const [duration, setDuration] = useState(60);
   const [customDuration, setCustomDuration] = useState("60");
@@ -32,8 +42,12 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exportedBlob, setExportedBlob] = useState<Blob | null>(null);
+  const [includeAutomation, setIncludeAutomation] = useState(false);
 
   const abortRef = useRef(false);
+
+  // Check if recording has events to include
+  const hasRecordingEvents = recording && recording.events.length > 0;
 
   const handleDurationPreset = (preset: (typeof DURATION_PRESETS)[number]) => {
     if (preset.value === 0) {
@@ -73,6 +87,8 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
             setProgress(p);
           }
         },
+        // Include recording automation if user opted in and recording exists
+        recording: includeAutomation && recording ? recording : undefined,
       });
 
       if (abortRef.current) {
@@ -89,7 +105,7 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
       setError(errorMsg);
       setExportState("error");
     }
-  }, [code, format, effectiveDuration, exportState]);
+  }, [code, format, effectiveDuration, exportState, includeAutomation, recording]);
 
   const handleDownload = () => {
     if (!exportedBlob) return;
@@ -207,6 +223,36 @@ export function ExportModal({ isOpen, code, trackName, onClose, onSuccess }: Exp
               </div>
             )}
           </div>
+
+          {/* Automation Toggle - only shown when recording exists */}
+          {hasRecordingEvents && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-violet-500/10 border border-violet-500/30">
+              <div>
+                <label className="text-sm font-medium text-violet-300">
+                  Include Automation
+                </label>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Bake {recording!.events.length} parameter changes into the audio
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={includeAutomation}
+                onClick={() => setIncludeAutomation(!includeAutomation)}
+                disabled={exportState === "rendering"}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+                  includeAutomation ? "bg-violet-600" : "bg-slate-700"
+                } ${exportState === "rendering" ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    includeAutomation ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
 
           {/* Estimated Size */}
           <div className="text-sm text-slate-500">
