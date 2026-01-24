@@ -150,16 +150,16 @@ interface HistorySnapshot {
 
 #### Test Plan
 
-- [ ] useHistory: pushing state adds to history
-- [ ] useHistory: undo restores previous state
-- [ ] useHistory: redo restores next state
-- [ ] useHistory: undo when empty does nothing
-- [ ] useHistory: redo when empty does nothing
-- [ ] useHistory: canUndo/canRedo flags update correctly
-- [ ] useHistory: history limited to 50 states
-- [ ] useHistory: no-op changes not recorded
-- [ ] useHistory: new push clears redo stack
-- [ ] useHistory: clear() resets all history
+- [x] useHistory: pushing state adds to history
+- [x] useHistory: undo restores previous state
+- [x] useHistory: redo restores next state
+- [x] useHistory: undo when empty does nothing
+- [x] useHistory: redo when empty does nothing
+- [x] useHistory: canUndo/canRedo flags update correctly
+- [x] useHistory: history limited to 50 states
+- [x] useHistory: no-op changes not recorded
+- [x] useHistory: new push clears redo stack
+- [x] useHistory: clear() resets all history
 
 #### Docs to Update
 
@@ -205,6 +205,34 @@ import type { TweaksConfig } from "@/lib/types/tweaks";
 ---
 
 ## Work Log
+
+### 2026-01-24 15:13 - Testing Complete
+
+Tests written:
+- lib/hooks/__tests__/useHistory.test.ts - 44 examples
+
+Test coverage:
+- Module structure and exports
+- Deep equality behavior (JSON.stringify comparison)
+- History stack operations (push, undo, redo, clear, reset)
+- History size limiting (50 entries max)
+- canUndo/canRedo flag logic
+- No-op detection for identical states
+- Debounce behavior (cancel/delay patterns)
+- Full undo/redo workflow cycles
+- Edge cases (empty state, null, circular refs, rapid pushes)
+
+Test results:
+- Total: 1107 examples, 0 failures (44 new + 1063 existing)
+- All tests passing
+
+Quality gates:
+- ESLint: Pass
+- TypeScript: Pass
+- Prettier: Pass
+- RSpec/Tests: Pass (1107/1107)
+
+Commit: b7dde35 - test: Add comprehensive tests for useHistory hook [003-008-undo-redo]
 
 ### 2026-01-24 15:09 - Implementation Complete
 
@@ -301,8 +329,10 @@ $ npm run quality
 (pass for code files)
 
 $ npm test
-Test Files: 38 passed (38)
-Tests: 1063 passed (1063)
+Test Files: 39 passed (39)
+Tests: 1107 passed (1107)
+
+New test file: lib/hooks/__tests__/useHistory.test.ts (44 tests)
 ```
 
 ---
