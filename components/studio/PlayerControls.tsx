@@ -9,6 +9,7 @@ interface PlayerControlsProps {
   onPlay: () => void;
   onStop: () => void;
   exportButton?: React.ReactNode;
+  shareButton?: React.ReactNode;
 }
 
 export function PlayerControls({
@@ -17,6 +18,7 @@ export function PlayerControls({
   onPlay,
   onStop,
   exportButton,
+  shareButton,
 }: PlayerControlsProps) {
   const isLoading = playerState === "loading";
   const canPlay = audioLoaded && !isLoading && playerState !== "error";
@@ -80,6 +82,9 @@ export function PlayerControls({
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         </button>
+
+        {/* Share Button Slot */}
+        {shareButton}
 
         {/* Export Button Slot */}
         {exportButton}

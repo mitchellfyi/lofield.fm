@@ -28,6 +28,8 @@ import { RevisionHistory } from "@/components/studio/RevisionHistory";
 import { SaveButton } from "@/components/studio/SaveButton";
 import { ExportButton } from "@/components/studio/ExportButton";
 import { ExportModal } from "@/components/studio/ExportModal";
+import { ShareButton } from "@/components/studio/ShareButton";
+import { ShareDialog } from "@/components/studio/ShareDialog";
 import { Toast } from "@/components/studio/Toast";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
@@ -326,6 +328,7 @@ export default function StudioPage() {
 
   // Export state
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [toast, setToast] = useState<ToastState>({ visible: false, message: "", type: "info" });
 
   // Project and track hooks
@@ -785,6 +788,12 @@ Request: ${inputValue}`;
                   audioLoaded={audioLoaded}
                   onPlay={() => playCode(code)}
                   onStop={stop}
+                  shareButton={
+                    <ShareButton
+                      disabled={!currentTrackId}
+                      onClick={() => setShowShareDialog(true)}
+                    />
+                  }
                   exportButton={
                     <ExportButton
                       code={code}
@@ -902,6 +911,15 @@ Request: ${inputValue}`;
         trackName={currentTrackName ?? undefined}
         onClose={() => setShowExportModal(false)}
         onSuccess={() => showToast("Audio exported successfully", "success")}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        isOpen={showShareDialog}
+        trackId={currentTrackId}
+        trackName={currentTrackName ?? undefined}
+        onClose={() => setShowShareDialog(false)}
+        onToast={showToast}
       />
 
       {/* Toast Notifications */}
