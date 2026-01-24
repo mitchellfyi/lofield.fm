@@ -156,6 +156,18 @@ describe("tracks service", () => {
       expect(tracksModule.createRevision).toBeDefined();
       expect(typeof tracksModule.createRevision).toBe("function");
     });
+
+    it("should export getRevision function", async () => {
+      const tracksModule = await import("../tracks");
+      expect(tracksModule.getRevision).toBeDefined();
+      expect(typeof tracksModule.getRevision).toBe("function");
+    });
+
+    it("should export pruneRevisions function", async () => {
+      const tracksModule = await import("../tracks");
+      expect(tracksModule.pruneRevisions).toBeDefined();
+      expect(typeof tracksModule.pruneRevisions).toBe("function");
+    });
   });
 
   describe("getProjects function", () => {
@@ -689,6 +701,206 @@ describe("tracks service", () => {
       const result = await tracksModule.createRevision("user-123", "track-1", "// code");
 
       expect(result.message).toBeNull();
+    });
+  });
+
+  describe("getRevision function", () => {
+    it("should return single revision for valid track and revision", async () => {
+      // First call for track ownership verification
+      mockSingle.mockResolvedValueOnce({
+        data: {
+          id: "track-1",
+          project_id: "project-1",
+          name: "Track 1",
+          current_code: "// code",
+          project: { user_id: "user-123" },
+        },
+        error: null,
+      });
+
+      // Second call for revision fetch
+      mockSingle.mockResolvedValueOnce({
+        data: {
+          id: "revision-1",
+          track_id: "track-1",
+          code: "// revision code",
+          message: "Initial save",
+          created_at: "2026-01-24T00:00:00Z",
+        },
+        error: null,
+      });
+
+      const tracksModule = await import("../tracks");
+      const result = await tracksModule.getRevision("user-123", "track-1", "revision-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe("revision-1");
+      expect(result?.code).toBe("// revision code");
+      expect(result?.message).toBe("Initial save");
+    });
+
+    it("should return null when revision not found", async () => {
+      // First call for track ownership verification
+      mockSingle.mockResolvedValueOnce({
+        data: {
+          id: "track-1",
+          project_id: "project-1",
+          name: "Track 1",
+          current_code: "// code",
+          project: { user_id: "user-123" },
+        },
+        error: null,
+      });
+
+      // Second call for revision - not found
+      mockSingle.mockResolvedValueOnce({
+        data: null,
+        error: { code: "PGRST116", message: "No rows found" },
+      });
+
+      const tracksModule = await import("../tracks");
+      const result = await tracksModule.getRevision("user-123", "track-1", "nonexistent");
+
+      expect(result).toBeNull();
+    });
+
+    it("should throw error if track not found", async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: "PGRST116" },
+      });
+
+      const tracksModule = await import("../tracks");
+
+      await expect(
+        tracksModule.getRevision("user-123", "nonexistent", "revision-1")
+      ).rejects.toThrow("Track not found or access denied");
+    });
+
+    it("should throw error on database failure", async () => {
+      // First call for track ownership verification
+      mockSingle.mockResolvedValueOnce({
+        data: {
+          id: "track-1",
+          project_id: "project-1",
+          name: "Track 1",
+          current_code: "// code",
+          project: { user_id: "user-123" },
+        },
+        error: null,
+      });
+
+      // Second call - database error
+      mockSingle.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Database error" },
+      });
+
+      const tracksModule = await import("../tracks");
+
+      await expect(tracksModule.getRevision("user-123", "track-1", "revision-1")).rejects.toThrow(
+        "Failed to fetch revision: Database error"
+      );
+    });
+  });
+
+  describe("pruneRevisions function", () => {
+    it("should not delete revisions when count is below limit", async () => {
+      // Return revisions below the limit
+      mockOrder.mockResolvedValue({
+        data: [
+          { id: "rev-1", created_at: "2026-01-24T03:00:00Z" },
+          { id: "rev-2", created_at: "2026-01-24T02:00:00Z" },
+          { id: "rev-3", created_at: "2026-01-24T01:00:00Z" },
+        ],
+        error: null,
+      });
+
+      const tracksModule = await import("../tracks");
+      const deletedCount = await tracksModule.pruneRevisions("track-1", 50);
+
+      expect(deletedCount).toBe(0);
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it("should delete old revisions when count exceeds limit", async () => {
+      // Return 5 revisions but we want to keep only 2
+      mockOrder.mockResolvedValue({
+        data: [
+          { id: "rev-1", created_at: "2026-01-24T05:00:00Z" },
+          { id: "rev-2", created_at: "2026-01-24T04:00:00Z" },
+          { id: "rev-3", created_at: "2026-01-24T03:00:00Z" },
+          { id: "rev-4", created_at: "2026-01-24T02:00:00Z" },
+          { id: "rev-5", created_at: "2026-01-24T01:00:00Z" },
+        ],
+        error: null,
+      });
+
+      // Create a mock for the `in` method
+      const mockIn = vi.fn().mockResolvedValue({ error: null });
+      mockDelete.mockReturnValue({ in: mockIn });
+
+      const tracksModule = await import("../tracks");
+      const deletedCount = await tracksModule.pruneRevisions("track-1", 2);
+
+      expect(deletedCount).toBe(3);
+      expect(mockDelete).toHaveBeenCalled();
+      expect(mockIn).toHaveBeenCalledWith("id", ["rev-3", "rev-4", "rev-5"]);
+    });
+
+    it("should use default keepCount of 50", async () => {
+      // Return 52 revisions
+      const revisions = Array.from({ length: 52 }, (_, i) => ({
+        id: `rev-${i + 1}`,
+        created_at: new Date(2026, 0, 24, 0, 0, 52 - i).toISOString(),
+      }));
+
+      mockOrder.mockResolvedValue({
+        data: revisions,
+        error: null,
+      });
+
+      const mockIn = vi.fn().mockResolvedValue({ error: null });
+      mockDelete.mockReturnValue({ in: mockIn });
+
+      const tracksModule = await import("../tracks");
+      const deletedCount = await tracksModule.pruneRevisions("track-1");
+
+      expect(deletedCount).toBe(2);
+      expect(mockIn).toHaveBeenCalledWith("id", ["rev-51", "rev-52"]);
+    });
+
+    it("should throw error on fetch failure", async () => {
+      mockOrder.mockResolvedValue({
+        data: null,
+        error: { message: "Database fetch failed" },
+      });
+
+      const tracksModule = await import("../tracks");
+
+      await expect(tracksModule.pruneRevisions("track-1")).rejects.toThrow(
+        "Failed to fetch revisions for pruning: Database fetch failed"
+      );
+    });
+
+    it("should throw error on delete failure", async () => {
+      mockOrder.mockResolvedValue({
+        data: [
+          { id: "rev-1", created_at: "2026-01-24T03:00:00Z" },
+          { id: "rev-2", created_at: "2026-01-24T02:00:00Z" },
+          { id: "rev-3", created_at: "2026-01-24T01:00:00Z" },
+        ],
+        error: null,
+      });
+
+      const mockIn = vi.fn().mockResolvedValue({ error: { message: "Delete failed" } });
+      mockDelete.mockReturnValue({ in: mockIn });
+
+      const tracksModule = await import("../tracks");
+
+      await expect(tracksModule.pruneRevisions("track-1", 1)).rejects.toThrow(
+        "Failed to prune revisions: Delete failed"
+      );
     });
   });
 });
