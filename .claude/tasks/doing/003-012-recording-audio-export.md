@@ -217,6 +217,31 @@ Additional ExportModal tests:
 - [x] includeAutomation toggle state (initial, toggle, conditional passing)
 - [x] Event count display in automation toggle label
 
+### 2026-01-24 18:38 - Documentation Sync
+
+Docs updated:
+- No external docs needed (internal feature enhancement as noted in plan)
+- Code has appropriate inline documentation:
+  - `scheduleAutomationEvents` function has JSDoc comment explaining purpose
+  - `applyTweakToObjects` helper has JSDoc comment
+  - Inline comments explain BPM warning, swing handling, filter/reverb/delay logic
+
+Annotations:
+- N/A (Node.js/Next.js project, no Rails model annotations)
+
+Consistency checks:
+- [x] Code matches docs - implementation matches task plan
+- [x] No broken links - all referenced files verified to exist:
+  - `lib/export/audioExport.ts` ✓
+  - `lib/types/recording.ts` ✓
+  - `lib/audio/tweaksInjector.ts` ✓
+  - `components/studio/ExportModal.tsx` ✓
+  - `app/studio/page.tsx` ✓
+- [x] Dependency task verified: `003-011-record-mode` in done/
+- [x] Test files exist and verified:
+  - `lib/export/__tests__/audioExport.test.ts` (37 tests)
+  - `components/studio/__tests__/ExportModal.test.ts` (51 tests)
+
 ### 2026-01-24 18:21 - Triage Complete
 
 - **Dependencies**: ✅ `003-011-record-mode` is completed (found in `.claude/tasks/done/`)
@@ -266,9 +291,22 @@ $ npm run test
 
 ## Notes
 
+**Initial Planning Notes:**
 - This is a complex feature requiring careful timing coordination
 - Consider starting with simpler params (filter, reverb, delay) before tackling BPM
 - May need to investigate Tone.js offline rendering limitations
+
+**Implementation Observations:**
+- Used `ReturnType<typeof Tone.getTransport>` for Transport type since Tone.js doesn't export it directly
+- BPM automation intentionally skipped in export with console warning - changing BPM mid-render affects transport timing which desynchronizes scheduled events
+- Used `rampTo()` with 50ms duration for smooth parameter transitions instead of instant value changes
+- TrackedObjects captures first instances of Filter, Reverb, FeedbackDelay during code execution
+- Proxy pattern on Tone namespace intercepts object creation without modifying user code
+
+**Design Decisions:**
+- Chose transport.schedule() over pre-baking values into code to preserve timeline fidelity
+- Optional "Include Automation" toggle UI only shown when recording prop is provided
+- Event count displayed in toggle label for user awareness
 
 ---
 
@@ -278,6 +316,11 @@ $ npm run test
 - `003-011-record-mode` (completed) - provides Recording type and automation capture
 
 **Related Files:**
-- `lib/export/audioExport.ts` - existing audio export
+- `lib/export/audioExport.ts` - audio export with automation scheduling
 - `lib/types/recording.ts` - Recording type definitions
 - `lib/audio/tweaksInjector.ts` - tweak injection utilities
+- `components/studio/ExportModal.tsx` - export UI with automation toggle
+
+**Test Files:**
+- `lib/export/__tests__/audioExport.test.ts` - scheduleAutomationEvents tests
+- `components/studio/__tests__/ExportModal.test.ts` - recording automation UI tests
