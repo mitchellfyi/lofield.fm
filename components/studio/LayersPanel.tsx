@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   DndContext,
   closestCenter,
@@ -17,12 +17,27 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { LayerRow } from "./LayerRow";
+import { StaticLayerRow } from "./StaticLayerRow";
 import {
   type AudioLayer,
   createDefaultLayer,
   DEFAULT_LAYERS,
   LAYER_COLORS,
 } from "@/lib/types/audioLayer";
+
+// Subscribe function that does nothing (we never need to re-subscribe)
+const emptySubscribe = () => () => {};
+// Return true on client, false on server
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
+/**
+ * Hook to detect if we're on the client after hydration.
+ * Uses useSyncExternalStore for hydration-safe detection.
+ */
+function useIsClient() {
+  return useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
+}
 
 interface LayersPanelProps {
   layers: AudioLayer[];
@@ -40,6 +55,8 @@ export function LayersPanel({
   onSelectLayer,
 }: LayersPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  // Detect if we're on the client after hydration to prevent DnD hydration mismatches
+  const isClient = useIsClient();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -121,29 +138,46 @@ export function LayersPanel({
 
       {isExpanded && (
         <div className="p-2 space-y-1">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={layers.map((layer) => layer.id)}
-              strategy={verticalListSortingStrategy}
+          {/* Render static rows during SSR/hydration, DnD-enabled rows after */}
+          {isClient ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              {layers.map((layer) => (
-                <LayerRow
-                  key={layer.id}
-                  layer={layer}
-                  isSelected={layer.id === selectedLayerId}
-                  isPlaying={isPlaying}
-                  onSelect={() => onSelectLayer(layer.id)}
-                  onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
-                  onDelete={() => handleDeleteLayer(layer.id)}
-                  canDelete={layers.length > 1}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={layers.map((layer) => layer.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {layers.map((layer) => (
+                  <LayerRow
+                    key={layer.id}
+                    layer={layer}
+                    isSelected={layer.id === selectedLayerId}
+                    isPlaying={isPlaying}
+                    onSelect={() => onSelectLayer(layer.id)}
+                    onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
+                    onDelete={() => handleDeleteLayer(layer.id)}
+                    canDelete={layers.length > 1}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            // Static rows without DnD during SSR to prevent hydration mismatch
+            layers.map((layer) => (
+              <StaticLayerRow
+                key={layer.id}
+                layer={layer}
+                isSelected={layer.id === selectedLayerId}
+                isPlaying={isPlaying}
+                onSelect={() => onSelectLayer(layer.id)}
+                onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
+                onDelete={() => handleDeleteLayer(layer.id)}
+                canDelete={layers.length > 1}
+              />
+            ))
+          )}
 
           <div className="flex gap-2 mt-2 pt-2 border-t border-cyan-500/10">
             <button

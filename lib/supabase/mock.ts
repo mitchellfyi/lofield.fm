@@ -316,6 +316,36 @@ export function createMockClient() {
         error: null,
       }),
       signOut: async () => ({ error: null }),
+      signInWithPassword: async () => ({
+        data: {
+          user: MOCK_E2E_USER,
+          session: { user: MOCK_E2E_USER, access_token: "mock-access-token" },
+        },
+        error: null,
+      }),
+      signUp: async () => ({
+        data: { user: MOCK_E2E_USER, session: null },
+        error: null,
+      }),
+      resetPasswordForEmail: async () => ({ data: {}, error: null }),
+      updateUser: async () => ({ data: { user: MOCK_E2E_USER }, error: null }),
+      // Subscribe to auth state changes - returns unsubscribe function
+      onAuthStateChange: (
+        callback: (event: string, session: { user: typeof MOCK_E2E_USER } | null) => void
+      ) => {
+        // Immediately call callback with mock session (simulates initial auth check)
+        setTimeout(() => {
+          callback("SIGNED_IN", { user: MOCK_E2E_USER });
+        }, 0);
+        // Return subscription object with unsubscribe method
+        return {
+          data: {
+            subscription: {
+              unsubscribe: () => {},
+            },
+          },
+        };
+      },
     },
     from: (table: string) => {
       const store = getStoreForTable(table);

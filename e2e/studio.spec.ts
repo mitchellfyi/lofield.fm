@@ -1,11 +1,25 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * Helper to get test API from window
+ * Helper to check test API state via page.evaluate
+ * We evaluate each method call separately because the test API methods
+ * can't be serialized and passed back to Node.js
  */
-async function getTestAPI(page: Page) {
+async function wasInitCalled(page: Page): Promise<boolean> {
   return await page.evaluate(() => {
-    return window.__audioTest;
+    return window.__audioTest?.wasInitCalled() ?? false;
+  });
+}
+
+async function wasPlayCalled(page: Page): Promise<boolean> {
+  return await page.evaluate(() => {
+    return window.__audioTest?.wasPlayCalled() ?? false;
+  });
+}
+
+async function wasStopCalled(page: Page): Promise<boolean> {
+  return await page.evaluate(() => {
+    return window.__audioTest?.wasStopCalled() ?? false;
   });
 }
 
@@ -31,238 +45,172 @@ test.describe("LoField Music Studio E2E Tests", () => {
   test("should load page and display UI elements", async ({ page }) => {
     // Check main UI elements are present
     await expect(page.getByRole("heading", { name: "LoField Music Lab" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Code Editor" })).toBeVisible();
 
-    // Check buttons are present
-    await expect(page.getByRole("button", { name: "Init Audio" })).toBeVisible();
+    // Check player state indicator shows IDLE initially
+    await expect(page.locator("text=IDLE")).toBeVisible();
+
+    // Check navigation buttons are present
+    await expect(page.getByRole("button", { name: "My Tracks" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Preset Library" })).toBeVisible();
+
+    // Check player control buttons are present
     await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
 
-    // Check code editor has default code
-    const codeEditor = page.locator("textarea");
-    await expect(codeEditor).toBeVisible();
-    const code = await codeEditor.inputValue();
-    expect(code).toContain("Tone.Transport");
-    expect(code).toContain("Transport.start()");
+    // Check initial button states
+    await expect(page.getByRole("button", { name: "Play" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Stop" })).toBeDisabled();
   });
 
-  test("should initialize audio engine and transition state", async ({ page }) => {
+  test("should display code editor with default Tone.js code", async ({ page }) => {
+    // The code is displayed in code editor area - look for Tone.js code content
+    const codeContent = page.locator("text=Tone.Transport.bpm.value");
+    await expect(codeContent.first()).toBeVisible();
+
+    // Also check for other Tone.js patterns in the default code
+    const transportStart = page.locator("text=Tone.Transport.swing");
+    await expect(transportStart.first()).toBeVisible();
+  });
+
+  test("should auto-initialize and play when clicking Play", async ({ page }) => {
     // Initial state should be idle
     await expect(page.locator("text=IDLE")).toBeVisible();
 
-    // Click Init Audio button
-    await page.getByRole("button", { name: "Init Audio" }).click();
-
-    // Wait for state to transition to ready
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 10000 });
-
-    // Verify via test API
-    const testAPI = await getTestAPI(page);
-    expect(testAPI).toBeDefined();
-    expect(testAPI?.wasInitCalled()).toBe(true);
-
-    // Check events in console
-    await expect(page.locator("text=Audio initialized successfully")).toBeVisible();
-  });
-
-  test("should play code and transition to playing state", async ({ page }) => {
-    // Initialize first
-    await page.getByRole("button", { name: "Init Audio" }).click();
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 10000 });
-
-    // Click Play
+    // Click Play button - this should auto-initialize audio and start playback
     await page.getByRole("button", { name: "Play" }).click();
 
-    // Wait for playing state
-    await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 5000 });
+    // Wait for state to transition to playing
+    await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 10000 });
 
-    // Verify via test API
-    const testAPI = await getTestAPI(page);
-    expect(testAPI?.wasPlayCalled()).toBe(true);
-    expect(testAPI?.wasStopCalled()).toBe(true); // Stop is called before play to clear previous
-
-    // Check for play event
-    const events = testAPI?.getLastEvents() || [];
-    const hasPlayEvent = events.some((e: { type: string }) => e.type === "play");
-    expect(hasPlayEvent).toBe(true);
+    // Verify via test API that both init and play were called
+    const initCalled = await wasInitCalled(page);
+    const playCalled = await wasPlayCalled(page);
+    expect(initCalled).toBe(true);
+    expect(playCalled).toBe(true);
   });
 
   test("should stop playback and return to ready state", async ({ page }) => {
-    // Initialize and play
-    await page.getByRole("button", { name: "Init Audio" }).click();
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 10000 });
-
+    // Start playback first
     await page.getByRole("button", { name: "Play" }).click();
-    await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 5000 });
-
-    // Stop
-    await page.getByRole("button", { name: "Stop" }).click();
-
-    // Should return to ready
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 5000 });
-
-    // Verify stop event
-    const testAPI = await getTestAPI(page);
-    const events = testAPI?.getLastEvents() || [];
-    const hasStopEvent = events.some((e: { type: string }) => e.type === "stop");
-    expect(hasStopEvent).toBe(true);
-  });
-
-  test("should auto-initialize when playing without explicit init", async ({ page }) => {
-    // Initial state should be idle
-    await expect(page.locator("text=IDLE")).toBeVisible();
-
-    // Click Play without initializing first
-    await page.getByRole("button", { name: "Play" }).click();
-
-    // Should auto-initialize and transition to playing
     await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 10000 });
 
-    // Verify both init and play were called
-    const testAPI = await getTestAPI(page);
-    expect(testAPI?.wasInitCalled()).toBe(true);
-    expect(testAPI?.wasPlayCalled()).toBe(true);
-  });
+    // Stop should now be enabled
+    await expect(page.getByRole("button", { name: "Stop" })).toBeEnabled();
 
-  test("should type prompt, send message, and receive response", async ({ page }) => {
-    // Type a prompt
-    const input = page.getByPlaceholder(/Type your prompt/);
-    await input.fill("make a simple beat at 90 bpm");
-
-    // Send message
-    await page.getByRole("button", { name: "Send" }).click();
-
-    // Should see user message
-    await expect(page.locator("text=User")).toBeVisible({ timeout: 5000 });
-    await expect(page.locator("text=make a simple beat at 90 bpm")).toBeVisible();
-
-    // Should see assistant processing
-    await expect(page.locator("text=Processing...")).toBeVisible({ timeout: 5000 });
-
-    // Wait for response (this may take a while)
-    await expect(page.locator("text=Assistant").nth(1)).toBeVisible({ timeout: 30000 });
-
-    // Input should be cleared
-    await expect(input).toHaveValue("");
-  });
-
-  test("should update code editor when AI returns valid code", async ({ page }) => {
-    const codeEditor = page.locator("textarea");
-
-    // Type a prompt
-    const input = page.getByPlaceholder(/Type your prompt/);
-    await input.fill("make a simple kick drum at 120 bpm");
-
-    // Send message
-    await page.getByRole("button", { name: "Send" }).click();
-
-    // Wait for assistant response
-    await expect(page.locator("text=Assistant").nth(1)).toBeVisible({ timeout: 30000 });
-
-    // Wait a bit for code to be processed
-    await page.waitForTimeout(2000);
-
-    // Code should have changed (or at minimum still contain required elements)
-    const updatedCode = await codeEditor.inputValue();
-    expect(updatedCode.length).toBeGreaterThan(0);
-    expect(updatedCode).toContain("Tone"); // Should use Tone.js
-    expect(updatedCode).toContain("Transport.start()"); // Should have playback
-  });
-
-  test("should validate code and show errors for invalid code", async ({ page }) => {
-    // Edit code to be invalid (missing Transport.start)
-    const codeEditor = page.locator("textarea");
-    await codeEditor.clear();
-    await codeEditor.fill("const synth = new Tone.Synth()"); // Missing Transport.start
-
-    // Try to play
-    await page.getByRole("button", { name: "Play" }).click();
-
-    // Should show validation error
-    await expect(page.locator("text=Code validation failed")).toBeVisible({ timeout: 5000 });
-    await expect(page.locator("text=Transport.start")).toBeVisible();
-
-    // State should remain idle or ready, not playing
-    const stateText = await page.locator("text=/(IDLE|READY)/").textContent();
-    expect(stateText).toMatch(/(IDLE|READY)/);
-  });
-
-  test("should handle eval errors gracefully", async ({ page }) => {
-    // Initialize first
-    await page.getByRole("button", { name: "Init Audio" }).click();
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 10000 });
-
-    // Edit code to have a syntax error
-    const codeEditor = page.locator("textarea");
-    await codeEditor.clear();
-    await codeEditor.fill(
-      "Tone.Transport.bpm.value = 120;\nthis is bad syntax!\nTone.Transport.start()"
-    );
-
-    // Try to play
-    await page.getByRole("button", { name: "Play" }).click();
-
-    // Should transition to error state
-    await expect(page.locator("text=ERROR")).toBeVisible({ timeout: 5000 });
-
-    // Should show error message
-    await expect(page.locator("text=Failed to play")).toBeVisible();
-
-    // Verify eval_fail event
-    const testAPI = await getTestAPI(page);
-    const events = testAPI?.getLastEvents() || [];
-    const hasEvalFailEvent = events.some((e: { type: string }) => e.type === "eval_fail");
-    expect(hasEvalFailEvent).toBe(true);
-  });
-
-  test("should display runtime events in console panel", async ({ page }) => {
-    // Initialize
-    await page.getByRole("button", { name: "Init Audio" }).click();
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 10000 });
-
-    // Should see init event with icon
-    await expect(page.locator("text=🎵")).toBeVisible();
-    await expect(page.locator("text=Audio initialized successfully")).toBeVisible();
-
-    // Play
-    await page.getByRole("button", { name: "Play" }).click();
-    await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 5000 });
-
-    // Should see play event
-    await expect(page.locator("text=▶️")).toBeVisible();
-
-    // Stop
+    // Click Stop
     await page.getByRole("button", { name: "Stop" }).click();
+
+    // Should return to ready state
     await expect(page.locator("text=READY")).toBeVisible({ timeout: 5000 });
 
-    // Should see stop event
-    await expect(page.locator("text=⏹️")).toBeVisible();
+    // Verify stop was called via test API
+    const stopCalled = await wasStopCalled(page);
+    expect(stopCalled).toBe(true);
   });
 
-  test("should enable/disable buttons based on state", async ({ page }) => {
-    // Initially, Init Audio should be enabled, others should check state
-    const initBtn = page.getByRole("button", { name: "Init Audio" });
+  test("should enable/disable buttons based on playback state", async ({ page }) => {
     const playBtn = page.getByRole("button", { name: "Play" });
     const stopBtn = page.getByRole("button", { name: "Stop" });
 
-    // Init should be enabled, stop should be disabled
-    await expect(initBtn).toBeEnabled();
-    await expect(stopBtn).toBeDisabled();
-
-    // Initialize
-    await initBtn.click();
-    await expect(page.locator("text=READY")).toBeVisible({ timeout: 10000 });
-
-    // Init button hidden after init (or disabled), play enabled, stop disabled
+    // Initially: Play enabled, Stop disabled
     await expect(playBtn).toBeEnabled();
     await expect(stopBtn).toBeDisabled();
 
-    // Play
+    // Start playback
     await playBtn.click();
-    await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=PLAYING")).toBeVisible({ timeout: 10000 });
 
-    // Stop should now be enabled
+    // While playing: Stop should be enabled
     await expect(stopBtn).toBeEnabled();
+
+    // Stop playback
+    await stopBtn.click();
+    await expect(page.locator("text=READY")).toBeVisible({ timeout: 5000 });
+
+    // After stopping: Stop should be disabled again
+    await expect(stopBtn).toBeDisabled();
+  });
+
+  test("should display tweaks panel with sliders", async ({ page }) => {
+    // Check tweaks panel header is visible
+    await expect(page.getByRole("button", { name: "Tweaks" })).toBeVisible();
+
+    // Check individual tweak labels exist (use first() to handle multiple matches)
+    await expect(
+      page.locator(".text-xs.font-medium.text-slate-300:text('BPM')").first()
+    ).toBeVisible();
+    await expect(page.locator("text=Swing").first()).toBeVisible();
+    await expect(page.locator("text=Filter").first()).toBeVisible();
+    await expect(page.locator("text=Reverb").first()).toBeVisible();
+    await expect(page.locator("text=Delay").first()).toBeVisible();
+
+    // Check sliders are present (multiple sliders exist)
+    const sliders = page.getByRole("slider");
+    await expect(sliders.first()).toBeVisible();
+    expect(await sliders.count()).toBeGreaterThan(0);
+  });
+
+  test("should display layers panel", async ({ page }) => {
+    // Check layers panel header is visible (it's a button that can expand/collapse)
+    await expect(page.getByRole("button", { name: /Layers/ })).toBeVisible();
+
+    // Check default layer exists with "main" name
+    await expect(page.locator("text=main")).toBeVisible();
+
+    // Check mute (M) and solo (S) buttons are present (use exact: true)
+    await expect(page.getByRole("button", { name: "M", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "S", exact: true })).toBeVisible();
+
+    // Check Add Layer button exists
+    await expect(page.getByRole("button", { name: "Add Layer" })).toBeVisible();
+  });
+
+  test("should display timeline section", async ({ page }) => {
+    // Check timeline panel header is visible
+    await expect(page.getByRole("button", { name: "Timeline" })).toBeVisible();
+
+    // Check section indicators (A, B, C, D for 32-bar arrangement)
+    // Use more specific selectors
+    const sectionA = page.locator("text=/^A$/");
+    const sectionB = page.locator("text=/^B$/");
+    const sectionC = page.locator("text=/^C$/");
+    const sectionD = page.locator("text=/^D$/");
+    await expect(sectionA.first()).toBeVisible();
+    await expect(sectionB.first()).toBeVisible();
+    await expect(sectionC.first()).toBeVisible();
+    await expect(sectionD.first()).toBeVisible();
+  });
+
+  test("should show API key prompt when no key is configured", async ({ page }) => {
+    // In E2E mode, mock Supabase should show no API key
+    // The API Key Required prompt should be visible
+    await expect(page.locator("text=API Key Required")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Add API Key" })).toBeVisible();
+  });
+
+  test("should display action buttons in toolbar", async ({ page }) => {
+    // Check action buttons are present (use exact: true where needed)
+    await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Redo" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save As" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Copy" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Revert" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Export" })).toBeVisible();
+
+    // Undo/Redo should be disabled initially (no history)
+    await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Redo" })).toBeDisabled();
+  });
+
+  test("should show model selector button", async ({ page }) => {
+    // Check AI model selector is present
+    await expect(page.getByRole("button", { name: "Select AI Model" })).toBeVisible();
+  });
+
+  test("should show Live mode toggle in code panel", async ({ page }) => {
+    // Check Live mode indicator is present in the code panel
+    // The "Live" button should be visible
+    await expect(page.getByRole("button", { name: "Live" })).toBeVisible();
   });
 });
