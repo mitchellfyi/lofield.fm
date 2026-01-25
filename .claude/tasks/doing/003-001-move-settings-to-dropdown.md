@@ -27,15 +27,17 @@ Settings and Help links are currently in the TopBar header. They should be moved
 ### Implementation Plan (Generated 2026-01-25)
 
 #### Gap Analysis
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Remove Settings link from TopBar | No | Settings link exists in TopBar.tsx:127-153 |
-| Remove Help button from TopBar | No | Help button exists in TopBar.tsx:155-174, modal at 182-242 |
-| Add Settings link to UserMenu dropdown | No | UserMenu.tsx only has Sign Out button (lines 107-122) |
-| Add Help option to UserMenu dropdown | No | No Help option exists in UserMenu |
-| Dropdown maintains good UX | No | Need to verify after adding items |
+
+| Criterion                              | Status | Gap                                                        |
+| -------------------------------------- | ------ | ---------------------------------------------------------- |
+| Remove Settings link from TopBar       | No     | Settings link exists in TopBar.tsx:127-153                 |
+| Remove Help button from TopBar         | No     | Help button exists in TopBar.tsx:155-174, modal at 182-242 |
+| Add Settings link to UserMenu dropdown | No     | UserMenu.tsx only has Sign Out button (lines 107-122)      |
+| Add Help option to UserMenu dropdown   | No     | No Help option exists in UserMenu                          |
+| Dropdown maintains good UX             | No     | Need to verify after adding items                          |
 
 #### Files to Modify
+
 1. `components/auth/UserMenu.tsx`
    - Add Settings link (using Next.js Link component) after the user header section
    - Add Help button that opens help modal
@@ -52,6 +54,7 @@ Settings and Help links are currently in the TopBar header. They should be moved
    - Keep remaining UI elements: My Tracks, Presets, UserMenu
 
 #### Files to Create
+
 1. `components/shared/HelpModal.tsx` (optional but recommended)
    - Extract help modal content from TopBar.tsx for reuse
    - Accept `isOpen` and `onClose` props
@@ -59,6 +62,7 @@ Settings and Help links are currently in the TopBar header. They should be moved
    - This avoids code duplication and allows Help to be shown from multiple places
 
 #### Design Decisions
+
 1. **Help implementation approach**: Extract Help modal to shared component since:
    - It's pure content with no TopBar-specific dependencies
    - Could be reused elsewhere (e.g., from a help page)
@@ -77,6 +81,7 @@ Settings and Help links are currently in the TopBar header. They should be moved
    - Maintain visual hierarchy with divider before Sign Out
 
 #### Test Plan
+
 - [ ] Manual: Verify Settings link navigates to /settings
 - [ ] Manual: Verify Help button opens help modal
 - [ ] Manual: Verify dropdown closes after clicking Settings
@@ -87,6 +92,7 @@ Settings and Help links are currently in the TopBar header. They should be moved
 - [ ] Visual: Verify responsive behavior on mobile
 
 #### Docs to Update
+
 - None required - this is a UI restructuring without API changes
 
 ## Work Log
@@ -130,5 +136,41 @@ Settings and Help links are currently in the TopBar header. They should be moved
   - Removed showHelp state and Link import
   - Commit: b760e31
 - Quality checks: ESLint pass, TypeScript pass
+
+### 2026-01-25 18:30 - Testing Complete
+
+Tests written:
+
+- `components/shared/__tests__/HelpModal.test.ts` - 9 tests
+  - Module structure validation
+  - Props interface (isOpen, onClose)
+  - Visibility behavior (returns null when closed, JSX when open)
+  - Content structure validation
+  - Accessibility considerations (fixed positioning)
+- `components/auth/__tests__/UserMenu.test.ts` - 27 tests
+  - Module structure validation
+  - useAuth hook integration
+  - User display name logic (full_name > email > "User")
+  - Initials generation (handles multi-word names, single names, emails)
+  - Sign out behavior (calls signOut, redirects to /)
+  - Dropdown menu items (Settings, Help, Sign Out)
+  - Menu item order verification (Settings > Help > divider > Sign Out)
+  - HelpModal integration
+  - Dropdown close behaviors
+  - Authentication states (loading, unauthenticated)
+  - Avatar display logic
+
+Test results:
+
+- Total: 2008 examples, 0 failures
+- New tests: 36 examples (9 HelpModal + 27 UserMenu)
+- Commit: 9f58dd8
+
+Quality gates:
+
+- ESLint: pass (0 errors, 2 pre-existing warnings)
+- TypeScript: pass
+- Prettier: pass
+- RSpec: pass (2008/2008)
 
 ## Notes
