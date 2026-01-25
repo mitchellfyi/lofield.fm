@@ -1,0 +1,8 @@
+# Run all quality checks and tests before pushing
+echo "Running quality checks..."
+npm run quality
+
+echo "Running unit tests..."
+npm test
+
+echo "All checks passed!"

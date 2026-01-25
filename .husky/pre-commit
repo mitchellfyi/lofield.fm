@@ -1,0 +1,5 @@
+# Run lint-staged for fast feedback on staged files
+npx lint-staged
+
+# Run TypeScript check on the full codebase
+npm run typecheck
