@@ -6,8 +6,8 @@
 | Status      | todo                               |
 | Priority    | High                               |
 | Created     | 2025-01-25                         |
-| Assigned To |                                    |
-| Assigned At |                                    |
+| Assigned To | `worker-1` |
+| Assigned At | `2026-01-25 16:53` |
 
 ## Context
 
