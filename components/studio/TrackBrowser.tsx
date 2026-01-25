@@ -69,14 +69,16 @@ export function TrackBrowser({
 
   const toggleExpanded = (projectId: string) => {
     setExpandedProjects((prev) => {
-      const next = new Set(prev);
-      if (next.has(projectId)) {
+      if (prev.has(projectId)) {
+        // Collapsing - just remove this project
+        const next = new Set(prev);
         next.delete(projectId);
+        return next;
       } else {
-        next.add(projectId);
+        // Expanding - select this project and collapse others
         setSelectedProjectId(projectId);
+        return new Set([projectId]);
       }
-      return next;
     });
   };
 
@@ -308,7 +310,7 @@ export function TrackBrowser({
                   {/* Tracks List (expanded) */}
                   {expandedProjects.has(project.id) && (
                     <div className="ml-6 mt-1 space-y-1">
-                      {tracksLoading && selectedProjectId === project.id ? (
+                      {tracksLoading ? (
                         <div className="text-sm text-slate-500 py-2 pl-4">Loading tracks...</div>
                       ) : (
                         <>
