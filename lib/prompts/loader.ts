@@ -1,5 +1,6 @@
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { getModelById } from "@/lib/models";
 
 const PROMPTS_DIR = join(process.cwd(), "prompts");
 
@@ -14,10 +15,30 @@ export function loadPrompt(filename: string): string {
 }
 
 /**
- * Load the system prompt
+ * Load the system prompt with optional variation
+ * @param variation - Optional variation name (e.g., 'concise' loads 'system-prompt-concise.md')
+ * @returns The prompt content as a string
  */
-export function loadSystemPrompt(): string {
+export function loadSystemPrompt(variation?: string): string {
+  if (variation) {
+    const variationFilename = `system-prompt-${variation}.md`;
+    const variationPath = join(PROMPTS_DIR, variationFilename);
+    if (existsSync(variationPath)) {
+      return loadPrompt(variationFilename);
+    }
+    // Fall back to default if variation file doesn't exist
+  }
   return loadPrompt("system-prompt.md");
+}
+
+/**
+ * Load the system prompt for a specific model
+ * @param modelId - The model ID (e.g., 'gpt-4o-mini')
+ * @returns The appropriate system prompt for the model
+ */
+export function loadSystemPromptForModel(modelId: string): string {
+  const model = getModelById(modelId);
+  return loadSystemPrompt(model?.systemPromptVariation);
 }
 
 /**
