@@ -33,7 +33,9 @@ export type ToastType = "success" | "error" | "info";
 
 /** Toast notification state */
 export interface ToastState {
+  id?: string;
   visible: boolean;
   message: string;
   type: ToastType;
+  duration?: number;
 }

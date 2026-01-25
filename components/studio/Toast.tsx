@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import type { ToastType } from "@/lib/export/types";
 
 interface ToastProps {
+  id?: string;
   message: string;
   type: ToastType;
   visible: boolean;
@@ -53,7 +54,7 @@ export function Toast({ message, type, visible, onDismiss, duration = 3000 }: To
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+    <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-sm text-white font-medium shadow-lg border backdrop-blur-sm ${typeStyles[type]}`}
       >
