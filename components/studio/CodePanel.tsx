@@ -139,18 +139,16 @@ export function CodePanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 sm:px-4 h-12 sm:h-16 border-b border-cyan-500/20 bg-slate-900/50">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">
-            Code
-          </h2>
+      <div className="flex-1 relative bg-slate-900 min-h-0 overflow-hidden">
+        {/* Compact control bar - positioned at top-right of editor */}
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5">
           {onLiveModeChange && (
             <button
               onClick={() => onLiveModeChange(!liveMode)}
-              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider transition-all duration-200 backdrop-blur-sm ${
                 liveMode
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
-                  : "bg-slate-700/50 text-slate-400 border border-slate-600"
+                  : "bg-slate-800/80 text-slate-400 border border-slate-600"
               }`}
               title={
                 liveMode
@@ -164,18 +162,16 @@ export function CodePanel({
               Live
             </button>
           )}
-        </div>
-        <div className="flex gap-1.5 sm:gap-2">
           {/* Custom action slot */}
           {actionSlot}
           {/* Sequencer toggle - mobile only */}
           {showSequencerToggle && (
             <button
               onClick={onSequencerToggle}
-              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 flex items-center justify-center ${
+              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all duration-200 flex items-center justify-center backdrop-blur-sm ${
                 sequencerVisible
-                  ? "text-cyan-400 border border-cyan-500/50 bg-cyan-500/10"
-                  : "text-slate-400 border border-slate-600"
+                  ? "text-cyan-400 border border-cyan-500/50 bg-cyan-500/20"
+                  : "text-slate-400 border border-slate-600 bg-slate-800/80"
               }`}
               title={sequencerVisible ? "Hide sequencer" : "Show sequencer"}
             >
@@ -190,9 +186,6 @@ export function CodePanel({
             </button>
           )}
         </div>
-      </div>
-
-      <div className="flex-1 relative bg-slate-900 min-h-0 overflow-hidden">
         <div className="absolute inset-0 overflow-auto">
           <CodeMirror
             ref={editorRef}
