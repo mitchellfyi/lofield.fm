@@ -10,6 +10,8 @@ interface ToastProps {
   visible: boolean;
   onDismiss: () => void;
   duration?: number;
+  /** When true, toast is rendered inline (for use in ToastProvider container). When false/undefined, uses fixed positioning. */
+  inline?: boolean;
 }
 
 const typeStyles: Record<ToastType, string> = {
@@ -43,7 +45,14 @@ const typeIcons: Record<ToastType, React.ReactNode> = {
   ),
 };
 
-export function Toast({ message, type, visible, onDismiss, duration = 3000 }: ToastProps) {
+export function Toast({
+  message,
+  type,
+  visible,
+  onDismiss,
+  duration = 3000,
+  inline = false,
+}: ToastProps) {
   useEffect(() => {
     if (visible && duration > 0) {
       const timer = setTimeout(onDismiss, duration);
@@ -53,8 +62,12 @@ export function Toast({ message, type, visible, onDismiss, duration = 3000 }: To
 
   if (!visible) return null;
 
+  const positionClasses = inline
+    ? "animate-in slide-in-from-top-4 fade-in duration-300"
+    : "fixed top-6 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-300";
+
   return (
-    <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
+    <div className={positionClasses}>
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-sm text-white font-medium shadow-lg border backdrop-blur-sm ${typeStyles[type]}`}
       >
