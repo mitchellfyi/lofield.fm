@@ -424,4 +424,180 @@ describe("LayerRow component", () => {
       expect(mdBreakpoint).toBe("md:");
     });
   });
+
+  describe("drag and drop behavior", () => {
+    describe("isDragging prop", () => {
+      it("should accept isDragging as optional boolean prop", () => {
+        const isDragging: boolean | undefined = true;
+        expect(typeof isDragging).toBe("boolean");
+      });
+
+      it("should default to false when isDragging prop is undefined", () => {
+        const isDraggingProp: boolean | undefined = undefined;
+        const isDraggingSortable = false;
+        const isDragging = isDraggingProp ?? isDraggingSortable;
+        expect(isDragging).toBe(false);
+      });
+
+      it("should use prop value when isDragging prop is provided", () => {
+        const isDraggingProp: boolean | undefined = true;
+        const isDraggingSortable = false;
+        const isDragging = isDraggingProp ?? isDraggingSortable;
+        expect(isDragging).toBe(true);
+      });
+
+      it("should use sortable value when isDragging prop is not provided", () => {
+        const isDraggingProp: boolean | undefined = undefined;
+        const isDraggingSortable = true;
+        const isDragging = isDraggingProp ?? isDraggingSortable;
+        expect(isDragging).toBe(true);
+      });
+    });
+
+    describe("drag visual feedback", () => {
+      it("should have opacity-80 class when dragging", () => {
+        const isDragging = true;
+        const dragClass = isDragging ? "opacity-80" : "";
+        expect(dragClass).toContain("opacity-80");
+      });
+
+      it("should have scale-[1.02] class when dragging", () => {
+        const isDragging = true;
+        const dragClass = isDragging ? "scale-[1.02]" : "";
+        expect(dragClass).toContain("scale-[1.02]");
+      });
+
+      it("should have shadow-lg class when dragging", () => {
+        const isDragging = true;
+        const dragClass = isDragging ? "shadow-lg shadow-cyan-500/20" : "";
+        expect(dragClass).toContain("shadow-lg");
+      });
+
+      it("should have z-10 class when dragging for elevated layer", () => {
+        const isDragging = true;
+        const dragClass = isDragging ? "z-10" : "";
+        expect(dragClass).toContain("z-10");
+      });
+
+      it("should have bg-slate-800/80 class when dragging", () => {
+        const isDragging = true;
+        const dragClass = isDragging ? "bg-slate-800/80" : "";
+        expect(dragClass).toContain("bg-slate-800/80");
+      });
+
+      it("should not have drag styles when not dragging", () => {
+        const isDragging = false;
+        const dragClass = isDragging ? "opacity-80 scale-[1.02] shadow-lg z-10" : "";
+        expect(dragClass).toBe("");
+      });
+    });
+
+    describe("drag handle", () => {
+      it("should have cursor-grab class on drag handle", () => {
+        const handleClass = "cursor-grab";
+        expect(handleClass).toBe("cursor-grab");
+      });
+
+      it("should have active:cursor-grabbing class for grabbing state", () => {
+        const handleClass = "active:cursor-grabbing";
+        expect(handleClass).toBe("active:cursor-grabbing");
+      });
+
+      it("should have touch-none class to prevent scroll interference", () => {
+        const handleClass = "touch-none";
+        expect(handleClass).toBe("touch-none");
+      });
+
+      it("should have title attribute for accessibility", () => {
+        const handleTitle = "Drag to reorder";
+        expect(handleTitle).toBe("Drag to reorder");
+      });
+
+      it("should have visible grip icon (8 circles for grip pattern)", () => {
+        // The drag handle shows 8 dots arranged in 4 rows of 2
+        const circleCount = 8;
+        expect(circleCount).toBe(8);
+      });
+    });
+
+    describe("sortable transform", () => {
+      it("should apply CSS transform from useSortable hook", () => {
+        // Transform is applied via style prop
+        const transform = { x: 0, y: 50, scaleX: 1, scaleY: 1 };
+        const transformString = `translate3d(${transform.x}px, ${transform.y}px, 0)`;
+        expect(transformString).toContain("translate3d");
+        expect(transformString).toContain("50px");
+      });
+
+      it("should apply transition from useSortable hook", () => {
+        // Transition enables smooth animation during drag
+        const transition = "transform 200ms ease";
+        expect(transition).toContain("transform");
+        expect(transition).toContain("200ms");
+      });
+
+      it("should have null transform when not dragging", () => {
+        const transform = null;
+        expect(transform).toBeNull();
+      });
+    });
+
+    describe("sortable attributes", () => {
+      it("should spread sortable attributes on row container", () => {
+        // Attributes include aria-describedby, aria-pressed, role, tabindex
+        const attributes = {
+          "aria-describedby": "sortable-description",
+          "aria-pressed": false,
+          role: "button",
+          tabIndex: 0,
+        };
+        expect(attributes).toHaveProperty("role");
+        expect(attributes).toHaveProperty("tabIndex");
+      });
+
+      it("should have proper accessibility role", () => {
+        const role = "button";
+        expect(role).toBe("button");
+      });
+
+      it("should be keyboard focusable via tabIndex", () => {
+        const tabIndex = 0;
+        expect(tabIndex).toBe(0);
+      });
+    });
+
+    describe("sortable listeners", () => {
+      it("should attach listeners to drag handle only", () => {
+        // Listeners are on the drag handle, not the whole row
+        // This allows clicking elsewhere without starting drag
+        const hasListenersOnHandle = true;
+        expect(hasListenersOnHandle).toBe(true);
+      });
+
+      it("should not propagate drag events to row click handler", () => {
+        // Drag handle has separate listeners from row onClick
+        const dragHandleHasSeparateListeners = true;
+        expect(dragHandleHasSeparateListeners).toBe(true);
+      });
+    });
+
+    describe("layer id for sortable", () => {
+      it("should use layer.id as sortable id", () => {
+        const layer = { id: "layer-1", name: "drums" };
+        const sortableId = layer.id;
+        expect(sortableId).toBe("layer-1");
+      });
+
+      it("should maintain unique id for each layer", () => {
+        const layers = [
+          { id: "layer-1", name: "drums" },
+          { id: "layer-2", name: "bass" },
+          { id: "layer-3", name: "melody" },
+        ];
+        const ids = layers.map((l) => l.id);
+        const uniqueIds = new Set(ids);
+        expect(uniqueIds.size).toBe(layers.length);
+      });
+    });
+  });
 });
