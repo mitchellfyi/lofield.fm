@@ -1,35 +1,8 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/service";
 import { AbuseStatus, AbuseFlag, ViolationType } from "./types";
 
 // Threshold for flagging a user as abusive
 const ABUSE_FLAG_THRESHOLD = 3; // Flag user after 3 violations of same type
-
-// Create a service client for server-side operations
-async function createServiceClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore errors in Server Components
-          }
-        },
-      },
-    }
-  );
-}
 
 /**
  * Check if a user has abuse flags that should block them.
@@ -51,11 +24,21 @@ export async function checkAbusePatterns(userId: string): Promise<AbuseStatus> {
     return { flagged: false, flags: [] };
   }
 
+  // Type for flag records from database
+  type FlagRecord = {
+    id: string;
+    user_id: string;
+    violation_type: string;
+    count: number;
+    last_flagged_at: string;
+    created_at: string;
+  };
+
   // Check if any flag exceeds the threshold
-  const abuseFlags: AbuseFlag[] = flags.map((f) => ({
+  const abuseFlags: AbuseFlag[] = (flags as FlagRecord[]).map((f) => ({
     id: f.id,
     userId: f.user_id,
-    violationType: f.violation_type,
+    violationType: f.violation_type as ViolationType,
     count: f.count,
     lastFlaggedAt: new Date(f.last_flagged_at),
     createdAt: new Date(f.created_at),
@@ -80,15 +63,16 @@ export async function flagAbuse(userId: string, violationType: ViolationType): P
     .eq("violation_type", violationType)
     .single();
 
-  if (existing) {
+  const existingFlag = existing as { id: string; count: number } | null;
+  if (existingFlag) {
     // Increment existing flag
     await supabase
       .from("abuse_flags")
       .update({
-        count: existing.count + 1,
+        count: existingFlag.count + 1,
         last_flagged_at: new Date().toISOString(),
       })
-      .eq("id", existing.id);
+      .eq("id", existingFlag.id);
   } else {
     // Create new flag
     await supabase.from("abuse_flags").insert({
@@ -115,10 +99,20 @@ export async function getAbuseFlags(userId: string): Promise<AbuseFlag[]> {
     return [];
   }
 
-  return flags.map((f) => ({
+  // Type for flag records from database
+  type FlagRecord = {
+    id: string;
+    user_id: string;
+    violation_type: string;
+    count: number;
+    last_flagged_at: string;
+    created_at: string;
+  };
+
+  return (flags as FlagRecord[]).map((f) => ({
     id: f.id,
     userId: f.user_id,
-    violationType: f.violation_type,
+    violationType: f.violation_type as ViolationType,
     count: f.count,
     lastFlaggedAt: new Date(f.last_flagged_at),
     createdAt: new Date(f.created_at),

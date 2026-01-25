@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/service";
 import crypto from "crypto";
 
 // Encryption configuration
@@ -58,31 +57,6 @@ export function extractLastFour(apiKey: string): string {
 
 export function maskApiKey(keyLast4: string): string {
   return `sk-...${keyLast4}`;
-}
-
-async function createServiceClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore errors in Server Components
-          }
-        },
-      },
-    }
-  );
 }
 
 export interface ApiKeyInfo {

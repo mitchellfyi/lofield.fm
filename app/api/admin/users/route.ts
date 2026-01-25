@@ -1,35 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/service";
 import { isAdmin } from "@/lib/admin";
 import { DEFAULT_DAILY_TOKEN_LIMIT, DEFAULT_REQUESTS_PER_MINUTE } from "@/lib/usage";
 
 export const runtime = "nodejs";
-
-async function createServiceClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore errors in Server Components
-          }
-        },
-      },
-    }
-  );
-}
 
 export async function GET() {
   // Get user session
@@ -73,33 +47,45 @@ export async function GET() {
   // Get abuse flags count per user
   const { data: flagsData } = await serviceClient.from("abuse_flags").select("user_id, count");
 
+  // Type definitions for query results
+  type UsageRecord = { user_id: string; tokens_used: number };
+  type QuotaRecord = {
+    user_id: string;
+    daily_token_limit: number;
+    requests_per_minute: number;
+    tier: string;
+  };
+  type FlagRecord = { user_id: string; count: number };
+  type ProfileRecord = { id: string; email: string; display_name: string; created_at: string };
+
   // Create lookup maps
-  const usageMap = new Map(usageData?.map((u) => [u.user_id, u]) ?? []);
-  const quotaMap = new Map(quotaData?.map((q) => [q.user_id, q]) ?? []);
+  const usageMap = new Map((usageData as UsageRecord[] | null)?.map((u) => [u.user_id, u]) ?? []);
+  const quotaMap = new Map((quotaData as QuotaRecord[] | null)?.map((q) => [q.user_id, q]) ?? []);
 
   // Sum up flags per user
   const flagsCountMap = new Map<string, number>();
-  flagsData?.forEach((f) => {
+  (flagsData as FlagRecord[] | null)?.forEach((f) => {
     const current = flagsCountMap.get(f.user_id) ?? 0;
     flagsCountMap.set(f.user_id, current + f.count);
   });
 
   // Combine data
-  const users = profiles.map((p) => {
-    const usage = usageMap.get(p.id);
-    const quota = quotaMap.get(p.id);
-    return {
-      id: p.id,
-      email: p.email,
-      displayName: p.display_name,
-      tokensUsed: usage?.tokens_used ?? 0,
-      dailyTokenLimit: quota?.daily_token_limit ?? DEFAULT_DAILY_TOKEN_LIMIT,
-      requestsPerMinute: quota?.requests_per_minute ?? DEFAULT_REQUESTS_PER_MINUTE,
-      tier: quota?.tier ?? "free",
-      abuseFlags: flagsCountMap.get(p.id) ?? 0,
-      createdAt: p.created_at,
-    };
-  });
+  const users =
+    (profiles as ProfileRecord[] | null)?.map((p) => {
+      const usage = usageMap.get(p.id);
+      const quota = quotaMap.get(p.id);
+      return {
+        id: p.id,
+        email: p.email,
+        displayName: p.display_name,
+        tokensUsed: usage?.tokens_used ?? 0,
+        dailyTokenLimit: quota?.daily_token_limit ?? DEFAULT_DAILY_TOKEN_LIMIT,
+        requestsPerMinute: quota?.requests_per_minute ?? DEFAULT_REQUESTS_PER_MINUTE,
+        tier: quota?.tier ?? "free",
+        abuseFlags: flagsCountMap.get(p.id) ?? 0,
+        createdAt: p.created_at,
+      };
+    }) ?? [];
 
   return new Response(JSON.stringify({ users }), {
     headers: { "Content-Type": "application/json" },

@@ -3,35 +3,9 @@
  * Handles all database operations for track management
  */
 
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { Project, Track, Revision, ProjectWithTrackCount } from "@/lib/types/tracks";
 import type { Recording, RecordingEvent } from "@/lib/types/recording";
-
-async function createServiceClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore errors in Server Components
-          }
-        },
-      },
-    }
-  );
-}
 
 // ============================================================================
 // Project Operations
@@ -56,7 +30,8 @@ export async function getProjects(userId: string): Promise<ProjectWithTrackCount
   }
 
   // Transform the response to include track_count
-  return (data || []).map((project) => ({
+  type ProjectWithTracks = Project & { tracks?: { count: number }[] };
+  return ((data as ProjectWithTracks[]) || []).map((project) => ({
     ...project,
     track_count: project.tracks?.[0]?.count ?? 0,
     tracks: undefined, // Remove the tracks array from response
@@ -377,7 +352,9 @@ export async function pruneRevisions(trackId: string, keepCount: number = 50): P
 
   // If we have more than keepCount revisions, delete the old ones
   if (revisions && revisions.length > keepCount) {
-    const revisionsToDelete = revisions.slice(keepCount).map((r) => r.id);
+    const revisionsToDelete = (revisions as { id: string; created_at: string }[])
+      .slice(keepCount)
+      .map((r) => r.id);
 
     const { error: deleteError } = await supabase
       .from("revisions")
