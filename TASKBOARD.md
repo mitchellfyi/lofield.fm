@@ -1,15 +1,15 @@
 # Taskboard
 
 > Auto-generated
-> Last updated: 2026-01-24 19:00:00
+> Last updated: 2026-01-25 16:32:00
 
 ## Summary
 
 | Status | Count |
 | ------ | ----- |
 | Doing  | 1     |
-| Todo   | 4     |
-| Done   | 18    |
+| Todo   | 9     |
+| Done   | 24    |
 
 ---
 
@@ -21,6 +21,11 @@
 
 ## Todo
 
+- **[001-003-fix-model-dropdown-overflow.md](.claude/tasks/todo/001-003-fix-model-dropdown-overflow.md)** - Fix Model Dropdown Overflow [Critical]
+- **[002-005-actions-bar-functionality-tests.md](.claude/tasks/todo/002-005-actions-bar-functionality-tests.md)** - Actions Bar Functionality Tests [High]
+- **[002-006-errors-as-prominent-toasts.md](.claude/tasks/todo/002-006-errors-as-prominent-toasts.md)** - Errors as Prominent Toasts [High]
+- **[003-001-move-settings-to-dropdown.md](.claude/tasks/todo/003-001-move-settings-to-dropdown.md)** - Move Settings to Dropdown [Medium]
+- **[003-002-remove-section-headers.md](.claude/tasks/todo/003-002-remove-section-headers.md)** - Remove Section Headers [Medium]
 - **[004-001-model-cost-display.md](.claude/tasks/todo/004-001-model-cost-display.md)** - Show Estimated Cost Per Model [Low]
 - **[004-001-recording-value-edit.md](.claude/tasks/todo/004-001-recording-value-edit.md)** - Edit Recorded Automation Values [Low]
 - **[004-002-layer-drag-reorder.md](.claude/tasks/todo/004-002-layer-drag-reorder.md)** - Drag-to-Reorder Layers [Low]
@@ -30,16 +35,16 @@
 
 ## Recently Completed (Last 10)
 
+- **[001-002-fix-saving-tracks.md](.claude/tasks/done/001-002-fix-saving-tracks.md)** - Fix Saving Tracks [Critical]
+- **[002-004-improve-tracks-error-handling.md](.claude/tasks/done/002-004-improve-tracks-error-handling.md)** - Improve Tracks Error Handling [High]
 - **[004-001-mobile-usability.md](.claude/tasks/done/004-001-mobile-usability.md)** - Mobile Usability Pass [Low]
 - **[003-012-recording-audio-export.md](.claude/tasks/done/003-012-recording-audio-export.md)** - Export Recording as Rendered Audio [Medium]
 - **[003-012-install-vercel-analytics.md](.claude/tasks/done/003-012-install-vercel-analytics.md)** - Install Vercel Analytics [Medium]
 - **[003-011-record-mode.md](.claude/tasks/done/003-011-record-mode.md)** - Record Mode - Capture Live Performance Changes
-- **[003-010-observability.md](.claude/tasks/done/003-010-observability.md)** - Observability - Error Tracking and Event Logging
-- **[003-008-undo-redo.md](.claude/tasks/done/003-008-undo-redo.md)** - Undo/Redo Across Chat and Code Edits
-- **[003-007-multi-track-support.md](.claude/tasks/done/003-007-multi-track-support.md)** - Multi-Track Support with Mute/Solo
-- **[003-006-tweaks-ux.md](.claude/tasks/done/003-006-tweaks-ux.md)** - Tweaks UX - Quick Parameter Sliders
-- **[003-005-preset-library.md](.claude/tasks/done/003-005-preset-library.md)** - Preset Library with Starter Patterns and Genre Templates
-- **[003-004-shareable-links.md](.claude/tasks/done/003-004-shareable-links.md)** - Shareable Links with Public Read-Only Pages
+- **[002-003-remove-duplicate-code-actions.md](.claude/tasks/done/002-003-remove-duplicate-code-actions.md)** - Remove Duplicate Code Actions [High]
+- **[002-002-create-favicon.md](.claude/tasks/done/002-002-create-favicon.md)** - Create Favicon [High]
+- **[002-001-mobile-controls-tab.md](.claude/tasks/done/002-001-mobile-controls-tab.md)** - Mobile Controls Tab [High]
+- **[001-001-fix-tweaks-jankiness.md](.claude/tasks/done/001-001-fix-tweaks-jankiness.md)** - Fix Tweaks Jankiness [Critical]
 
 ---
 
