@@ -8,7 +8,7 @@ import {
   TWEAK_PARAM_COLORS,
   formatRecordingTime,
 } from "@/lib/types/recording";
-import type { TweaksConfig } from "@/lib/types/tweaks";
+import { TWEAK_PARAMS, type TweaksConfig } from "@/lib/types/tweaks";
 import { useTransportState } from "@/lib/audio/useVisualization";
 
 interface RecordingTimelineProps {
@@ -20,8 +20,52 @@ interface RecordingTimelineProps {
   onSelectEvent?: (event: RecordingEvent) => void;
   /** Callback when an event is deleted */
   onDeleteEvent?: (eventId: string) => void;
+  /** Callback when an event value is updated */
+  onUpdateEvent?: (event: RecordingEvent) => void;
   /** Whether the timeline is interactive */
   interactive?: boolean;
+}
+
+/**
+ * Value configuration for editable event types
+ */
+interface EventValueConfig {
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  isBoolean: boolean;
+}
+
+/**
+ * Get the value configuration for editing an event's value
+ */
+function getEventValueConfig(event: RecordingEvent): EventValueConfig | null {
+  // Boolean events (mute, solo)
+  if (event.type === "layer_mute" || event.type === "layer_solo") {
+    return { min: 0, max: 1, step: 1, unit: "", isBoolean: true };
+  }
+
+  // Layer volume (0-100%)
+  if (event.type === "layer_volume") {
+    return { min: 0, max: 100, step: 1, unit: "%", isBoolean: false };
+  }
+
+  // Tweak events - use TWEAK_PARAMS config
+  if (event.type === "tweak" && event.param) {
+    const paramConfig = TWEAK_PARAMS.find((p) => p.key === event.param);
+    if (paramConfig) {
+      return {
+        min: paramConfig.min,
+        max: paramConfig.max,
+        step: paramConfig.step,
+        unit: paramConfig.unit,
+        isBoolean: false,
+      };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -57,6 +101,7 @@ export function RecordingTimeline({
   currentTimeMs,
   onSelectEvent,
   onDeleteEvent,
+  onUpdateEvent,
   interactive = true,
 }: RecordingTimelineProps) {
   const transport = useTransportState();
@@ -181,37 +226,98 @@ export function RecordingTimeline({
 
       {/* Selected event details */}
       {selectedEventId && interactive && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+        <div className="px-3 py-2 rounded-lg bg-slate-800/50 border border-cyan-500/20 space-y-2">
           {(() => {
             const event = recording.events.find((e) => e.id === selectedEventId);
             if (!event) return null;
+            const valueConfig = getEventValueConfig(event);
+            const handleValueChange = (newValue: number | boolean) => {
+              if (!onUpdateEvent) return;
+              onUpdateEvent({ ...event, newValue });
+            };
             return (
               <>
-                <span
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: getEventColor(event) }}
-                />
-                <span className="text-xs text-slate-300 flex-1 truncate">
-                  {getEventLabel(event)}
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">
-                  {formatRecordingTime(event.timestamp_ms)}
-                </span>
-                {onDeleteEvent && (
-                  <button
-                    onClick={(e) => handleDeleteClick(e, event.id)}
-                    className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
-                    title="Delete event"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                {/* Event info row */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: getEventColor(event) }}
+                  />
+                  <span className="text-xs text-slate-300 flex-1 truncate">
+                    {getEventLabel(event)}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {formatRecordingTime(event.timestamp_ms)}
+                  </span>
+                  {onDeleteEvent && (
+                    <button
+                      onClick={(e) => handleDeleteClick(e, event.id)}
+                      className="p-1 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                      title="Delete event"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Value editor row */}
+                {valueConfig && onUpdateEvent && (
+                  <div className="flex items-center gap-2">
+                    {valueConfig.isBoolean ? (
+                      // Boolean toggle for mute/solo
+                      <button
+                        onClick={() => handleValueChange(!event.newValue)}
+                        className={`
+                          flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                          ${event.newValue ? "bg-cyan-500/30 text-cyan-300 border border-cyan-500/50" : "bg-slate-700/50 text-slate-400 border border-slate-600/50"}
+                        `}
+                      >
+                        {event.newValue ? "On" : "Off"}
+                      </button>
+                    ) : (
+                      // Numeric slider for volume/tweak params
+                      <>
+                        <input
+                          type="range"
+                          min={valueConfig.min}
+                          max={valueConfig.max}
+                          step={valueConfig.step}
+                          value={event.newValue as number}
+                          onChange={(e) => handleValueChange(Number(e.target.value))}
+                          className="flex-1 h-1.5 rounded-full appearance-none bg-slate-700 cursor-pointer
+                            [&::-webkit-slider-thumb]:appearance-none
+                            [&::-webkit-slider-thumb]:w-3
+                            [&::-webkit-slider-thumb]:h-3
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:bg-cyan-400
+                            [&::-webkit-slider-thumb]:hover:bg-cyan-300
+                            [&::-webkit-slider-thumb]:transition-colors
+                            [&::-moz-range-thumb]:w-3
+                            [&::-moz-range-thumb]:h-3
+                            [&::-moz-range-thumb]:rounded-full
+                            [&::-moz-range-thumb]:bg-cyan-400
+                            [&::-moz-range-thumb]:border-0
+                            [&::-moz-range-thumb]:hover:bg-cyan-300"
+                        />
+                        <span className="text-xs text-slate-400 font-mono min-w-[4rem] text-right">
+                          {event.newValue}
+                          {valueConfig.unit}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 )}
               </>
             );

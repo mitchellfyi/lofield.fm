@@ -1409,6 +1409,18 @@ Request: ${inputValue}`;
                         const newEvents = activeRecording.events.filter((e) => e.id !== eventId);
                         setActiveRecording({ ...activeRecording, events: newEvents });
                       }}
+                      onUpdateEvent={(updatedEvent) => {
+                        // Update local state with new event value
+                        const newEvents = activeRecording.events.map((e) =>
+                          e.id === updatedEvent.id ? updatedEvent : e
+                        );
+                        setActiveRecording({ ...activeRecording, events: newEvents });
+
+                        // Persist to database if recording is saved
+                        if (activeRecording.id && currentTrackId) {
+                          updateRecordingApi(activeRecording.id, { events: newEvents });
+                        }
+                      }}
                     />
                   </div>
                 )}
