@@ -2,6 +2,43 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Track } from "@/lib/types/tracks";
+import { getCache, setCache } from "@/lib/storage/localCache";
+
+const TRACKS_CACHE_PREFIX = "tracks_";
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+
+/**
+ * Get a user-friendly error message for tracks
+ */
+function getFriendlyErrorMessage(error: unknown, status?: number): string {
+  if (error instanceof TypeError && error.message.includes("fetch")) {
+    return "Unable to connect. Check your internet connection.";
+  }
+
+  if (status) {
+    switch (status) {
+      case 401:
+        return "Please sign in to view your tracks.";
+      case 403:
+        return "You don't have permission to view these tracks.";
+      case 404:
+        return "Could not find your tracks.";
+      case 500:
+      case 502:
+      case 503:
+        return "Server error. Please try again later.";
+      default:
+        if (status >= 400 && status < 500) {
+          return "There was a problem with your request.";
+        }
+        if (status >= 500) {
+          return "Server error. Please try again later.";
+        }
+    }
+  }
+
+  return "Unable to load tracks. Please try again.";
+}
 
 export interface UseTracksResult {
   tracks: Track[];
@@ -28,6 +65,8 @@ export function useTracks(projectId: string | null): UseTracksResult {
       return;
     }
 
+    const cacheKey = TRACKS_CACHE_PREFIX + projectId;
+
     try {
       setLoading(true);
       setError(null);
@@ -39,13 +78,36 @@ export function useTracks(projectId: string | null): UseTracksResult {
           setTracks([]);
           return;
         }
-        throw new Error("Failed to fetch tracks");
+        // Try cached tracks on error
+        const cached = getCache<Track[]>(cacheKey);
+        if (cached && cached.length > 0) {
+          setTracks(cached);
+          setError(getFriendlyErrorMessage(null, res.status));
+          return;
+        }
+        throw { status: res.status };
       }
 
       const data = await res.json();
-      setTracks(data.tracks || []);
+      const fetchedTracks = data.tracks || [];
+      setTracks(fetchedTracks);
+
+      // Cache successful response
+      if (fetchedTracks.length > 0) {
+        setCache(cacheKey, fetchedTracks, CACHE_TTL_MS);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      // Try cached tracks on error
+      const cached = getCache<Track[]>(cacheKey);
+      if (cached && cached.length > 0) {
+        setTracks(cached);
+        const status = (err as { status?: number })?.status;
+        setError(getFriendlyErrorMessage(err, status));
+        return;
+      }
+
+      const status = (err as { status?: number })?.status;
+      setError(getFriendlyErrorMessage(err, status));
       setTracks([]);
     } finally {
       setLoading(false);
