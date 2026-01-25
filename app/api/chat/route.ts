@@ -1,7 +1,7 @@
 import { createOpenAI, type OpenAIProvider } from "@ai-sdk/openai";
 import { streamText, type ModelMessage } from "ai";
 import { validateToneCode } from "@/lib/audio/llmContract";
-import { loadSystemPrompt, buildRetryPrompt } from "@/lib/prompts/loader";
+import { loadSystemPromptForModel, buildRetryPrompt } from "@/lib/prompts/loader";
 import { isValidModel, DEFAULT_MODEL } from "@/lib/models";
 import { createClient } from "@/lib/supabase/server";
 import { getApiKey } from "@/lib/api-keys";
@@ -33,7 +33,7 @@ interface GenerationContext {
 
 async function generateWithValidation(ctx: GenerationContext): Promise<Response> {
   const { messages, modelName, openai, userId, rateLimitHeaders, retryCount = 0, requestId } = ctx;
-  const systemPrompt = loadSystemPrompt();
+  const systemPrompt = loadSystemPromptForModel(modelName);
 
   let fullText = "";
   const chunks: string[] = [];
