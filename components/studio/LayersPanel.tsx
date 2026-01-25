@@ -1,6 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { LayerRow } from "./LayerRow";
 import {
   type AudioLayer,
@@ -25,6 +40,31 @@ export function LayersPanel({
   onSelectLayer,
 }: LayersPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // 5px movement before drag starts to prevent accidental drags
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = layers.findIndex((layer) => layer.id === active.id);
+      const newIndex = layers.findIndex((layer) => layer.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newLayers = arrayMove(layers, oldIndex, newIndex);
+        onLayersChange(newLayers);
+      }
+    }
+  };
 
   const handleAddLayer = () => {
     const newLayerNumber = layers.length + 1;
@@ -81,18 +121,29 @@ export function LayersPanel({
 
       {isExpanded && (
         <div className="p-2 space-y-1">
-          {layers.map((layer) => (
-            <LayerRow
-              key={layer.id}
-              layer={layer}
-              isSelected={layer.id === selectedLayerId}
-              isPlaying={isPlaying}
-              onSelect={() => onSelectLayer(layer.id)}
-              onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
-              onDelete={() => handleDeleteLayer(layer.id)}
-              canDelete={layers.length > 1}
-            />
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={layers.map((layer) => layer.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {layers.map((layer) => (
+                <LayerRow
+                  key={layer.id}
+                  layer={layer}
+                  isSelected={layer.id === selectedLayerId}
+                  isPlaying={isPlaying}
+                  onSelect={() => onSelectLayer(layer.id)}
+                  onUpdate={(updates) => handleUpdateLayer(layer.id, updates)}
+                  onDelete={() => handleDeleteLayer(layer.id)}
+                  canDelete={layers.length > 1}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
 
           <div className="flex gap-2 mt-2 pt-2 border-t border-cyan-500/10">
             <button
