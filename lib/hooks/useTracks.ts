@@ -100,6 +100,9 @@ export function useTracks(projectId: string | null): UseTracksResult {
         });
 
         if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Please sign in to save your tracks");
+          }
           const data = await res.json();
           throw new Error(data.error || "Failed to create track");
         }
@@ -135,6 +138,9 @@ export function useTracks(projectId: string | null): UseTracksResult {
         });
 
         if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Please sign in to save your tracks");
+          }
           const data = await res.json();
           throw new Error(data.error || "Failed to update track");
         }

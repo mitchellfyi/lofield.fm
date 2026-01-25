@@ -89,6 +89,9 @@ export function useProjects(): UseProjectsResult {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Please sign in to save your projects");
+        }
         const data = await res.json();
         throw new Error(data.error || "Failed to create project");
       }
