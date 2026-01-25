@@ -37,9 +37,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# supabase
+supabase/.branches
+supabase/.temp
+.supabase
 
 # typescript
 *.tsbuildinfo
