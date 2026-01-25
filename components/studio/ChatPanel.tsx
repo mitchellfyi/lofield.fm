@@ -29,15 +29,6 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-3 sm:px-4 h-12 sm:h-16 flex flex-col justify-center border-b border-cyan-500/20 bg-slate-900/50">
-        <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">
-          AI Chat
-        </h2>
-        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 hidden sm:block">
-          Generate and modify beats with AI
-        </p>
-      </div>
-
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
         {messages.map((message) => {
           const textParts = message.parts.filter((part) => part.type === "text");
