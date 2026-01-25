@@ -3,12 +3,13 @@
 | Field       | Value                             |
 | ----------- | --------------------------------- |
 | ID          | 003-001-move-settings-to-dropdown |
-| Status      | doing                             |
+| Status      | done                              |
 | Priority    | Medium                            |
 | Created     | 2025-01-25                        |
 | Started     | 2026-01-25                        |
-| Assigned To | worker-1                          |
-| Assigned At | 2026-01-25 18:22                  |
+| Completed   | 2026-01-25                        |
+| Assigned To |                                   |
+| Assigned At |                                   |
 
 ## Context
 
@@ -16,11 +17,11 @@ Settings and Help links are currently in the TopBar header. They should be moved
 
 ## Acceptance Criteria
 
-- [ ] Remove Settings link from TopBar header
-- [ ] Remove Help button from TopBar header
-- [ ] Add Settings link to UserMenu dropdown
-- [ ] Add Help option to UserMenu dropdown
-- [ ] Dropdown maintains good UX with additional items
+- [x] Remove Settings link from TopBar header
+- [x] Remove Help button from TopBar header
+- [x] Add Settings link to UserMenu dropdown
+- [x] Add Help option to UserMenu dropdown
+- [x] Dropdown maintains good UX with additional items
 
 ## Plan
 
@@ -199,5 +200,26 @@ npm run test         # 2008 examples, 0 failures
 All tests passing:
 - HelpModal tests: 9/9 pass
 - UserMenu tests: 27/27 pass
+
+### 2026-01-25 18:32 - Review Complete
+
+Code review:
+- Issues found: none
+- Issues fixed: N/A
+
+Consistency:
+- All criteria met: yes
+- Test coverage adequate: yes (36 new tests)
+- Docs in sync: yes (README updated)
+
+Quality gates:
+- ESLint: pass (0 errors, 2 pre-existing warnings unrelated to this task)
+- TypeScript: pass (no errors)
+- Prettier: pass (code files)
+- Tests: 2008/2008 passing
+
+Follow-up tasks created: none needed
+
+Final status: COMPLETE
 
 ## Notes

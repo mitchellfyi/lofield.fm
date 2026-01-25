@@ -20,9 +20,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             <h3 className="text-lg font-semibold text-cyan-400 mb-2">Getting Started</h3>
             <ol className="list-decimal list-inside space-y-2 text-slate-300 text-sm">
               <li>Click &ldquo;Init Audio&rdquo; to initialize the audio engine</li>
-              <li>
-                Type your prompt in the chat (e.g., &ldquo;make a lofi beat at 90bpm&rdquo;)
-              </li>
+              <li>Type your prompt in the chat (e.g., &ldquo;make a lofi beat at 90bpm&rdquo;)</li>
               <li>The AI will generate Tone.js code for you</li>
               <li>Click &ldquo;Play&rdquo; to hear your beat</li>
               <li>Modify the code or chat again to iterate</li>
