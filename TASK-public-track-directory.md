@@ -29,15 +29,14 @@ A Spotify-like explore page where users can:
 - **Play queue system**: Auto-play, shuffle, history navigation
 - **Filtering**: Genre, tags, BPM range, sort options
 
-### What's Still Missing (Phase 3-5)
+### What's Still Missing (Phase 4-5)
 
-- URL doesn't reflect filter state (not shareable)
 - AI tagging system not implemented
 - No tag management UI for track owners
 - No featured tracks section
 - No "Similar tracks" suggestions
 - No keyboard shortcuts
-- No waveform visualization preview
+- No "Load more" button alternative (infinite scroll works)
 
 ## Database Changes Required
 
@@ -400,12 +399,12 @@ Option C: Make explore the homepage, studio is secondary
 - [x] Progress bar (shows bar progress)
 - [x] Play count tracking (rate-limited, 1 play/track/hour/fingerprint)
 
-### Phase 3: Advanced Filtering (Partially Complete)
+### Phase 3: Advanced Filtering (Mostly Complete)
 
 - [x] Tag filtering (multi-select) - implemented in Phase 2
 - [x] BPM range inputs - implemented in Phase 2
 - [x] Sort by: newest, popular, random - implemented in Phase 2
-- [ ] URL reflects filter state (shareable)
+- [x] URL reflects filter state (shareable) - sync filters to URL params
 - [x] Infinite scroll pagination - implemented in Phase 2
 - [ ] "Load more" button alternative
 
@@ -424,7 +423,7 @@ Option C: Make explore the homepage, studio is secondary
 - [ ] Share track button (copies URL)
 - [ ] "Open in Studio" button (loads code)
 - [ ] Keyboard shortcuts (space=play, n=next, p=prev)
-- [ ] Waveform visualization preview
+- [x] Waveform visualization preview - deterministic waveform based on track code
 
 ## File Structure
 
@@ -583,3 +582,47 @@ lib/
 - Add URL state for shareable filter links
 - Implement "Load more" button in addition to infinite scroll
 - Add sort indicator in UI
+
+### 2026-01-25 - URL State & Waveform Preview
+
+**Completed by:** Claude Opus 4.5
+
+#### Features Implemented:
+
+1. **URL State for Shareable Filters**
+   - Filter state now syncs to URL query parameters
+   - Supports: genre, tags (comma-separated), bpm_min, bpm_max, sort
+   - Only non-default values are included in URL
+   - Uses `router.replace()` to avoid cluttering browser history
+   - Initial filters parsed from URL on page load
+
+2. **Waveform Visualization Preview**
+   - Created `WaveformPreview` component
+   - Deterministic waveform generation based on track code hash
+   - Uses LCG pseudo-random generator for consistent output
+   - Applies 3-point moving average for smooth waveform shape
+   - Cyan colors when playing, slate when idle
+   - Responsive bar count and height
+
+#### Files Created:
+
+- `components/explore/WaveformPreview.tsx` - Waveform component
+- `components/explore/__tests__/WaveformPreview.test.tsx` - Algorithm tests
+- `lib/hooks/__tests__/useExplore.test.ts` - URL state tests
+
+#### Files Modified:
+
+- `lib/hooks/useExplore.ts` - Added URL state parsing and synchronization
+- `components/explore/ExploreTrackCard.tsx` - Added waveform preview
+- `components/explore/index.ts` - Export WaveformPreview
+
+#### Tests:
+
+- 25 new tests added
+- All 2190 tests passing
+
+#### Next Steps:
+
+- Implement "Load more" button
+- Add keyboard shortcuts
+- Featured tracks section

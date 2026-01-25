@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type {
   PublicTrack,
   ExploreResponse,
@@ -30,7 +31,70 @@ export interface UseExploreResult {
 
 const PAGE_SIZE = 20;
 
+/**
+ * Parse filters from URL search params
+ */
+function parseFiltersFromURL(searchParams: URLSearchParams): ExploreFilterState {
+  const genre = searchParams.get("genre") || null;
+  const tagsParam = searchParams.get("tags");
+  const tags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+  const bpmMinParam = searchParams.get("bpm_min");
+  const bpmMaxParam = searchParams.get("bpm_max");
+  const bpmMin = bpmMinParam ? parseInt(bpmMinParam, 10) : DEFAULT_EXPLORE_FILTERS.bpmMin;
+  const bpmMax = bpmMaxParam ? parseInt(bpmMaxParam, 10) : DEFAULT_EXPLORE_FILTERS.bpmMax;
+  const sortParam = searchParams.get("sort");
+  const sort: ExploreSortOption =
+    sortParam === "newest" || sortParam === "popular" || sortParam === "random"
+      ? sortParam
+      : DEFAULT_EXPLORE_FILTERS.sort;
+
+  return {
+    genre,
+    tags,
+    bpmMin: isNaN(bpmMin) ? DEFAULT_EXPLORE_FILTERS.bpmMin : bpmMin,
+    bpmMax: isNaN(bpmMax) ? DEFAULT_EXPLORE_FILTERS.bpmMax : bpmMax,
+    sort,
+  };
+}
+
+/**
+ * Build URL search params from filters
+ */
+function buildURLFromFilters(filters: ExploreFilterState): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (filters.genre) {
+    params.set("genre", filters.genre);
+  }
+  if (filters.tags.length > 0) {
+    params.set("tags", filters.tags.join(","));
+  }
+  if (filters.bpmMin !== DEFAULT_EXPLORE_FILTERS.bpmMin) {
+    params.set("bpm_min", filters.bpmMin.toString());
+  }
+  if (filters.bpmMax !== DEFAULT_EXPLORE_FILTERS.bpmMax) {
+    params.set("bpm_max", filters.bpmMax.toString());
+  }
+  if (filters.sort !== DEFAULT_EXPLORE_FILTERS.sort) {
+    params.set("sort", filters.sort);
+  }
+
+  return params;
+}
+
 export function useExplore(): UseExploreResult {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Parse initial filters from URL
+  const initialFilters = useMemo(
+    () => parseFiltersFromURL(searchParams),
+    // Only run once on mount - we manage state after that
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const [tracks, setTracks] = useState<PublicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,8 +102,17 @@ export function useExplore(): UseExploreResult {
   const [genres, setGenres] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [bpmRange, setBpmRangeState] = useState({ min: 40, max: 200 });
-  const [filters, setFilters] = useState<ExploreFilterState>(DEFAULT_EXPLORE_FILTERS);
+  const [filters, setFilters] = useState<ExploreFilterState>(initialFilters);
   const [offset, setOffset] = useState(0);
+
+  // Sync filters to URL
+  useEffect(() => {
+    const params = buildURLFromFilters(filters);
+    const newURL = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+
+    // Use replace to avoid polluting browser history with every filter change
+    router.replace(newURL, { scroll: false });
+  }, [filters, pathname, router]);
 
   const fetchTracks = useCallback(
     async (reset: boolean = false) => {

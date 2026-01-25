@@ -1,6 +1,7 @@
 "use client";
 
 import type { PublicTrack } from "@/lib/types/explore";
+import { WaveformPreview } from "./WaveformPreview";
 
 interface ExploreTrackCardProps {
   track: PublicTrack;
@@ -114,6 +115,16 @@ export function ExploreTrackCard({
             </svg>
           )}
         </div>
+      </div>
+
+      {/* Waveform Preview */}
+      <div className="my-3 px-1">
+        <WaveformPreview
+          code={track.current_code}
+          isPlaying={isPlaying}
+          height={28}
+          barCount={32}
+        />
       </div>
 
       {/* Tags */}
