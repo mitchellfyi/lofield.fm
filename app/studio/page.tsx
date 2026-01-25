@@ -21,6 +21,7 @@ import { useModelSelection } from "@/lib/hooks/useModelSelection";
 import { useApiKey } from "@/lib/hooks/useApiKey";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useTracks, useAutoSave } from "@/lib/hooks/useTracks";
+import { useDraftTrack } from "@/lib/hooks/useDraftTrack";
 import { useRevisions } from "@/lib/hooks/useRevisions";
 import { useHistory } from "@/lib/hooks/useHistory";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
@@ -407,6 +408,9 @@ export default function StudioPage() {
 
   // Auto-save hook
   const { saving: autoSaving } = useAutoSave(currentTrackId, code, autoSaveEnabled);
+
+  // Draft state hook - saves work locally for recovery
+  const { saveDraft, clearDraft } = useDraftTrack(currentTrackId);
 
   // Recording hooks
   const {
@@ -925,10 +929,11 @@ Request: ${inputValue}`;
   useEffect(() => {
     if (currentTrackId && code !== lastSavedCodeRef.current) {
       // Intentional - tracking unsaved changes when code changes
-
       setHasUnsavedChanges(true);
+      // Save draft to localStorage for recovery
+      saveDraft(code, currentTrackName || undefined);
     }
-  }, [code, currentTrackId]);
+  }, [code, currentTrackId, currentTrackName, saveDraft]);
 
   // Handle selecting a track from the browser
   const handleSelectTrack = useCallback(
@@ -983,13 +988,15 @@ Request: ${inputValue}`;
       if (result) {
         lastSavedCodeRef.current = code;
         setHasUnsavedChanges(false);
+        // Clear local draft after successful server save
+        clearDraft();
       }
     } catch {
       setError("Failed to save track");
     } finally {
       setSaving(false);
     }
-  }, [currentTrackId, code, updateTrack]);
+  }, [currentTrackId, code, updateTrack, clearDraft]);
 
   // Handle save-as (create new track)
   const handleSaveAs = useCallback(async () => {
@@ -1023,13 +1030,15 @@ Request: ${inputValue}`;
         setHasUnsavedChanges(false);
         setShowSaveAsModal(false);
         setSaveAsName("");
+        // Clear local draft after successful server save
+        clearDraft();
       }
     } catch {
       setError("Failed to create track");
     } finally {
       setSaving(false);
     }
-  }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code]);
+  }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code, clearDraft]);
 
   // Handle starting a recording
   const handleStartRecording = useCallback(() => {
