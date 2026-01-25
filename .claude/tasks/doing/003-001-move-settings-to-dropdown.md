@@ -93,7 +93,8 @@ Settings and Help links are currently in the TopBar header. They should be moved
 
 #### Docs to Update
 
-- None required - this is a UI restructuring without API changes
+- ~~None required - this is a UI restructuring without API changes~~
+- README.md - Update Settings access instructions (was "gear icon in top bar")
 
 ## Work Log
 
@@ -172,5 +173,31 @@ Quality gates:
 - TypeScript: pass
 - Prettier: pass
 - RSpec: pass (2008/2008)
+
+### 2026-01-25 18:31 - Documentation Sync
+
+Docs updated:
+- `README.md` - Updated API Key Management section: changed "gear icon in the top bar" to "user dropdown menu (click your avatar)" to reflect the new Settings location
+
+Annotations:
+- No model annotations needed (this is a Next.js/React project, not Rails)
+
+Consistency checks:
+- [x] Code matches docs - README now reflects Settings is in user dropdown
+- [x] No broken links - no internal links affected
+- [x] Schema annotations N/A - frontend-only change
+
+## Testing Evidence
+
+Commands run:
+```bash
+npm run lint         # ESLint pass
+npm run format:check # Prettier pass
+npm run test         # 2008 examples, 0 failures
+```
+
+All tests passing:
+- HelpModal tests: 9/9 pass
+- UserMenu tests: 27/27 pass
 
 ## Notes

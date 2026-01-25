@@ -39,7 +39,7 @@ Your selection persists in localStorage across sessions.
 Users must provide their own OpenAI API key to use the chat feature:
 
 1. **First-time use**: A modal prompts you to enter your API key
-2. **Settings page**: Access via the gear icon in the top bar to manage your key
+2. **Settings page**: Access via the user dropdown menu (click your avatar) to manage your key
 3. **Security**: Keys are encrypted at rest using AES-256-GCM
 4. **Privacy**: Your key is stored in your user account, never shared
 
