@@ -1,110 +1,224 @@
 # LoField Music Lab
 
-## Strudel MVP
+**Create lofi beats using natural language.** Just describe what you want, and AI generates the music for you.
 
-A Next.js application for generating lofi beats through chat using Strudel live coding.
+[Try it live](https://lofield.fm) | [View on GitHub](https://github.com/your-repo)
+
+---
+
+## What is LoField?
+
+LoField Music Lab is a browser-based music studio that lets you create chill lofi beats through conversation. No music theory required. No complex DAWs to learn. Just type what you want and hear it instantly.
+
+```
+"make a chill lofi beat at 90 bpm with a jazzy rhodes"
+```
+
+The AI writes the code. You hear the music. Tweak it, save it, share it.
+
+## Features
+
+### Chat-to-Music
+Describe your beat in plain English. The AI generates Tone.js code that plays immediately in your browser. Want to change something? Just ask:
+
+- *"add more swing"*
+- *"make the drums quieter"*
+- *"give it a vinyl crackle vibe"*
+
+### Live Performance Controls
+Real-time sliders for instant tweaks:
+- **BPM** (60-200)
+- **Swing** (0-100%)
+- **Filter** (lowpass cutoff)
+- **Reverb** & **Delay** wet mix
+
+Changes apply instantly while the track plays.
+
+### Multi-Layer Composition
+Build complex arrangements with multiple audio layers:
+- Add drum, bass, melody, and pad layers
+- Mute/solo individual layers
+- Drag-and-drop reordering
+- Each layer has its own code
+
+### Record Your Performance
+Capture your live parameter changes (knob twists, slider moves) as automation:
+- Hit record while playing
+- Tweak any control
+- Automation is saved and can be replayed
+- Export with automation baked into the audio
+
+### Full Version History
+Never lose your work:
+- Every AI-generated change is saved as a revision
+- Browse and compare past versions with diff view
+- One-click revert to any previous state
+- Undo/redo with Cmd+Z / Cmd+Shift+Z
+
+### Export & Share
+- **Export to WAV** - Render 30s to 10min of audio
+- **Share links** - Public URLs for anyone to play your track
+- **Code export** - Copy the Tone.js code to use anywhere
+
+### Professional Code Editor
+Full-featured IDE experience:
+- Syntax highlighting for JavaScript/Tone.js
+- Live mode - code changes play immediately
+- Error detection before playback
+- Dark theme optimized for focus
+
+### 32-Bar Arrangement Timeline
+Visual timeline showing:
+- Current playback position
+- Section markers (A/B/C/D intro-build-drop-breakdown)
+- Beat and bar counters
+
+## Tech Stack
+
+- **Next.js 16** with App Router
+- **React 19** with Server Components
+- **Tone.js** for audio synthesis
+- **AI SDK** with OpenAI (GPT-4o, GPT-4o Mini, GPT-4 Turbo)
+- **Supabase** for auth, database, and storage
+- **CodeMirror 6** for code editing
+- **Tailwind CSS 4** for styling
+- **Vercel** for hosting
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- A Supabase account (free tier works)
+- An OpenAI API key (users bring their own)
 
 ### Setup
 
-1. `npm install`
-2. Copy `.env.example` to `.env.local` and configure:
-   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
-   - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
-   - `API_KEY_ENCRYPTION_SECRET` - Generate with `openssl rand -hex 32`
-   - `OPENAI_API_KEY` - (Optional) Fallback for development only
-3. Run Supabase migrations: `npx supabase db push`
-4. `npm run dev`
-5. Open http://localhost:3000/studio
+1. **Clone and install**
+   ```bash
+   git clone https://github.com/your-repo/lofield.fm
+   cd lofield.fm
+   npm install
+   ```
 
-### Usage
+2. **Configure environment**
 
-1. Click "Init Audio" (required once for browser audio) or simply click "Play" - audio will initialize automatically on first play
-2. Click "Play" to hear the default beat
-3. Chat "make a lofi beat at 90bpm" to generate new code
-4. Follow-up messages tweak the same track
+   Copy `.env.example` to `.env.local` and fill in:
+   ```bash
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-### AI Model Selection
+   # API Key Encryption
+   API_KEY_ENCRYPTION_SECRET=  # Generate with: openssl rand -hex 32
 
-Select your preferred AI model from the dropdown in the top bar:
+   # Development fallback (optional)
+   OPENAI_API_KEY=sk-...  # Only used in development when no user key
 
-- **GPT-4o Mini** (default) - Fast and affordable, great for most tasks
-- **GPT-4o** - Most capable, best for complex music generation
-- **GPT-4 Turbo** - Powerful with large context window
+   # Error tracking (optional)
+   SENTRY_DSN=
+   ```
 
-Each model displays:
+3. **Run database migrations**
+   ```bash
+   npx supabase db push
+   ```
 
-- Cost tier badge (low/medium/high)
-- Estimated cost per 1K tokens (input/output)
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-Your selection persists in localStorage across sessions.
+5. **Open the studio**
 
-### API Key Management
+   Navigate to http://localhost:3000/studio
 
-Users must provide their own OpenAI API key to use the chat feature:
+### API Keys
 
-1. **First-time use**: A modal prompts you to enter your API key
-2. **Settings page**: Access via the user dropdown menu (click your avatar) to manage your key
-3. **Security**: Keys are encrypted at rest using AES-256-GCM
-4. **Privacy**: Your key is stored in your user account, never shared
+LoField uses a "bring your own key" (BYOK) model:
+- Users provide their own OpenAI API key
+- Keys are encrypted with AES-256-GCM before storage
+- Keys never leave the user's account
+- In development, falls back to `OPENAI_API_KEY` env var
 
-In development mode (`NODE_ENV=development`), the app falls back to the server's `OPENAI_API_KEY` env var if no user key is set. In production, a user key is always required.
+## Scripts
 
-## Audio Initialization & Known Quirks
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run format` | Format code with Prettier |
+| `npm run typecheck` | TypeScript type checking |
+| `npm run quality` | Run all quality checks |
+| `npm test` | Run unit tests (Vitest) |
+| `npm run test:e2e` | Run E2E tests (Playwright) |
 
-### Reliable Strudel Player
+## Project Structure
 
-The Strudel audio engine has been enhanced with a reliable state machine to provide predictable behavior:
+```
+app/
+├── studio/         # Main music studio
+├── share/[token]/  # Public share pages
+├── settings/       # User settings
+├── auth/           # Sign in/up flows
+├── admin/          # Admin dashboard
+└── api/            # API routes (chat, tracks, etc.)
 
-#### Player States
+components/
+├── studio/         # Studio UI components
+├── auth/           # Authentication components
+└── settings/       # Settings components
 
-- **idle**: Initial state, audio not initialized
-- **loading**: Initializing audio engine (brief)
-- **ready**: Audio initialized, ready to play
-- **playing**: Currently playing audio
-- **error**: Error occurred during initialization or playback
+lib/
+├── audio/          # Tone.js runtime, validation
+├── hooks/          # React hooks
+├── types/          # TypeScript types
+└── export/         # Audio export utilities
 
-#### Behavior
+prompts/            # AI system prompts
+supabase/           # Database migrations
+```
 
-- **First Play**: Clicking "Play" for the first time automatically initializes audio (requires user gesture per browser policies)
-- **Explicit Init**: You can also click "Init Audio" to initialize before playing
-- **Re-running Code**: If already playing, clicking "Play" stops and restarts with the current code
-- **Error Handling**: Runtime errors are captured and displayed with clear messages
-- **Console Panel**: Track the last 10 runtime events (init, play, stop, success, failures) for diagnostics
+## AI Model Selection
 
-#### Known Quirks
+Choose your preferred model in the studio:
 
-- Browser audio requires a user gesture (click/tap) to initialize - this is a web standard security feature
-- Hot reload during development may require re-initializing audio
-- The runtime maintains a singleton instance to prevent multiple initializations
-- Strudel library is loaded from CDN and must complete loading before use
+| Model | Speed | Quality | Cost |
+|-------|-------|---------|------|
+| GPT-4o Mini | Fast | Good | Low |
+| GPT-4o | Medium | Best | High |
+| GPT-4 Turbo | Medium | Great | Medium |
 
-### Mobile Browser Support
+Your selection persists across sessions.
 
-The studio is designed to work on mobile devices with a responsive layout:
+## Browser Support
 
-- **Responsive Design**: Single-column layout with tab switching (Chat/Code) on screens < 768px
-- **Touch Targets**: All interactive elements meet the 44px minimum for accessibility
-- **iOS Safari**: Special handling for AudioContext interruptions (phone calls, Siri, backgrounding)
-- **Virtual Keyboard**: Layout adjusts properly when the on-screen keyboard appears
+- **Desktop**: Chrome, Firefox, Safari, Edge (latest)
+- **Mobile**: iOS Safari, Chrome for Android
+  - Responsive single-column layout with tabs
+  - Touch-optimized controls (44px minimum targets)
+  - PWA support ("Add to Home Screen")
 
-**Mobile-specific notes:**
+**Note**: Audio requires user interaction to start (browser security policy).
 
-- iOS Safari may require tapping the Play button again if audio is interrupted by a phone call or Siri
-- Code editing is functional but optimized for desktop; consider using desktop for extended sessions
-- The app supports "Add to Home Screen" as a progressive web app (PWA)
+## Privacy
 
-### Analytics
+- **No tracking cookies** - Vercel Analytics uses privacy-preserving hashed IDs
+- **Your keys, your data** - API keys are encrypted and never shared
+- **Local storage** - Model preferences stored in browser
+- **Shareable, not public** - Tracks are private unless you create a share link
 
-LoField Music Lab uses [Vercel Analytics](https://vercel.com/docs/analytics) to understand how users interact with the application.
+## Contributing
 
-- **Privacy-friendly**: No cookies used; visitors identified via privacy-preserving hashed IDs
-- **What's tracked**: Page views, top pages, referrers, device types, and geographic regions
-- **Data access**: View analytics in the [Vercel Dashboard](https://vercel.com/dashboard) under your project's Analytics tab
-- **Production only**: Analytics are automatically enabled when deployed to Vercel; no data is collected in local development
+Contributions welcome! Please read the contributing guidelines before submitting PRs.
 
-The Analytics component is loaded in the root layout (`app/layout.tsx`) and requires no additional configuration.
+## License
 
-### Use with Claude
+MIT
 
-`claude --dangerously-skip-permissions --model opus --permission-mode bypassPermissions`
+---
+
+Built with Tone.js and GPT-4o. Made for the lofi community.
