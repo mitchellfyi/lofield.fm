@@ -5,15 +5,15 @@
 | Field       | Value                        |
 | ----------- | ---------------------------- |
 | ID          | `004-002-layer-drag-reorder` |
-| Status      | `doing`                      |
+| Status      | `done`                       |
 | Priority    | `004` Low                    |
 | Created     | `2026-01-24 14:55`           |
 | Started     | `2026-01-25 20:26`           |
-| Completed   |                              |
+| Completed   | `2026-01-25 20:36`           |
 | Blocked By  |                              |
 | Blocks      |                              |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-25 20:26` |
+| Assigned To | |
+| Assigned At | |
 
 ---
 
@@ -27,13 +27,13 @@ Users should be able to drag layers to reorder them in the LayersPanel. This is 
 
 ## Acceptance Criteria
 
-- [ ] Layers can be dragged to reorder in the LayersPanel
-- [ ] Visual feedback during drag (drop indicator, ghost element)
-- [ ] Order persists after drag completes
-- [ ] Order affects playback order (layers combine in displayed order)
-- [ ] Keyboard accessibility for reordering (optional)
-- [ ] Tests for drag reorder functionality
-- [ ] Quality gates pass
+- [x] Layers can be dragged to reorder in the LayersPanel
+- [x] Visual feedback during drag (drop indicator, ghost element)
+- [x] Order persists after drag completes
+- [x] Order affects playback order (layers combine in displayed order)
+- [x] Keyboard accessibility for reordering (optional)
+- [x] Tests for drag reorder functionality
+- [x] Quality gates pass
 
 ---
 
@@ -140,6 +140,56 @@ Rationale (per task notes):
 ---
 
 ## Work Log
+
+### 2026-01-25 20:36 - Review Complete
+
+**Code review:**
+- Issues found: none
+- Code follows project conventions (TypeScript, React hooks, Tailwind CSS)
+- No code smells or anti-patterns
+- Proper error handling in handleDragEnd (checks for null, validates indices)
+- No security vulnerabilities
+- No N+1 queries (frontend-only feature)
+- Clean accessibility implementation (keyboard navigation)
+
+**Consistency:**
+- All criteria met: yes
+- Test coverage adequate: yes (47 new tests for drag reorder)
+- Docs in sync: yes (internal UI feature, no public docs to update)
+
+**Quality gates:**
+- ESLint: ✅ 0 errors, 2 unrelated warnings
+- TypeScript: ✅ No errors
+- Tests: ✅ 2089/2089 pass
+- Prettier: ✅ (warnings only in markdown task files)
+
+**Follow-up tasks created:**
+- None required - implementation is complete and clean
+
+**Final status:** COMPLETE
+
+---
+
+### 2026-01-25 20:34 - Documentation Sync
+
+**Docs reviewed:**
+- README.md - No update needed (internal UI feature, no user-facing changes)
+- No docs/ directory exists in this project
+
+**Model annotations:**
+- N/A - This is a Next.js/TypeScript project, not Rails
+
+**Consistency checks:**
+- [x] Code matches docs - feature is internal, no doc references to update
+- [x] No broken links - all file paths in Links section verified
+- [x] Schema annotations current - N/A (no Rails models)
+
+**Links verified:**
+- Parent task 003-007-multi-track-support.md exists in done/
+- components/studio/LayersPanel.tsx exists
+- components/studio/LayerRow.tsx exists
+
+---
 
 ### 2026-01-25 20:33 - Testing Complete
 
