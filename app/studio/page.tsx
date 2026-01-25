@@ -990,13 +990,14 @@ Request: ${inputValue}`;
         setHasUnsavedChanges(false);
         // Clear local draft after successful server save
         clearDraft();
+        showToast("Track saved", "success");
       }
     } catch {
-      setError("Failed to save track");
+      showToast("Failed to save track", "error");
     } finally {
       setSaving(false);
     }
-  }, [currentTrackId, code, updateTrack, clearDraft]);
+  }, [currentTrackId, code, updateTrack, clearDraft, showToast]);
 
   // Handle save-as (create new track)
   const handleSaveAs = useCallback(async () => {
@@ -1011,7 +1012,7 @@ Request: ${inputValue}`;
         if (projects.length === 0) {
           const newProject = await createProject("My Tracks");
           if (!newProject) {
-            setError("Failed to create project");
+            showToast("Failed to create project", "error");
             return;
           }
           projectId = newProject.id;
@@ -1032,13 +1033,14 @@ Request: ${inputValue}`;
         setSaveAsName("");
         // Clear local draft after successful server save
         clearDraft();
+        showToast(`Track "${newTrack.name}" created`, "success");
       }
     } catch {
-      setError("Failed to create track");
+      showToast("Failed to create track", "error");
     } finally {
       setSaving(false);
     }
-  }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code, clearDraft]);
+  }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code, clearDraft, showToast]);
 
   // Handle starting a recording
   const handleStartRecording = useCallback(() => {
@@ -1259,7 +1261,10 @@ Request: ${inputValue}`;
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative z-10">
           {/* Desktop Layout: Three Column */}
-          <div ref={containerRef} className={`hidden md:flex flex-1 ${isResizing ? "select-none" : ""}`}>
+          <div
+            ref={containerRef}
+            className={`hidden md:flex flex-1 ${isResizing ? "select-none" : ""}`}
+          >
             {/* Left Sidebar - Tweaks, Layers, Bars */}
             <div
               className="flex flex-col border-r border-cyan-950/50 backdrop-blur-sm bg-slate-900/30 shrink-0"
@@ -1281,7 +1286,12 @@ Request: ${inputValue}`;
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
                   {timelineExpanded && (
@@ -1463,39 +1473,40 @@ Request: ${inputValue}`;
                 className="flex flex-col backdrop-blur-sm min-w-0"
                 style={{ width: `${100 - rightColumnWidth}%` }}
               >
-              <div className="flex-1 min-h-0">
-                <CodePanel
-                  code={code}
-                  onChange={handleCodeChange}
-                  validationErrors={validationErrors}
-                  defaultCode={DEFAULT_CODE}
-                  liveMode={liveMode}
-                  onLiveModeChange={setLiveMode}
-                />
-              </div>
+                <div className="flex-1 min-h-0">
+                  <CodePanel
+                    code={code}
+                    onChange={handleCodeChange}
+                    validationErrors={validationErrors}
+                    defaultCode={DEFAULT_CODE}
+                    liveMode={liveMode}
+                    onLiveModeChange={setLiveMode}
+                  />
+                </div>
 
-              {/* Player Controls */}
-              <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
-                <PlayerControls
-                  playerState={playerState}
-                  audioLoaded={audioLoaded}
-                  onPlay={() => playCode(combineLayers(layers))}
-                  onStop={stop}
-                  hideTimeline
-                  recordButton={
-                    <RecordButton
-                      isRecording={isRecording}
-                      onStartRecording={handleStartRecording}
-                      onStopRecording={handleStopRecording}
-                      elapsedMs={recordingElapsedMs}
-                      disabled={playerState !== "playing" && !isRecording}
-                      disabledReason="Start playback to record"
-                    />
-                  }
-                />
+                {/* Player Controls */}
+                <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
+                  <PlayerControls
+                    playerState={playerState}
+                    audioLoaded={audioLoaded}
+                    onPlay={() => playCode(combineLayers(layers))}
+                    onStop={stop}
+                    hideTimeline
+                    recordButton={
+                      <RecordButton
+                        isRecording={isRecording}
+                        onStartRecording={handleStartRecording}
+                        onStopRecording={handleStopRecording}
+                        elapsedMs={recordingElapsedMs}
+                        disabled={playerState !== "playing" && !isRecording}
+                        disabledReason="Start playback to record"
+                      />
+                    }
+                  />
+                </div>
               </div>
             </div>
-            </div>{/* End Main Content Area */}
+            {/* End Main Content Area */}
           </div>
 
           {/* Mobile Layout: Tabbed */}
