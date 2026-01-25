@@ -208,6 +208,35 @@ Final quality gate:
 
 Final status: COMPLETE
 
+### 2026-01-25 20:50 - Verification Complete
+
+Task location: done/
+Status field: matches (done)
+Acceptance criteria: 7/7 checked
+
+Verification checklist:
+- [x] Task file in correct location (done/)
+- [x] Status field = "done"
+- [x] Started timestamp set (2026-01-25 20:38)
+- [x] Completed timestamp set (2026-01-25 20:50)
+- [x] All 7 acceptance criteria checked [x]
+- [x] Work Log has entries for all phases (Triage, Implementation, Testing, Docs, Review)
+- [x] Plan execution verified:
+  - `lib/models.ts`: systemPromptVariation field added ✓
+  - `lib/prompts/loader.ts`: loadSystemPromptForModel function added ✓
+  - `app/api/chat/route.ts`: using loadSystemPromptForModel ✓
+  - `lib/prompts/__tests__/loader.test.ts`: test file created ✓
+- [x] Git commits present (5 commits for this task)
+- [x] Assignment fields cleared
+
+Issues found: none
+
+Actions taken:
+- Task already in done/ with correct state
+- No corrections needed
+
+Task verified: PASS
+
 ### 2026-01-25 20:47 - Documentation Sync
 
 Docs reviewed:
