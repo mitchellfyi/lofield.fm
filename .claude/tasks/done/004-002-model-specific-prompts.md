@@ -5,15 +5,15 @@
 | Field       | Value                            |
 | ----------- | -------------------------------- |
 | ID          | `004-002-model-specific-prompts` |
-| Status      | `doing`                          |
+| Status      | `done`                           |
 | Priority    | `004` Low                        |
 | Created     | `2026-01-23 20:40`               |
 | Started     | `2026-01-25 20:38`               |
-| Completed   |                                  |
+| Completed   | `2026-01-25 20:50`               |
 | Blocked By  |                                  |
 | Blocks      |                                  |
-| Assigned To | `worker-1`                       |
-| Assigned At | `2026-01-25 20:38`               |
+| Assigned To |                                  |
+| Assigned At |                                  |
 
 ---
 
@@ -34,13 +34,13 @@ Different models may benefit from different system prompts or prompt variations.
 
 ## Acceptance Criteria
 
-- [ ] Research if different models need different prompts
-- [ ] Add optional `systemPromptVariation` field to AIModel interface
-- [ ] Update prompt loader to apply model-specific variations
-- [ ] Ensure backward compatibility (no variation = default prompt)
-- [ ] Tests written and passing
-- [ ] Quality gates pass
-- [ ] Changes committed with task reference
+- [x] Research if different models need different prompts
+- [x] Add optional `systemPromptVariation` field to AIModel interface
+- [x] Update prompt loader to apply model-specific variations
+- [x] Ensure backward compatibility (no variation = default prompt)
+- [x] Tests written and passing
+- [x] Quality gates pass
+- [x] Changes committed with task reference
 
 ---
 
@@ -177,24 +177,133 @@ Current system prompt (`prompts/system-prompt.md`) is 249 lines, well within lim
   - Commit: deef0f5
   - Quality check: ✅ ESLint passed, TypeScript passes
 
-- **Next**: Tests will be written in the TEST phase
+### 2026-01-25 20:41 - Testing Phase Complete
+
+- **Completed Step 5**: Created comprehensive test suite
+  - Created `lib/prompts/__tests__/loader.test.ts`
+  - 21 test cases covering all loader functions
+  - Uses integration testing approach with real prompt files
+  - Uses vi.doMock for model mock isolation
+  - Commit: ccb5d8f
+  - All quality checks pass
+
+### 2026-01-25 20:50 - Review Complete
+
+Code review:
+- Issues found: none
+- Issues fixed: n/a
+
+Consistency:
+- All criteria met: yes
+- Test coverage adequate: yes (21 tests covering all loader functions)
+- Docs in sync: yes
+
+Follow-up tasks created: none (implementation is complete and self-contained)
+
+Final quality gate:
+- ESLint: 0 errors (2 pre-existing warnings in unrelated files)
+- TypeScript: pass
+- Prettier: pass (code files clean, only task markdown files flagged)
+- Vitest: 2110 tests pass (21 tests for this task)
+
+Final status: COMPLETE
+
+### 2026-01-25 20:47 - Documentation Sync
+
+Docs reviewed:
+- `README.md` - No changes needed (AI Model Selection section already covers user-facing features; model-specific prompts are internal implementation detail)
+- `IMPLEMENTATION_SUMMARY.md` - No changes needed (testing implementation doc, unrelated to this task)
+
+Annotations:
+- N/A (Next.js project, no Ruby model annotations)
+
+Consistency checks:
+- [x] Code matches docs - README AI Model Selection section remains accurate
+- [x] No broken links - All file references in task are valid
+- [x] TypeScript exports consistent - `loadSystemPromptForModel` exported and used correctly
+
+Documentation updates:
+- Updated task file Notes section with research findings
+- Updated task file Links section with complete list of modified/created files
+- No external documentation changes required (internal implementation detail per plan)
 
 ---
 
 ## Testing Evidence
 
-_Testing evidence will be recorded during TEST phase_
+### 2026-01-25 20:41 - Testing Complete
+
+Tests written:
+
+- `lib/prompts/__tests__/loader.test.ts` - 21 examples
+
+Test results:
+
+- Total: 2110 examples, 0 failures (21 new tests added)
+- All existing tests continue to pass
+
+Quality gates:
+
+- ESLint: ✅ Pass (2 pre-existing warnings, 0 errors)
+- TypeScript: ✅ Pass (no type errors)
+- Prettier: ✅ Pass (test file formatted)
+- Vitest: ✅ Pass (all 2110 tests pass)
+
+Test coverage includes:
+
+1. **loadPrompt**
+   - ✅ Loads system-prompt.md file
+   - ✅ Loads retry-prompt.md file
+   - ✅ Trims whitespace from loaded prompts
+   - ✅ Throws error for non-existent file
+
+2. **loadSystemPrompt**
+   - ✅ Loads default when no variation specified
+   - ✅ Loads default with undefined variation
+   - ✅ Loads default with empty string variation
+   - ✅ Falls back to default when variation file doesn't exist
+   - ✅ Returns same content as loadPrompt for system-prompt.md
+
+3. **loadSystemPromptForModel**
+   - ✅ Loads default prompt for model without variation
+   - ✅ Falls back to default for model with nonexistent variation
+   - ✅ Handles unknown model ID gracefully
+
+4. **loadRetryPromptTemplate**
+   - ✅ Loads the retry prompt template
+
+5. **buildRetryPrompt**
+   - ✅ Builds retry prompt with single error
+   - ✅ Builds retry prompt with multiple errors
+   - ✅ Handles empty errors array
+   - ✅ Preserves error message content exactly
+
+6. **Backward compatibility**
+   - ✅ Default model uses default prompt
+   - ✅ Works with gpt-4o-mini model ID
+   - ✅ Works with gpt-4o model ID
+   - ✅ Works with gpt-4-turbo model ID
+
+Commit: ccb5d8f
 
 ---
 
 ## Notes
 
-- May not be necessary if all models work well with same prompt
-- Could consider A/B testing prompt variations
+- Research complete: All GPT-4 models work well with same prompt format
+- Implementation provides future flexibility for model-specific prompts
+- Graceful fallback ensures backward compatibility
+- Could consider A/B testing prompt variations in the future
+- No external documentation changes needed (internal implementation detail)
 
 ---
 
 ## Links
 
 - Related task: `002-002-ai-model-selection`
-- File: `lib/prompts/loader.ts`
+- Files modified:
+  - `lib/models.ts` - Added `systemPromptVariation` field to AIModel interface
+  - `lib/prompts/loader.ts` - Added variation support and `loadSystemPromptForModel()`
+  - `app/api/chat/route.ts` - Updated to use model-specific prompt loading
+- Files created:
+  - `lib/prompts/__tests__/loader.test.ts` - 21 test cases for prompt loader
