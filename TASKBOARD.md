@@ -1,15 +1,15 @@
 # Taskboard
 
 > Auto-generated
-> Last updated: 2026-01-25 16:43:00
+> Last updated: 2026-01-25 20:07:00
 
 ## Summary
 
 | Status | Count |
 | ------ | ----- |
 | Doing  | 1     |
-| Todo   | 8     |
-| Done   | 25    |
+| Todo   | 3     |
+| Done   | 30    |
 
 ---
 
@@ -21,11 +21,6 @@
 
 ## Todo
 
-- **[002-005-actions-bar-functionality-tests.md](.claude/tasks/todo/002-005-actions-bar-functionality-tests.md)** - Actions Bar Functionality Tests [High]
-- **[002-006-errors-as-prominent-toasts.md](.claude/tasks/todo/002-006-errors-as-prominent-toasts.md)** - Errors as Prominent Toasts [High]
-- **[003-001-move-settings-to-dropdown.md](.claude/tasks/todo/003-001-move-settings-to-dropdown.md)** - Move Settings to Dropdown [Medium]
-- **[003-002-remove-section-headers.md](.claude/tasks/todo/003-002-remove-section-headers.md)** - Remove Section Headers [Medium]
-- **[004-001-model-cost-display.md](.claude/tasks/todo/004-001-model-cost-display.md)** - Show Estimated Cost Per Model [Low]
 - **[004-001-recording-value-edit.md](.claude/tasks/todo/004-001-recording-value-edit.md)** - Edit Recorded Automation Values [Low]
 - **[004-002-layer-drag-reorder.md](.claude/tasks/todo/004-002-layer-drag-reorder.md)** - Drag-to-Reorder Layers [Low]
 - **[004-002-model-specific-prompts.md](.claude/tasks/todo/004-002-model-specific-prompts.md)** - Add Model-Specific System Prompts [Low]
@@ -34,6 +29,7 @@
 
 ## Recently Completed (Last 10)
 
+- **[004-001-model-cost-display.md](.claude/tasks/done/004-001-model-cost-display.md)** - Show Estimated Cost Per Model [Low]
 - **[001-003-fix-model-dropdown-overflow.md](.claude/tasks/done/001-003-fix-model-dropdown-overflow.md)** - Fix Model Dropdown Overflow [Critical]
 - **[001-002-fix-saving-tracks.md](.claude/tasks/done/001-002-fix-saving-tracks.md)** - Fix Saving Tracks [Critical]
 - **[002-004-improve-tracks-error-handling.md](.claude/tasks/done/002-004-improve-tracks-error-handling.md)** - Improve Tracks Error Handling [High]
@@ -43,7 +39,6 @@
 - **[003-011-record-mode.md](.claude/tasks/done/003-011-record-mode.md)** - Record Mode - Capture Live Performance Changes
 - **[002-003-remove-duplicate-code-actions.md](.claude/tasks/done/002-003-remove-duplicate-code-actions.md)** - Remove Duplicate Code Actions [High]
 - **[002-002-create-favicon.md](.claude/tasks/done/002-002-create-favicon.md)** - Create Favicon [High]
-- **[002-001-mobile-controls-tab.md](.claude/tasks/done/002-001-mobile-controls-tab.md)** - Mobile Controls Tab [High]
 
 ---
 
