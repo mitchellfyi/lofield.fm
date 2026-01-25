@@ -3,11 +3,12 @@
 | Field       | Value                               |
 | ----------- | ----------------------------------- |
 | ID          | 001-003-fix-model-dropdown-overflow |
-| Status      | todo                                |
+| Status      | doing                               |
 | Priority    | Critical                            |
 | Created     | 2025-01-25                          |
-| Assigned To | `worker-1` |
-| Assigned At | `2026-01-25 16:34` |
+| Started     | 2026-01-25                          |
+| Assigned To | worker-1                            |
+| Assigned At | 2026-01-25 16:34                    |
 
 ## Context
 
@@ -23,13 +24,119 @@ The model select dropdown in the ActionsBar does not appear when clicked. This i
 
 ## Plan
 
-1. Inspect ModelSelector component
-2. Check parent containers for overflow:hidden
-3. Check z-index hierarchy
-4. Test with position:fixed if needed for dropdown
-5. Use React Portal if container overflow can't be changed
+### Implementation Plan (Generated 2026-01-25 16:35)
+
+#### Root Cause Analysis
+
+The dropdown is invisible because:
+1. **ActionsBar.tsx:61** has `overflow-x-auto` on the scrollable container
+2. The ModelSelector dropdown uses `position: absolute` which is clipped by the parent's overflow
+3. z-index doesn't help when the parent has overflow clipping - the content is clipped regardless of z-index
+
+#### Gap Analysis
+
+| Criterion | Status | Gap |
+|-----------|--------|-----|
+| Model dropdown appears when clicked | **NO** | Dropdown is clipped by overflow-x-auto container |
+| Dropdown positioned correctly | partial | Currently uses absolute positioning; needs portal + manual position calc |
+| Visible above other content | partial | Has z-[100] but doesn't matter when clipped |
+| Closes when clicking outside | **YES** | Already implemented with mousedown listener |
+| Works on desktop and mobile | **NO** | Needs testing after fix; may need viewport-aware positioning |
+
+#### Solution: React Portal with Dynamic Positioning
+
+Use `createPortal` from React to render the dropdown at `document.body` level, escaping all parent overflow constraints. Calculate position dynamically based on button's getBoundingClientRect().
+
+#### Files to Modify
+
+1. **`components/studio/ModelSelector.tsx`** - Major changes:
+   - Add `buttonRef` to track button position
+   - Add `dropdownPosition` state to store calculated {top, left, width}
+   - Add `useEffect` to calculate position when dropdown opens
+   - Use `createPortal` to render dropdown at document.body
+   - Update click-outside logic to include both button and dropdown refs
+   - Handle window resize to reposition dropdown
+   - Handle scroll events on the ActionsBar container (optional optimization)
+
+#### Implementation Steps
+
+1. Add `buttonRef` for the trigger button
+2. Add state for dropdown position `{top, right, width}`
+3. Create position calculation function using `getBoundingClientRect()`
+4. Add `useEffect` to recalculate position on:
+   - Window resize
+   - Dropdown open
+5. Use `createPortal(dropdown, document.body)` to render dropdown
+6. Update the dropdown's positioning to use `fixed` with calculated values
+7. Update click-outside detection to check both button and dropdown refs
+
+#### Test Plan
+
+- [ ] Click model selector button - dropdown should appear
+- [ ] Dropdown aligned to right edge of button, below it
+- [ ] Dropdown stays in viewport (doesn't overflow right edge)
+- [ ] Click outside closes dropdown
+- [ ] Click button when open closes dropdown
+- [ ] Scroll ActionsBar - dropdown should stay attached or close
+- [ ] Resize window - dropdown repositions correctly
+- [ ] Mobile view - dropdown fits within viewport
+
+#### Edge Cases to Handle
+
+1. Dropdown near right edge of screen - needs to stay within viewport
+2. Mobile devices - max-width already set to `calc(100vw-1rem)`, should work
+3. Scroll while dropdown open - close dropdown or reposition (simplest: close on scroll)
+
+#### Docs to Update
+
+- None required - internal implementation change
 
 ## Work Log
+
+### 2026-01-25 16:40 - Implementation Complete
+
+- **Completed**: Implemented React Portal solution for ModelSelector dropdown
+- **Files modified**: `components/studio/ModelSelector.tsx`
+- **Commit**: `110db66` - "fix: Use portal for model selector dropdown to escape overflow clipping"
+- **Quality check**: pass (ESLint: 0 errors, TypeScript: no errors)
+- **Changes made**:
+  1. Added `createPortal` import from react-dom
+  2. Added `useSyncExternalStore` for SSR-safe DOM detection (avoids lint error)
+  3. Added `buttonRef` to track button position
+  4. Added `dropdownPosition` state `{top, right, width}`
+  5. Added `calculatePosition` callback using `getBoundingClientRect()`
+  6. Added `useEffect` for resize handling and scroll-to-close
+  7. Created `renderDropdown()` function that uses `createPortal(dropdown, document.body)`
+  8. Updated dropdown to use `position: fixed` with calculated values
+  9. Updated click-outside detection to check both button and dropdown refs
+  10. Changed z-index from z-[100] to z-[9999] to ensure visibility above all content
+- **Next**: Testing phase to verify all acceptance criteria
+
+### 2026-01-25 16:35 - Planning Complete
+
+- **Root cause identified**: `overflow-x-auto` on ActionsBar.tsx:61 clips the dropdown
+- **Solution**: React Portal to render dropdown at document.body level
+- **Key files analyzed**:
+  - `ModelSelector.tsx` - Current implementation uses absolute positioning
+  - `ActionsBar.tsx` - Contains overflow-x-auto that causes clipping
+  - `app/studio/page.tsx` - Confirms ActionsBar usage context
+  - `TopBar.tsx` - Shows how modals are handled (fixed positioning)
+- **No existing Portal in codebase** - will use React's createPortal directly
+- **Click-outside detection** already works, needs minor update for portal
+- **Mobile support** - existing max-width constraint should work with portal
+
+### 2026-01-25 16:34 - Triage Complete
+
+- **Dependencies**: None specified. No blocking dependencies.
+- **Task clarity**: Clear. Issue is well-defined (dropdown not appearing due to overflow/z-index).
+- **Ready to proceed**: Yes
+- **Notes**:
+  - Task file well-formed with all required sections
+  - ModelSelector.tsx exists at specified path
+  - Acceptance criteria are specific and testable (5 criteria)
+  - Plan includes progressive debugging steps (inspect, check overflow, check z-index, try fixes)
+  - Task mentions overflow-x-auto on ActionsBar as likely cause
+  - May need Portal solution if overflow cannot be changed
 
 ## Notes
 
