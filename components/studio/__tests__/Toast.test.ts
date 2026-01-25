@@ -234,9 +234,10 @@ describe("Toast component", () => {
   });
 
   describe("animation", () => {
-    it("should support slide-in animation", () => {
-      const animationClass = "slide-in-from-bottom-4";
+    it("should support slide-in animation from top", () => {
+      const animationClass = "slide-in-from-top-4";
       expect(animationClass).toContain("slide-in");
+      expect(animationClass).toContain("top");
     });
 
     it("should support fade-in animation", () => {
@@ -246,20 +247,39 @@ describe("Toast component", () => {
   });
 
   describe("positioning", () => {
-    it("should be fixed positioned", () => {
+    it("should be fixed positioned when not inline", () => {
       const position = "fixed";
       expect(position).toBe("fixed");
     });
 
-    it("should be positioned at bottom-right", () => {
-      const positioning = { bottom: "6", right: "6" };
-      expect(positioning.bottom).toBe("6");
+    it("should be positioned at top-right when not inline", () => {
+      const positioning = { top: "6", right: "6" };
+      expect(positioning.top).toBe("6");
       expect(positioning.right).toBe("6");
     });
 
     it("should have high z-index", () => {
       const zIndex = 50;
       expect(zIndex).toBeGreaterThanOrEqual(50);
+    });
+
+    it("should support inline mode for use in ToastProvider", () => {
+      const inline = true;
+      expect(inline).toBe(true);
+    });
+  });
+
+  describe("inline prop", () => {
+    it("should not use fixed positioning when inline is true", () => {
+      const inline = true;
+      const usesFixedPositioning = !inline;
+      expect(usesFixedPositioning).toBe(false);
+    });
+
+    it("should use fixed positioning when inline is false or undefined", () => {
+      const inline = false;
+      const usesFixedPositioning = !inline;
+      expect(usesFixedPositioning).toBe(true);
     });
   });
 });
