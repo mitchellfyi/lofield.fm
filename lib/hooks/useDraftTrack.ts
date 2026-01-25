@@ -39,7 +39,7 @@ export function useDraftTrack(trackId: string | null): UseDraftTrackResult {
 
     const cached = getCache<DraftData>(DRAFT_PREFIX + trackId);
     // This is intentional initialization from localStorage
-     
+
     setDraftData(cached);
   }, [trackId]);
 

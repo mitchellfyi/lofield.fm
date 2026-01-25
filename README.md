@@ -84,6 +84,7 @@ The studio is designed to work on mobile devices with a responsive layout:
 - **Virtual Keyboard**: Layout adjusts properly when the on-screen keyboard appears
 
 **Mobile-specific notes:**
+
 - iOS Safari may require tapping the Play button again if audio is interrupted by a phone call or Siri
 - Code editing is functional but optimized for desktop; consider using desktop for extended sessions
 - The app supports "Add to Home Screen" as a progressive web app (PWA)

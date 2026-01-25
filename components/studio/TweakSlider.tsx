@@ -11,7 +11,16 @@ interface TweakSliderProps {
   onChangeEnd?: (value: number) => void;
 }
 
-export function TweakSlider({ label, value, min, max, step, unit, onChange, onChangeEnd }: TweakSliderProps) {
+export function TweakSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  unit,
+  onChange,
+  onChangeEnd,
+}: TweakSliderProps) {
   const percentage = ((value - min) / (max - min)) * 100;
 
   const handleMouseUp = () => {

@@ -55,10 +55,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const contextValue = useMemo(
-    () => ({ showToast, dismissToast }),
-    [showToast, dismissToast]
-  );
+  const contextValue = useMemo(() => ({ showToast, dismissToast }), [showToast, dismissToast]);
 
   return (
     <ToastContext.Provider value={contextValue}>

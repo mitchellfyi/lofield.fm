@@ -54,8 +54,7 @@ export function ActionsBar({
   const buttonDefault =
     "text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30";
   const buttonDisabled = "text-slate-500 cursor-not-allowed";
-  const buttonActive =
-    "text-cyan-300 bg-cyan-500/10 border border-cyan-500/30";
+  const buttonActive = "text-cyan-300 bg-cyan-500/10 border border-cyan-500/30";
 
   return (
     <div className="border-b border-cyan-950/50 bg-slate-900/50 backdrop-blur-sm">
@@ -179,11 +178,7 @@ export function ActionsBar({
         {/* Edit Actions Group */}
         <div className="flex items-center border-r border-cyan-500/20 pr-2 mr-1">
           {onCopy && (
-            <button
-              onClick={onCopy}
-              className={`${buttonBase} ${buttonDefault}`}
-              title="Copy Code"
-            >
+            <button onClick={onCopy} className={`${buttonBase} ${buttonDefault}`} title="Copy Code">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -257,11 +252,7 @@ export function ActionsBar({
         <div className="flex-1" />
         {selectedModel && onModelChange && (
           <div className="shrink-0">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-              compact
-            />
+            <ModelSelector selectedModel={selectedModel} onModelChange={onModelChange} compact />
           </div>
         )}
       </div>

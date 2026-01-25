@@ -9,11 +9,7 @@ interface TimelineBarProps {
   compact?: boolean;
 }
 
-export function TimelineBar({
-  barsPerRow = 8,
-  totalRows = 4,
-  compact = false,
-}: TimelineBarProps) {
+export function TimelineBar({ barsPerRow = 8, totalRows = 4, compact = false }: TimelineBarProps) {
   const transport = useTransportState();
   const totalBars = barsPerRow * totalRows;
 

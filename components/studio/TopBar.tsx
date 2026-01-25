@@ -92,7 +92,10 @@ export function TopBar({
                 </svg>
                 <span className="hidden sm:inline">{currentTrackName || "My Tracks"}</span>
                 {hasUnsavedChanges && currentTrackName && (
-                  <span className="ml-1 w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="Unsaved changes" />
+                  <span
+                    className="ml-1 w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+                    title="Unsaved changes"
+                  />
                 )}
               </button>
             )}
