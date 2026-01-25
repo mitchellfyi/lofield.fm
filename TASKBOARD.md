@@ -1,15 +1,15 @@
 # Taskboard
 
 > Auto-generated
-> Last updated: 2026-01-25 16:32:00
+> Last updated: 2026-01-25 16:43:00
 
 ## Summary
 
 | Status | Count |
 | ------ | ----- |
 | Doing  | 1     |
-| Todo   | 9     |
-| Done   | 24    |
+| Todo   | 8     |
+| Done   | 25    |
 
 ---
 
@@ -21,7 +21,6 @@
 
 ## Todo
 
-- **[001-003-fix-model-dropdown-overflow.md](.claude/tasks/todo/001-003-fix-model-dropdown-overflow.md)** - Fix Model Dropdown Overflow [Critical]
 - **[002-005-actions-bar-functionality-tests.md](.claude/tasks/todo/002-005-actions-bar-functionality-tests.md)** - Actions Bar Functionality Tests [High]
 - **[002-006-errors-as-prominent-toasts.md](.claude/tasks/todo/002-006-errors-as-prominent-toasts.md)** - Errors as Prominent Toasts [High]
 - **[003-001-move-settings-to-dropdown.md](.claude/tasks/todo/003-001-move-settings-to-dropdown.md)** - Move Settings to Dropdown [Medium]
@@ -35,6 +34,7 @@
 
 ## Recently Completed (Last 10)
 
+- **[001-003-fix-model-dropdown-overflow.md](.claude/tasks/done/001-003-fix-model-dropdown-overflow.md)** - Fix Model Dropdown Overflow [Critical]
 - **[001-002-fix-saving-tracks.md](.claude/tasks/done/001-002-fix-saving-tracks.md)** - Fix Saving Tracks [Critical]
 - **[002-004-improve-tracks-error-handling.md](.claude/tasks/done/002-004-improve-tracks-error-handling.md)** - Improve Tracks Error Handling [High]
 - **[004-001-mobile-usability.md](.claude/tasks/done/004-001-mobile-usability.md)** - Mobile Usability Pass [Low]
@@ -44,7 +44,6 @@
 - **[002-003-remove-duplicate-code-actions.md](.claude/tasks/done/002-003-remove-duplicate-code-actions.md)** - Remove Duplicate Code Actions [High]
 - **[002-002-create-favicon.md](.claude/tasks/done/002-002-create-favicon.md)** - Create Favicon [High]
 - **[002-001-mobile-controls-tab.md](.claude/tasks/done/002-001-mobile-controls-tab.md)** - Mobile Controls Tab [High]
-- **[001-001-fix-tweaks-jankiness.md](.claude/tasks/done/001-001-fix-tweaks-jankiness.md)** - Fix Tweaks Jankiness [Critical]
 
 ---
 
