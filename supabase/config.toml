@@ -1,10 +1,6 @@
 # Supabase Local Development Configuration
 # See: https://supabase.com/docs/guides/cli/config
 
-[project]
-id = "lofield-fm"
-name = "LoField Music Lab"
-
 [api]
 enabled = true
 # Port to use for the API URL.
@@ -25,7 +21,7 @@ port = 54322
 shadow_port = 54320
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version;` on the remote database to check.
-major_version = 15
+major_version = 17
 
 [db.pooler]
 enabled = false
