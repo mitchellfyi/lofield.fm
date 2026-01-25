@@ -594,7 +594,7 @@ function StudioContent() {
   const playCode = useCallback(
     async (codeToPlay: string) => {
       if (!audioLoaded) {
-        setError("Audio system not ready. Please wait.");
+        showToast("Audio system not ready. Please wait.", "error");
         return;
       }
 
@@ -618,10 +618,10 @@ function StudioContent() {
         setValidationErrors([]);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err);
-        setError(`Failed to play: ${errorMsg}`);
+        showToast(`Failed to play: ${errorMsg}`, "error");
       }
     },
-    [audioLoaded, validateCode]
+    [audioLoaded, validateCode, showToast]
   );
 
   // Scroll to bottom of messages
@@ -697,7 +697,7 @@ function StudioContent() {
 
   const stop = () => {
     if (!audioLoaded) {
-      setError("Audio system not ready.");
+      showToast("Audio system not ready.", "error");
       return;
     }
     try {
@@ -706,7 +706,7 @@ function StudioContent() {
       setError("");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to stop: ${errorMsg}`);
+      showToast(`Failed to stop: ${errorMsg}`, "error");
     }
   };
 
