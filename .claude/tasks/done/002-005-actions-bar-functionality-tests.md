@@ -8,8 +8,8 @@
 | Started     | 2026-01-25 16:45                        |
 | Priority    | High                                    |
 | Created     | 2025-01-25                              |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                                         |
+| Assigned At |                                         |
 
 ## Context
 
@@ -38,25 +38,27 @@ The ActionsBar component consolidates all action buttons. Need to verify all but
 ### Implementation Plan (Generated 2026-01-25 16:52)
 
 #### Gap Analysis
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Undo button works and respects canUndo state | partial | Component code exists, needs unit tests to verify disabled state behavior |
-| Redo button works and respects canRedo state | partial | Component code exists, needs unit tests to verify disabled state behavior |
-| Save button triggers save and shows saving state | partial | Component code exists with spinner animation, needs tests for state transitions |
-| Save As button opens save-as modal | partial | Button exists with conditional render, needs tests for click handler |
-| History button opens revision history (when track is saved) | partial | Button exists with conditional render (onOpenHistory prop), needs tests |
-| Copy button copies code to clipboard | partial | Button exists, needs tests for click handler |
-| Revert button reverts to default code | partial | Button exists, needs tests for click handler |
-| Export button opens export modal | partial | Button exists, needs tests for click handler |
-| Share button opens share dialog (disabled when no track) | partial | Button exists with canShare prop, needs tests for disabled state |
-| Model selector works and persists selection | partial | ModelSelector component integrated, needs integration tests |
-| All disabled states render correctly | no | Need tests for all disabled state variations |
-| All hover/active states work | no | Need tests for visual state classes |
-| Mobile layout displays correctly (icons only) | no | Need tests for responsive classes |
-| Write unit tests for ActionsBar component | no | Test file doesn't exist |
-| Write integration tests for action handlers | no | No integration tests for ActionsBar integration in studio page |
+
+| Criterion                                                   | Status  | Gap                                                                             |
+| ----------------------------------------------------------- | ------- | ------------------------------------------------------------------------------- |
+| Undo button works and respects canUndo state                | partial | Component code exists, needs unit tests to verify disabled state behavior       |
+| Redo button works and respects canRedo state                | partial | Component code exists, needs unit tests to verify disabled state behavior       |
+| Save button triggers save and shows saving state            | partial | Component code exists with spinner animation, needs tests for state transitions |
+| Save As button opens save-as modal                          | partial | Button exists with conditional render, needs tests for click handler            |
+| History button opens revision history (when track is saved) | partial | Button exists with conditional render (onOpenHistory prop), needs tests         |
+| Copy button copies code to clipboard                        | partial | Button exists, needs tests for click handler                                    |
+| Revert button reverts to default code                       | partial | Button exists, needs tests for click handler                                    |
+| Export button opens export modal                            | partial | Button exists, needs tests for click handler                                    |
+| Share button opens share dialog (disabled when no track)    | partial | Button exists with canShare prop, needs tests for disabled state                |
+| Model selector works and persists selection                 | partial | ModelSelector component integrated, needs integration tests                     |
+| All disabled states render correctly                        | no      | Need tests for all disabled state variations                                    |
+| All hover/active states work                                | no      | Need tests for visual state classes                                             |
+| Mobile layout displays correctly (icons only)               | no      | Need tests for responsive classes                                               |
+| Write unit tests for ActionsBar component                   | no      | Test file doesn't exist                                                         |
+| Write integration tests for action handlers                 | no      | No integration tests for ActionsBar integration in studio page                  |
 
 #### Files to Create
+
 1. `components/studio/__tests__/ActionsBar.test.ts` - Main unit test file for ActionsBar component
    - Module structure tests (export, named export)
    - Props interface validation tests
@@ -68,20 +70,24 @@ The ActionsBar component consolidates all action buttons. Need to verify all but
    - Conditional rendering tests (buttons only shown when handlers provided)
 
 #### Files to Modify
+
 None - this is a testing-only task
 
 #### Test Plan
 
 **1. Module Structure Tests**
+
 - [ ] Should export ActionsBar component
 - [ ] Should be a named export
 
 **2. Props Interface Tests**
+
 - [ ] Should accept all optional callback props (onUndo, onRedo, onSave, etc.)
 - [ ] Should accept all boolean state props (canUndo, canRedo, saving, etc.)
 - [ ] Should accept model selection props (selectedModel, onModelChange)
 
 **3. Undo/Redo Group Tests**
+
 - [ ] Undo button should be disabled when canUndo is false
 - [ ] Undo button should be enabled when canUndo is true
 - [ ] Undo button should call onUndo when clicked (and enabled)
@@ -91,6 +97,7 @@ None - this is a testing-only task
 - [ ] Both buttons should have correct title attributes for keyboard shortcuts
 
 **4. Save Group Tests**
+
 - [ ] Save button should call onSave when clicked
 - [ ] Save button should be disabled when saving is true
 - [ ] Save button should show spinner when saving is true
@@ -101,17 +108,20 @@ None - this is a testing-only task
 - [ ] Save As button should call onSaveAs when clicked
 
 **5. History Button Tests**
+
 - [ ] History button should only render when onOpenHistory is provided
 - [ ] History button should call onOpenHistory when clicked
 - [ ] History button should show indicator dot when hasRevisions is true
 
 **6. Edit Actions Group Tests**
+
 - [ ] Copy button should only render when onCopy is provided
 - [ ] Copy button should call onCopy when clicked
 - [ ] Revert button should only render when onRevert is provided
 - [ ] Revert button should call onRevert when clicked
 
 **7. Export/Share Group Tests**
+
 - [ ] Export button should only render when onExport is provided
 - [ ] Export button should call onExport when clicked
 - [ ] Share button should only render when onShare is provided
@@ -121,34 +131,42 @@ None - this is a testing-only task
 - [ ] Share button should have appropriate title based on canShare state
 
 **8. Model Selector Tests**
+
 - [ ] Model selector should only render when both selectedModel and onModelChange are provided
 - [ ] Model selector should receive compact prop as true
 
 **9. Disabled State Styling Tests**
+
 - [ ] Disabled buttons should have buttonDisabled class
 - [ ] Enabled buttons should have buttonDefault class
 - [ ] Active buttons (hasUnsavedChanges) should have buttonActive class
 
 **10. Mobile Responsive Tests**
+
 - [ ] Text labels should have "hidden sm:inline" class for responsive hiding
 - [ ] Container should have responsive padding (px-2 sm:px-4)
 - [ ] Container should have horizontal scroll (overflow-x-auto)
 
 **11. Layout Tests**
+
 - [ ] Should have border dividers between button groups
 - [ ] Should have flex-1 spacer before model selector
 - [ ] Model selector should be pushed to the end (right side)
 
 **12. Edge Cases**
+
 - [ ] Should handle all optional props being undefined
 - [ ] Should handle rapid button clicks
 - [ ] Should handle all props being provided
 
 #### Docs to Update
+
 - None required
 
 #### Test Patterns to Follow
+
 Based on existing test files (`components/studio/__tests__/TweaksPanel.test.ts`):
+
 - Use `describe` blocks to group related tests
 - Use dynamic imports for module validation (`await import("../ActionsBar")`)
 - Test logical behavior through pure JavaScript rather than rendering
@@ -158,6 +176,7 @@ Based on existing test files (`components/studio/__tests__/TweaksPanel.test.ts`)
 - Test conditional rendering through boolean logic
 
 #### Dependencies
+
 - vitest (for testing framework)
 - No need for @testing-library/react (following existing pattern)
 
@@ -170,14 +189,16 @@ Status field: matches (done)
 Acceptance criteria: 15/15 checked
 
 Issues found:
+
 - none
 
 Actions taken:
+
 - Verified task file was in done/ folder
 - Verified Status field is "done" with Completed timestamp
 - Verified all 15 acceptance criteria are checked [x]
 - Verified Work Log has entries from all phases
-- Verified test file exists at components/studio/__tests__/ActionsBar.test.ts
+- Verified test file exists at components/studio/**tests**/ActionsBar.test.ts
 - Committed task file changes to git (commit aab03a6)
 
 Task verified: PASS
@@ -185,20 +206,24 @@ Task verified: PASS
 ### 2026-01-25 16:52 - Review Complete
 
 Code review:
+
 - Issues found: none
 - Issues fixed: N/A
 
 Consistency:
+
 - All criteria met: yes
 - Test coverage adequate: yes (102 unit tests covering all button groups, states, and behaviors)
 - Docs in sync: yes
 
 Follow-up tasks created:
+
 - None required - task scope was complete and comprehensive
 
 Final status: COMPLETE
 
 Summary:
+
 - Created comprehensive unit test suite for ActionsBar component
 - 102 tests covering all 15 acceptance criteria
 - Tests validate: button states, callbacks, styling, layout, responsive design, edge cases
@@ -209,14 +234,17 @@ Summary:
 ### 2026-01-25 16:55 - Documentation Sync
 
 Docs updated:
+
 - Task file `002-005-actions-bar-functionality-tests.md` - Added Testing Evidence section
 - Task file - Added Links section with component and test file references
 - No external docs needed (testing-only task, no user-facing features changed)
 
 Annotations:
+
 - N/A - This is a Next.js/TypeScript project, not Rails
 
 Consistency checks:
+
 - [x] Code matches docs - Test file properly tests the ActionsBar component
 - [x] No broken links - All file references verified
 - [x] Schema annotations N/A - No database models
@@ -224,13 +252,16 @@ Consistency checks:
 ### 2026-01-25 16:49 - Testing Complete
 
 Tests written:
+
 - `components/studio/__tests__/ActionsBar.test.ts` - 102 examples
 
 Test results:
+
 - Total: 102 examples, 0 failures
 - Full suite: 1940 examples, 0 failures
 
 Quality gates:
+
 - ESLint: pass (2 pre-existing warnings, 0 errors)
 - TypeScript: pass (no errors)
 - Vitest: pass (all 1940 tests pass)
