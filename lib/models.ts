@@ -11,6 +11,12 @@ export interface AIModel {
   inputCostPer1kTokens?: number;
   /** Cost per 1K output tokens in USD */
   outputCostPer1kTokens?: number;
+  /**
+   * Optional system prompt variation for this model.
+   * If set, the loader will try to load `system-prompt-{variation}.md`.
+   * Falls back to default `system-prompt.md` if variation file doesn't exist.
+   */
+  systemPromptVariation?: string;
 }
 
 export const MODELS: AIModel[] = [
