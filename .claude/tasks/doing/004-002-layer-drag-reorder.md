@@ -141,6 +141,40 @@ Rationale (per task notes):
 
 ## Work Log
 
+### 2026-01-25 20:33 - Testing Complete
+
+**Tests written:**
+- `components/studio/__tests__/LayersPanel.test.ts` - 20 new tests
+- `components/studio/__tests__/LayerRow.test.ts` - 27 new tests
+
+**Test coverage areas:**
+- arrayMove utility (move, preserve, immutability)
+- handleDragEnd logic (first-to-last, last-to-first, middle moves)
+- Edge cases (same position, dropped outside, invalid IDs)
+- Layer property preservation during reorder
+- Sensor configuration (5px activation, keyboard sensor)
+- SortableContext items
+- isDragging prop handling
+- Drag visual feedback (opacity, scale, shadow, z-index, background)
+- Drag handle (cursor, touch-none, title, grip icon)
+- Sortable transform and transition
+- Sortable attributes and listeners
+- Layer ID uniqueness
+
+**Test results:**
+- Total: 2089 examples, 0 failures
+- Coverage: Logic-only tests (no component rendering, per project pattern)
+
+**Quality gates:**
+- ESLint: ✅ Pass (2 unrelated warnings)
+- TypeScript: ✅ Pass
+- Prettier: ✅ Pass (after formatting)
+- Tests: ✅ All 2089 pass
+
+**Commit:** `fea0fd2` - "test: Add specs for layer drag reorder functionality"
+
+---
+
 ### 2026-01-25 20:31 - Implementation Complete
 
 **Changes Made:**
@@ -210,7 +244,25 @@ Rationale (per task notes):
 
 ## Testing Evidence
 
-_(empty - task not started)_
+```bash
+$ npm test -- --run
+# Test Files  65 passed (65)
+# Tests       2089 passed (2089)
+# Duration    5.69s
+
+$ npm run lint
+# 0 errors, 2 warnings (unrelated)
+
+$ npx tsc --noEmit
+# (no output = success)
+
+$ npm run format:check
+# All matched files use Prettier code style!
+```
+
+**New tests added (47 total):**
+- LayersPanel.test.ts: 20 tests in "drag to reorder behavior" describe block
+- LayerRow.test.ts: 27 tests in "drag and drop behavior" describe block
 
 ---
 
