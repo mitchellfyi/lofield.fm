@@ -32,6 +32,11 @@ Select your preferred AI model from the dropdown in the top bar:
 - **GPT-4o** - Most capable, best for complex music generation
 - **GPT-4 Turbo** - Powerful with large context window
 
+Each model displays:
+
+- Cost tier badge (low/medium/high)
+- Estimated cost per 1K tokens (input/output)
+
 Your selection persists in localStorage across sessions.
 
 ### API Key Management
