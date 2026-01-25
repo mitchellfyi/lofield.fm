@@ -146,9 +146,7 @@ export function ModelSelector({
               </div>
               <p className="text-xs text-slate-400">{model.description}</p>
               {formatModelCost(model) && (
-                <p className="text-xs text-slate-500 mt-1 font-mono">
-                  {formatModelCost(model)}
-                </p>
+                <p className="text-xs text-slate-500 mt-1 font-mono">{formatModelCost(model)}</p>
               )}
               {model.id === selectedModel && (
                 <div className="mt-2 flex items-center gap-1 text-xs text-cyan-400">

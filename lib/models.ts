@@ -62,10 +62,7 @@ export function getModelById(modelId: string): AIModel | undefined {
  * Returns null if model has no cost data
  */
 export function formatModelCost(model: AIModel): string | null {
-  if (
-    model.inputCostPer1kTokens === undefined ||
-    model.outputCostPer1kTokens === undefined
-  ) {
+  if (model.inputCostPer1kTokens === undefined || model.outputCostPer1kTokens === undefined) {
     return null;
   }
 
