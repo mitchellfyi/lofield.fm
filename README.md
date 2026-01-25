@@ -19,14 +19,17 @@ The AI writes the code. You hear the music. Tweak it, save it, share it.
 ## Features
 
 ### Chat-to-Music
+
 Describe your beat in plain English. The AI generates Tone.js code that plays immediately in your browser. Want to change something? Just ask:
 
-- *"add more swing"*
-- *"make the drums quieter"*
-- *"give it a vinyl crackle vibe"*
+- _"add more swing"_
+- _"make the drums quieter"_
+- _"give it a vinyl crackle vibe"_
 
 ### Live Performance Controls
+
 Real-time sliders for instant tweaks:
+
 - **BPM** (60-200)
 - **Swing** (0-100%)
 - **Filter** (lowpass cutoff)
@@ -35,40 +38,51 @@ Real-time sliders for instant tweaks:
 Changes apply instantly while the track plays.
 
 ### Multi-Layer Composition
+
 Build complex arrangements with multiple audio layers:
+
 - Add drum, bass, melody, and pad layers
 - Mute/solo individual layers
 - Drag-and-drop reordering
 - Each layer has its own code
 
 ### Record Your Performance
+
 Capture your live parameter changes (knob twists, slider moves) as automation:
+
 - Hit record while playing
 - Tweak any control
 - Automation is saved and can be replayed
 - Export with automation baked into the audio
 
 ### Full Version History
+
 Never lose your work:
+
 - Every AI-generated change is saved as a revision
 - Browse and compare past versions with diff view
 - One-click revert to any previous state
 - Undo/redo with Cmd+Z / Cmd+Shift+Z
 
 ### Export & Share
+
 - **Export to WAV** - Render 30s to 10min of audio
 - **Share links** - Public URLs for anyone to play your track
 - **Code export** - Copy the Tone.js code to use anywhere
 
 ### Professional Code Editor
+
 Full-featured IDE experience:
+
 - Syntax highlighting for JavaScript/Tone.js
 - Live mode - code changes play immediately
 - Error detection before playback
 - Dark theme optimized for focus
 
 ### 32-Bar Arrangement Timeline
+
 Visual timeline showing:
+
 - Current playback position
 - Section markers (A/B/C/D intro-build-drop-breakdown)
 - Beat and bar counters
@@ -95,6 +109,7 @@ Visual timeline showing:
 ### Setup
 
 1. **Clone and install**
+
    ```bash
    git clone https://github.com/your-repo/lofield.fm
    cd lofield.fm
@@ -104,6 +119,7 @@ Visual timeline showing:
 2. **Configure environment**
 
    Copy `.env.example` to `.env.local` and fill in:
+
    ```bash
    # Supabase
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -121,11 +137,13 @@ Visual timeline showing:
    ```
 
 3. **Run database migrations**
+
    ```bash
    npx supabase db push
    ```
 
 4. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -137,6 +155,7 @@ Visual timeline showing:
 ### API Keys
 
 LoField uses a "bring your own key" (BYOK) model:
+
 - Users provide their own OpenAI API key
 - Keys are encrypted with AES-256-GCM before storage
 - Keys never leave the user's account
@@ -144,17 +163,17 @@ LoField uses a "bring your own key" (BYOK) model:
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format code with Prettier |
-| `npm run typecheck` | TypeScript type checking |
-| `npm run quality` | Run all quality checks |
-| `npm test` | Run unit tests (Vitest) |
-| `npm run test:e2e` | Run E2E tests (Playwright) |
+| Command             | Description                |
+| ------------------- | -------------------------- |
+| `npm run dev`       | Start development server   |
+| `npm run build`     | Build for production       |
+| `npm run start`     | Start production server    |
+| `npm run lint`      | Run ESLint                 |
+| `npm run format`    | Format code with Prettier  |
+| `npm run typecheck` | TypeScript type checking   |
+| `npm run quality`   | Run all quality checks     |
+| `npm test`          | Run unit tests (Vitest)    |
+| `npm run test:e2e`  | Run E2E tests (Playwright) |
 
 ## Project Structure
 
@@ -186,11 +205,11 @@ supabase/           # Database migrations
 
 Choose your preferred model in the studio:
 
-| Model | Speed | Quality | Cost |
-|-------|-------|---------|------|
-| GPT-4o Mini | Fast | Good | Low |
-| GPT-4o | Medium | Best | High |
-| GPT-4 Turbo | Medium | Great | Medium |
+| Model       | Speed  | Quality | Cost   |
+| ----------- | ------ | ------- | ------ |
+| GPT-4o Mini | Fast   | Good    | Low    |
+| GPT-4o      | Medium | Best    | High   |
+| GPT-4 Turbo | Medium | Great   | Medium |
 
 Your selection persists across sessions.
 
