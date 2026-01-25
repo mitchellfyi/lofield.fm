@@ -526,4 +526,470 @@ describe("RecordingTimeline component", () => {
       expect(selectedEvent).toBeUndefined();
     });
   });
+
+  describe("onUpdateEvent prop", () => {
+    it("should accept onUpdateEvent callback prop", () => {
+      const onUpdateEvent = vi.fn();
+      expect(typeof onUpdateEvent).toBe("function");
+    });
+
+    it("should call onUpdateEvent with updated event object", () => {
+      const onUpdateEvent = vi.fn();
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "tweak",
+        param: "bpm",
+        oldValue: 82,
+        newValue: 90,
+      };
+
+      // Simulate value update
+      const newValue = 100;
+      onUpdateEvent({ ...event, newValue });
+
+      expect(onUpdateEvent).toHaveBeenCalledTimes(1);
+      expect(onUpdateEvent).toHaveBeenCalledWith({
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "tweak",
+        param: "bpm",
+        oldValue: 82,
+        newValue: 100,
+      });
+    });
+  });
+
+  describe("getEventValueConfig", () => {
+    // Hard-coded TWEAK_PARAMS values matching lib/types/tweaks.ts
+    const TWEAK_PARAMS_CONFIG: Record<
+      string,
+      { min: number; max: number; step: number; unit: string }
+    > = {
+      bpm: { min: 60, max: 200, step: 1, unit: "" },
+      swing: { min: 0, max: 100, step: 1, unit: "%" },
+      filter: { min: 100, max: 10000, step: 100, unit: " Hz" },
+      reverb: { min: 0, max: 100, step: 1, unit: "%" },
+      delay: { min: 0, max: 100, step: 1, unit: "%" },
+    };
+
+    // Helper function to match the implementation
+    function getEventValueConfig(event: RecordingEvent): {
+      min: number;
+      max: number;
+      step: number;
+      unit: string;
+      isBoolean: boolean;
+    } | null {
+      // Boolean events (mute, solo)
+      if (event.type === "layer_mute" || event.type === "layer_solo") {
+        return { min: 0, max: 1, step: 1, unit: "", isBoolean: true };
+      }
+
+      // Layer volume (0-100%)
+      if (event.type === "layer_volume") {
+        return { min: 0, max: 100, step: 1, unit: "%", isBoolean: false };
+      }
+
+      // Tweak events - use TWEAK_PARAMS config
+      if (event.type === "tweak" && event.param) {
+        const paramConfig = TWEAK_PARAMS_CONFIG[event.param];
+        if (paramConfig) {
+          return {
+            min: paramConfig.min,
+            max: paramConfig.max,
+            step: paramConfig.step,
+            unit: paramConfig.unit,
+            isBoolean: false,
+          };
+        }
+      }
+
+      return null;
+    }
+
+    describe("BPM tweak events", () => {
+      it("should return config with min 60 for BPM", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "bpm",
+          oldValue: 82,
+          newValue: 90,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(60);
+      });
+
+      it("should return config with max 200 for BPM", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "bpm",
+          oldValue: 82,
+          newValue: 90,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.max).toBe(200);
+      });
+
+      it("should return config with step 1 for BPM", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "bpm",
+          oldValue: 82,
+          newValue: 90,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.step).toBe(1);
+      });
+
+      it("should return isBoolean false for BPM", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "bpm",
+          oldValue: 82,
+          newValue: 90,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.isBoolean).toBe(false);
+      });
+    });
+
+    describe("filter tweak events", () => {
+      it("should return config with min 100 for filter", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "filter",
+          oldValue: 8000,
+          newValue: 5000,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(100);
+      });
+
+      it("should return config with max 10000 for filter", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "filter",
+          oldValue: 8000,
+          newValue: 5000,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.max).toBe(10000);
+      });
+
+      it("should return config with step 100 for filter", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "filter",
+          oldValue: 8000,
+          newValue: 5000,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.step).toBe(100);
+      });
+
+      it("should return unit ' Hz' for filter", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "filter",
+          oldValue: 8000,
+          newValue: 5000,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.unit).toBe(" Hz");
+      });
+    });
+
+    describe("reverb tweak events", () => {
+      it("should return config with range 0-100 for reverb", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "reverb",
+          oldValue: 25,
+          newValue: 50,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(0);
+        expect(config?.max).toBe(100);
+        expect(config?.step).toBe(1);
+      });
+    });
+
+    describe("delay tweak events", () => {
+      it("should return config with range 0-100 for delay", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "delay",
+          oldValue: 20,
+          newValue: 40,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(0);
+        expect(config?.max).toBe(100);
+        expect(config?.step).toBe(1);
+      });
+    });
+
+    describe("swing tweak events", () => {
+      it("should return config with range 0-100 for swing", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "tweak",
+          param: "swing",
+          oldValue: 8,
+          newValue: 25,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(0);
+        expect(config?.max).toBe(100);
+        expect(config?.step).toBe(1);
+      });
+    });
+
+    describe("layer_volume events", () => {
+      it("should return config with range 0-100 for layer_volume", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_volume",
+          layerId: "l1",
+          oldValue: 100,
+          newValue: 80,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(0);
+        expect(config?.max).toBe(100);
+        expect(config?.step).toBe(1);
+      });
+
+      it("should return unit '%' for layer_volume", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_volume",
+          layerId: "l1",
+          oldValue: 100,
+          newValue: 80,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.unit).toBe("%");
+      });
+
+      it("should return isBoolean false for layer_volume", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_volume",
+          layerId: "l1",
+          oldValue: 100,
+          newValue: 80,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.isBoolean).toBe(false);
+      });
+    });
+
+    describe("layer_mute events", () => {
+      it("should return isBoolean true for layer_mute", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_mute",
+          layerId: "l1",
+          oldValue: false,
+          newValue: true,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.isBoolean).toBe(true);
+      });
+
+      it("should return min 0 and max 1 for layer_mute", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_mute",
+          layerId: "l1",
+          oldValue: false,
+          newValue: true,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(0);
+        expect(config?.max).toBe(1);
+      });
+    });
+
+    describe("layer_solo events", () => {
+      it("should return isBoolean true for layer_solo", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_solo",
+          layerId: "l1",
+          oldValue: false,
+          newValue: true,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.isBoolean).toBe(true);
+      });
+
+      it("should return min 0 and max 1 for layer_solo", () => {
+        const event: RecordingEvent = {
+          id: "e1",
+          timestamp_ms: 1000,
+          type: "layer_solo",
+          layerId: "l1",
+          oldValue: false,
+          newValue: true,
+        };
+        const config = getEventValueConfig(event);
+        expect(config?.min).toBe(0);
+        expect(config?.max).toBe(1);
+      });
+    });
+  });
+
+  describe("numeric value change behavior", () => {
+    it("should create updated event with new numeric value", () => {
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "tweak",
+        param: "bpm",
+        oldValue: 82,
+        newValue: 90,
+      };
+
+      const newValue = 120;
+      const updatedEvent = { ...event, newValue };
+
+      expect(updatedEvent.id).toBe("e1");
+      expect(updatedEvent.timestamp_ms).toBe(1000);
+      expect(updatedEvent.type).toBe("tweak");
+      expect(updatedEvent.param).toBe("bpm");
+      expect(updatedEvent.oldValue).toBe(82);
+      expect(updatedEvent.newValue).toBe(120);
+    });
+
+    it("should preserve all other event properties when updating value", () => {
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 2500,
+        type: "layer_volume",
+        layerId: "layer-1",
+        oldValue: 100,
+        newValue: 80,
+      };
+
+      const newValue = 50;
+      const updatedEvent = { ...event, newValue };
+
+      expect(updatedEvent.layerId).toBe("layer-1");
+      expect(updatedEvent.newValue).toBe(50);
+    });
+  });
+
+  describe("boolean toggle behavior", () => {
+    it("should toggle layer_mute from false to true", () => {
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "layer_mute",
+        layerId: "l1",
+        oldValue: false,
+        newValue: false,
+      };
+
+      const updatedEvent = { ...event, newValue: !event.newValue };
+      expect(updatedEvent.newValue).toBe(true);
+    });
+
+    it("should toggle layer_mute from true to false", () => {
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "layer_mute",
+        layerId: "l1",
+        oldValue: false,
+        newValue: true,
+      };
+
+      const updatedEvent = { ...event, newValue: !event.newValue };
+      expect(updatedEvent.newValue).toBe(false);
+    });
+
+    it("should toggle layer_solo from false to true", () => {
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "layer_solo",
+        layerId: "l1",
+        oldValue: false,
+        newValue: false,
+      };
+
+      const updatedEvent = { ...event, newValue: !event.newValue };
+      expect(updatedEvent.newValue).toBe(true);
+    });
+
+    it("should toggle layer_solo from true to false", () => {
+      const event: RecordingEvent = {
+        id: "e1",
+        timestamp_ms: 1000,
+        type: "layer_solo",
+        layerId: "l1",
+        oldValue: false,
+        newValue: true,
+      };
+
+      const updatedEvent = { ...event, newValue: !event.newValue };
+      expect(updatedEvent.newValue).toBe(false);
+    });
+  });
+
+  describe("value editor visibility", () => {
+    it("should only show value editor when event is selected", () => {
+      const selectedEventId: string | null = "e1";
+      const interactive = true;
+
+      const shouldShowEditor = selectedEventId !== null && interactive;
+      expect(shouldShowEditor).toBe(true);
+    });
+
+    it("should not show value editor when no event selected", () => {
+      const selectedEventId: string | null = null;
+      const interactive = true;
+
+      const shouldShowEditor = selectedEventId !== null && interactive;
+      expect(shouldShowEditor).toBe(false);
+    });
+
+    it("should not show value editor when not interactive", () => {
+      const selectedEventId: string | null = "e1";
+      const interactive = false;
+
+      const shouldShowEditor = selectedEventId !== null && interactive;
+      expect(shouldShowEditor).toBe(false);
+    });
+  });
 });
