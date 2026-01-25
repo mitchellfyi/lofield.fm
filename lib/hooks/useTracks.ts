@@ -168,6 +168,9 @@ export function useTracks(projectId: string | null): UseTracksResult {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Please sign in to delete your tracks");
+        }
         const data = await res.json();
         throw new Error(data.error || "Failed to delete track");
       }

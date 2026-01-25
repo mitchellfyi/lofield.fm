@@ -47,6 +47,13 @@ export function TrackBrowser({
     updateTrack,
   } = useTracks(selectedProjectId);
 
+  // Refresh projects when modal opens to ensure fresh data
+  useEffect(() => {
+    if (isOpen) {
+      refreshProjects();
+    }
+  }, [isOpen, refreshProjects]);
+
   // Auto-expand first project when projects load - intentional one-time initialization
   useEffect(() => {
     if (projects.length > 0 && expandedProjects.size === 0) {
@@ -174,12 +181,26 @@ export function TrackBrowser({
             </div>
           ) : projects.length === 0 && !showNewProject ? (
             <div className="text-center py-8">
-              <p className="text-slate-400 mb-4">No projects yet</p>
+              <svg
+                className="w-12 h-12 mx-auto mb-4 text-slate-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                />
+              </svg>
+              <p className="text-slate-300 font-medium mb-2">No saved tracks yet</p>
+              <p className="text-slate-500 text-sm mb-4">Save your first track to see it here</p>
               <button
                 onClick={() => setShowNewProject(true)}
                 className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
               >
-                Create Your First Project
+                Create a Project
               </button>
             </div>
           ) : (

@@ -121,6 +121,9 @@ export function useProjects(): UseProjectsResult {
         });
 
         if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Please sign in to update your projects");
+          }
           const data = await res.json();
           throw new Error(data.error || "Failed to update project");
         }
@@ -148,6 +151,9 @@ export function useProjects(): UseProjectsResult {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Please sign in to delete your projects");
+        }
         const data = await res.json();
         throw new Error(data.error || "Failed to delete project");
       }
