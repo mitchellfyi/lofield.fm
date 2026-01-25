@@ -29,7 +29,7 @@ import { TrackBrowser } from "@/components/studio/TrackBrowser";
 import { RevisionHistory } from "@/components/studio/RevisionHistory";
 import { ExportModal } from "@/components/studio/ExportModal";
 import { ShareDialog } from "@/components/studio/ShareDialog";
-import { Toast } from "@/components/studio/Toast";
+import { ToastProvider, useToast } from "@/components/studio/ToastProvider";
 import { TweaksPanel } from "@/components/studio/TweaksPanel";
 import { LayersPanel } from "@/components/studio/LayersPanel";
 import { RecordButton } from "@/components/studio/RecordButton";
@@ -38,7 +38,6 @@ import { RecordingTimeline } from "@/components/studio/RecordingTimeline";
 import { RecordingPanel } from "@/components/studio/RecordingPanel";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
-import type { ToastState } from "@/lib/export/types";
 import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
 import { extractTweaks, injectTweaks } from "@/lib/audio/tweaksInjector";
 import { type AudioLayer, DEFAULT_LAYERS } from "@/lib/types/audioLayer";
@@ -336,6 +335,14 @@ const DANGEROUS_TOKENS = [
 ];
 
 export default function StudioPage() {
+  return (
+    <ToastProvider>
+      <StudioContent />
+    </ToastProvider>
+  );
+}
+
+function StudioContent() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [playerState, setPlayerState] = useState<PlayerState>("idle");
   const audioLoaded = true; // Tone.js is always available as a module
@@ -365,7 +372,9 @@ export default function StudioPage() {
   // Export state
   const [showExportModal, setShowExportModal] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [toast, setToast] = useState<ToastState>({ visible: false, message: "", type: "info" });
+
+  // Toast notifications via context
+  const { showToast } = useToast();
 
   // Tweaks state
   const [tweaks, setTweaks] = useState<TweaksConfig>(DEFAULT_TWEAKS);
@@ -743,15 +752,6 @@ Request: ${inputValue}`;
     await refreshApiKey();
   };
 
-  // Toast helper
-  const showToast = useCallback((message: string, type: ToastState["type"]) => {
-    setToast({ visible: true, message, type });
-  }, []);
-
-  const dismissToast = useCallback(() => {
-    setToast((prev) => ({ ...prev, visible: false }));
-  }, []);
-
   /**
    * Create a snapshot of the current state for history.
    */
@@ -1040,7 +1040,16 @@ Request: ${inputValue}`;
     } finally {
       setSaving(false);
     }
-  }, [saveAsName, selectedProjectId, projects, createProject, createTrack, code, clearDraft, showToast]);
+  }, [
+    saveAsName,
+    selectedProjectId,
+    projects,
+    createProject,
+    createTrack,
+    code,
+    clearDraft,
+    showToast,
+  ]);
 
   // Handle starting a recording
   const handleStartRecording = useCallback(() => {
@@ -1627,14 +1636,6 @@ Request: ${inputValue}`;
         trackName={currentTrackName ?? undefined}
         onClose={() => setShowShareDialog(false)}
         onToast={showToast}
-      />
-
-      {/* Toast Notifications */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        visible={toast.visible}
-        onDismiss={dismissToast}
       />
     </>
   );
