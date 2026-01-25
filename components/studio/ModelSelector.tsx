@@ -6,9 +6,10 @@ import { MODELS, getModelById } from "@/lib/models";
 interface ModelSelectorProps {
   selectedModel: string;
   onModelChange: (model: string) => void;
+  compact?: boolean;
 }
 
-export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorProps) {
+export function ModelSelector({ selectedModel, onModelChange, compact = false }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -45,11 +46,13 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
     <div className="relative z-[100]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+        className={`flex items-center gap-1 sm:gap-2 rounded-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm ${
+          compact ? "px-2 py-1.5 text-xs" : "px-2.5 sm:px-4 py-2 text-sm"
+        }`}
         aria-label="Select AI Model"
       >
         <svg
-          className="w-5 h-5 sm:w-4 sm:h-4"
+          className={compact ? "w-4 h-4" : "w-5 h-5 sm:w-4 sm:h-4"}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -61,9 +64,9 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
             d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
           />
         </svg>
-        <span className="hidden sm:inline">{currentModel?.name || "Model"}</span>
+        <span className={compact ? "inline" : "hidden sm:inline"}>{currentModel?.name || "Model"}</span>
         <svg
-          className={`w-4 h-4 hidden sm:block transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""} ${compact ? "inline" : "hidden sm:block"}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

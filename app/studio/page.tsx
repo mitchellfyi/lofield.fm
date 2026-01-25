@@ -26,15 +26,13 @@ import { useHistory } from "@/lib/hooks/useHistory";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
 import { TrackBrowser } from "@/components/studio/TrackBrowser";
 import { RevisionHistory } from "@/components/studio/RevisionHistory";
-import { SaveButton } from "@/components/studio/SaveButton";
-import { ExportButton } from "@/components/studio/ExportButton";
 import { ExportModal } from "@/components/studio/ExportModal";
-import { ShareButton } from "@/components/studio/ShareButton";
 import { ShareDialog } from "@/components/studio/ShareDialog";
 import { Toast } from "@/components/studio/Toast";
 import { TweaksPanel } from "@/components/studio/TweaksPanel";
 import { LayersPanel } from "@/components/studio/LayersPanel";
 import { RecordButton } from "@/components/studio/RecordButton";
+import { ActionsBar } from "@/components/studio/ActionsBar";
 import { RecordingTimeline } from "@/components/studio/RecordingTimeline";
 import { RecordingPanel } from "@/components/studio/RecordingPanel";
 import type { UIMessage } from "@ai-sdk/react";
@@ -356,7 +354,7 @@ export default function StudioPage() {
   const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [autoSaveEnabled, _setAutoSaveEnabled] = useState(false);
   const [showSaveAsModal, setShowSaveAsModal] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -370,6 +368,12 @@ export default function StudioPage() {
 
   // Tweaks state
   const [tweaks, setTweaks] = useState<TweaksConfig>(DEFAULT_TWEAKS);
+
+  // Layout state - column widths and collapsible sections
+  const [timelineExpanded, setTimelineExpanded] = useState(true);
+  const [leftColumnWidth, setLeftColumnWidth] = useState(256); // 256px = w-64
+  const [rightColumnWidth, setRightColumnWidth] = useState(50); // percentage of remaining space
+  const [isResizing, setIsResizing] = useState<"left" | "right" | null>(null);
 
   // Layers state - for multi-track composition
   const [layers, setLayers] = useState<AudioLayer[]>(() => [
@@ -393,6 +397,8 @@ export default function StudioPage() {
 
   // Track if we're currently restoring from history to avoid re-pushing
   const isRestoringFromHistoryRef = useRef(false);
+  // Track whether history change was from undo/redo (vs push)
+  const historyActionRef = useRef<"undo" | "redo" | null>(null);
 
   // Project and track hooks
   const { projects, createProject } = useProjects();
@@ -400,7 +406,7 @@ export default function StudioPage() {
   const { revisions, createRevision } = useRevisions(currentTrackId);
 
   // Auto-save hook
-  const { saving: autoSaving, lastSaved } = useAutoSave(currentTrackId, code, autoSaveEnabled);
+  const { saving: autoSaving } = useAutoSave(currentTrackId, code, autoSaveEnabled);
 
   // Recording hooks
   const {
@@ -788,6 +794,7 @@ Request: ${inputValue}`;
    */
   const handleUndo = useCallback(() => {
     if (!canUndo) return;
+    historyActionRef.current = "undo";
     historyUndo();
   }, [canUndo, historyUndo]);
 
@@ -796,31 +803,37 @@ Request: ${inputValue}`;
    */
   const handleRedo = useCallback(() => {
     if (!canRedo) return;
+    historyActionRef.current = "redo";
     historyRedo();
   }, [canRedo, historyRedo]);
 
-  // Sync component state when history state changes (from undo/redo)
+  // Sync component state when history state changes (from undo/redo only)
   const prevHistoryStateRef = useRef<HistorySnapshot | null>(null);
   useEffect(() => {
-    // Skip initial render and skip if we just pushed (to avoid infinite loop)
+    // Skip initial render
     if (prevHistoryStateRef.current === null) {
       prevHistoryStateRef.current = historyState;
       return;
     }
 
-    // Only restore if history state actually changed (from undo/redo)
+    // Only restore if history state changed AND it was from undo/redo (not push)
     if (prevHistoryStateRef.current !== historyState) {
       prevHistoryStateRef.current = historyState;
-      restoreSnapshot(historyState);
+      // Only restore on undo/redo, not on push operations
+      if (historyActionRef.current === "undo" || historyActionRef.current === "redo") {
+        restoreSnapshot(historyState);
+        historyActionRef.current = null; // Reset flag after restore
+      }
     }
   }, [historyState, restoreSnapshot]);
 
   // Handle tweaks changes - inject into code and trigger live update
+  // saveToHistory: true = save snapshot for undo (on slider release), false = live update only
   const handleTweaksChange = useCallback(
-    (newTweaks: TweaksConfig) => {
-      // Push current state to history before changing (debounced for rapid slider moves)
-      if (!isRestoringFromHistoryRef.current) {
-        pushHistoryDebounced(createSnapshot());
+    (newTweaks: TweaksConfig, saveToHistory = false) => {
+      // Only push to history when explicitly requested (on slider release)
+      if (saveToHistory && !isRestoringFromHistoryRef.current) {
+        pushHistory(createSnapshot());
       }
 
       // Capture tweak changes when recording
@@ -845,7 +858,7 @@ Request: ${inputValue}`;
         });
       }
     },
-    [code, playerState, createSnapshot, pushHistoryDebounced, isRecording, tweaks, captureTweak]
+    [code, playerState, createSnapshot, pushHistory, isRecording, tweaks, captureTweak]
   );
 
   // Handle layer changes
@@ -1149,6 +1162,48 @@ Request: ${inputValue}`;
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleSave, handleUndo, handleRedo]);
 
+  // Column resize handling
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleResizeMouseDown = useCallback(
+    (column: "left" | "right") => (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(column);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+
+      if (isResizing === "left") {
+        const newWidth = Math.max(200, Math.min(400, e.clientX - containerRect.left));
+        setLeftColumnWidth(newWidth);
+      } else if (isResizing === "right") {
+        const remainingWidth = containerRect.width - leftColumnWidth;
+        const rightEdge = containerRect.right;
+        const mouseFromRight = rightEdge - e.clientX;
+        const newRightPercent = Math.max(30, Math.min(70, (mouseFromRight / remainingWidth) * 100));
+        setRightColumnWidth(100 - newRightPercent);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(null);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, leftColumnWidth]);
+
   return (
     <>
       <div
@@ -1163,104 +1218,89 @@ Request: ${inputValue}`;
         <TopBar
           playerState={playerState}
           onLoadPreset={setCode}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
           currentTrackName={currentTrackName}
           onOpenTracks={() => setShowTrackBrowser(true)}
-          onOpenHistory={currentTrackId ? () => setShowRevisionHistory(true) : undefined}
-          hasRevisions={revisions.length > 0}
           hasUnsavedChanges={hasUnsavedChanges}
+        />
+
+        {/* Actions Bar */}
+        <ActionsBar
           onUndo={handleUndo}
           onRedo={handleRedo}
           canUndo={canUndo}
           canRedo={canRedo}
+          onSave={handleSave}
+          onSaveAs={() => setShowSaveAsModal(true)}
+          hasUnsavedChanges={hasUnsavedChanges}
+          saving={saving || autoSaving}
+          onExport={() => setShowExportModal(true)}
+          onShare={() => setShowShareDialog(true)}
+          canShare={!!currentTrackId}
+          onRevert={() => setCode(DEFAULT_CODE)}
+          onCopy={() => {
+            navigator.clipboard.writeText(code);
+            showToast("Code copied to clipboard", "success");
+          }}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          onOpenHistory={currentTrackId ? () => setShowRevisionHistory(true) : undefined}
+          hasRevisions={revisions.length > 0}
         />
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative z-10">
-          {/* Desktop Layout: Split View */}
-          <div className="hidden md:flex flex-1">
-            {/* Left Panel - Chat */}
-            <div className="w-1/2 flex flex-col border-r border-cyan-950/50 backdrop-blur-sm">
-              {!hasKey && !apiKeyLoading ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <ApiKeyPrompt onAddKey={() => setShowApiKeyModal(true)} />
+          {/* Desktop Layout: Three Column */}
+          <div ref={containerRef} className={`hidden md:flex flex-1 ${isResizing ? "select-none" : ""}`}>
+            {/* Left Sidebar - Tweaks, Layers, Bars */}
+            <div
+              className="flex flex-col border-r border-cyan-950/50 backdrop-blur-sm bg-slate-900/30 shrink-0"
+              style={{ width: leftColumnWidth }}
+            >
+              <div className="p-3 flex-1 flex flex-col gap-3 min-h-0 overflow-hidden">
+                {/* Timeline Section - Collapsible */}
+                <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm overflow-hidden shrink-0">
+                  <button
+                    onClick={() => setTimelineExpanded(!timelineExpanded)}
+                    className="w-full px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50 hover:bg-slate-900/70 transition-colors flex items-center justify-between gap-2"
+                  >
+                    <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
+                      Timeline
+                    </div>
+                    <svg
+                      className={`w-3 h-3 text-cyan-400 transition-transform ${timelineExpanded ? "rotate-180" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {timelineExpanded && (
+                    <div className="p-3">
+                      <TimelineBar barsPerRow={8} totalRows={4} compact />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <ChatPanel
-                  messages={messages}
-                  inputValue={inputValue}
-                  onInputChange={setInputValue}
-                  onSubmit={handleSubmit}
-                  isLoading={isLoading}
-                  statusMessage={chatStatusMessage}
-                />
-              )}
-            </div>
 
-            {/* Right Panel - Code & Controls */}
-            <div className="w-1/2 flex flex-col backdrop-blur-sm">
-              <div className="flex-1 min-h-0">
-                <CodePanel
-                  code={code}
-                  onChange={handleCodeChange}
-                  validationErrors={validationErrors}
-                  defaultCode={DEFAULT_CODE}
-                  liveMode={liveMode}
-                  onLiveModeChange={setLiveMode}
-                  actionSlot={
-                    <SaveButton
-                      onSave={handleSave}
-                      onSaveAs={() => setShowSaveAsModal(true)}
-                      disabled={!hasKey}
-                      hasUnsavedChanges={hasUnsavedChanges}
-                      saving={saving || autoSaving}
-                      autoSaveEnabled={autoSaveEnabled}
-                      onAutoSaveToggle={setAutoSaveEnabled}
-                      lastSaved={lastSaved}
-                    />
-                  }
-                />
-              </div>
+                {/* Tweaks Section */}
+                <div className="shrink-0">
+                  <TweaksPanel tweaks={tweaks} onTweaksChange={handleTweaksChange} />
+                </div>
 
-              {/* Controls & Console */}
-              <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50 space-y-4">
-                <PlayerControls
-                  playerState={playerState}
-                  audioLoaded={audioLoaded}
-                  onPlay={() => playCode(combineLayers(layers))}
-                  onStop={stop}
-                  recordButton={
-                    <RecordButton
-                      isRecording={isRecording}
-                      onStartRecording={handleStartRecording}
-                      onStopRecording={handleStopRecording}
-                      elapsedMs={recordingElapsedMs}
-                      disabled={playerState !== "playing" && !isRecording}
-                      disabledReason="Start playback to record"
-                    />
-                  }
-                  shareButton={
-                    <ShareButton
-                      disabled={!currentTrackId}
-                      onClick={() => setShowShareDialog(true)}
-                    />
-                  }
-                  exportButton={
-                    <ExportButton
-                      code={code}
-                      trackName={currentTrackName ?? undefined}
-                      onExportAudio={() => setShowExportModal(true)}
-                      onToast={showToast}
-                    />
-                  }
-                />
-
-                <TweaksPanel tweaks={tweaks} onTweaksChange={handleTweaksChange} />
+                {/* Layers Section - grows to fill available space */}
+                <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-cyan-500/30">
+                  <LayersPanel
+                    layers={layers}
+                    selectedLayerId={selectedLayerId}
+                    isPlaying={playerState === "playing"}
+                    onLayersChange={handleLayersChange}
+                    onSelectLayer={handleSelectLayer}
+                  />
+                </div>
 
                 {/* Recording Timeline - shows when there's an active recording */}
                 {activeRecording && (
-                  <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm p-3">
+                  <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm p-3 shrink-0">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
                         Recording: {activeRecording.name || "Untitled"}
@@ -1347,27 +1387,106 @@ Request: ${inputValue}`;
 
                 {/* Recording Panel - shows saved recordings for current track */}
                 {recordings.length > 0 && (
-                  <RecordingPanel
-                    recordings={recordings}
-                    activeRecording={activeRecording}
-                    loading={recordingsLoading}
-                    onLoadRecording={handleLoadRecording}
-                    onDeleteRecording={handleDeleteRecording}
-                    onRenameRecording={handleRenameRecording}
-                  />
+                  <div className="shrink-0">
+                    <RecordingPanel
+                      recordings={recordings}
+                      activeRecording={activeRecording}
+                      loading={recordingsLoading}
+                      onLoadRecording={handleLoadRecording}
+                      onDeleteRecording={handleDeleteRecording}
+                      onRenameRecording={handleRenameRecording}
+                    />
+                  </div>
                 )}
 
-                <LayersPanel
-                  layers={layers}
-                  selectedLayerId={selectedLayerId}
-                  isPlaying={playerState === "playing"}
-                  onLayersChange={handleLayersChange}
-                  onSelectLayer={handleSelectLayer}
-                />
-
-                <ConsolePanel events={runtimeEvents} error={error} />
+                {/* Console Panel */}
+                <div className="shrink-0">
+                  <ConsolePanel events={runtimeEvents} error={error} />
+                </div>
               </div>
             </div>
+
+            {/* Left Resize Handle */}
+            <div
+              onMouseDown={handleResizeMouseDown("left")}
+              className="w-1 hover:w-1.5 bg-transparent hover:bg-cyan-500/50 cursor-col-resize transition-all shrink-0 group"
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-0.5 h-8 bg-cyan-500/30 group-hover:bg-cyan-500/70 rounded-full transition-colors" />
+              </div>
+            </div>
+
+            {/* Main Content Area - Chat & Code */}
+            <div className="flex-1 flex min-w-0">
+              {/* Middle Panel - Chat */}
+              <div
+                className="flex flex-col border-r border-cyan-950/50 backdrop-blur-sm min-w-0"
+                style={{ width: `${rightColumnWidth}%` }}
+              >
+                {!hasKey && !apiKeyLoading ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <ApiKeyPrompt onAddKey={() => setShowApiKeyModal(true)} />
+                  </div>
+                ) : (
+                  <ChatPanel
+                    messages={messages}
+                    inputValue={inputValue}
+                    onInputChange={setInputValue}
+                    onSubmit={handleSubmit}
+                    isLoading={isLoading}
+                    statusMessage={chatStatusMessage}
+                  />
+                )}
+              </div>
+
+              {/* Right Resize Handle */}
+              <div
+                onMouseDown={handleResizeMouseDown("right")}
+                className="w-1 hover:w-1.5 bg-transparent hover:bg-cyan-500/50 cursor-col-resize transition-all shrink-0 group"
+              >
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-0.5 h-8 bg-cyan-500/30 group-hover:bg-cyan-500/70 rounded-full transition-colors" />
+                </div>
+              </div>
+
+              {/* Right Panel - Code & Player Controls */}
+              <div
+                className="flex flex-col backdrop-blur-sm min-w-0"
+                style={{ width: `${100 - rightColumnWidth}%` }}
+              >
+              <div className="flex-1 min-h-0">
+                <CodePanel
+                  code={code}
+                  onChange={handleCodeChange}
+                  validationErrors={validationErrors}
+                  defaultCode={DEFAULT_CODE}
+                  liveMode={liveMode}
+                  onLiveModeChange={setLiveMode}
+                />
+              </div>
+
+              {/* Player Controls */}
+              <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
+                <PlayerControls
+                  playerState={playerState}
+                  audioLoaded={audioLoaded}
+                  onPlay={() => playCode(combineLayers(layers))}
+                  onStop={stop}
+                  hideTimeline
+                  recordButton={
+                    <RecordButton
+                      isRecording={isRecording}
+                      onStartRecording={handleStartRecording}
+                      onStopRecording={handleStopRecording}
+                      elapsedMs={recordingElapsedMs}
+                      disabled={playerState !== "playing" && !isRecording}
+                      disabledReason="Start playback to record"
+                    />
+                  }
+                />
+              </div>
+            </div>
+            </div>{/* End Main Content Area */}
           </div>
 
           {/* Mobile Layout: Tabbed */}
@@ -1389,6 +1508,12 @@ Request: ${inputValue}`;
               liveMode={liveMode}
               onLiveModeChange={setLiveMode}
               chatStatusMessage={chatStatusMessage}
+              tweaks={tweaks}
+              onTweaksChange={handleTweaksChange}
+              layers={layers}
+              selectedLayerId={selectedLayerId}
+              onLayersChange={handleLayersChange}
+              onSelectLayer={handleSelectLayer}
             />
           </div>
         </div>
@@ -1513,6 +1638,13 @@ interface MobileTabsProps {
   liveMode: boolean;
   onLiveModeChange: (enabled: boolean) => void;
   chatStatusMessage: string;
+  // Controls tab props
+  tweaks: TweaksConfig;
+  onTweaksChange: (tweaks: TweaksConfig, saveToHistory?: boolean) => void;
+  layers: AudioLayer[];
+  selectedLayerId: string | null;
+  onLayersChange: (layers: AudioLayer[]) => void;
+  onSelectLayer: (layerId: string | null) => void;
 }
 
 function MobileTabs({
@@ -1532,9 +1664,14 @@ function MobileTabs({
   liveMode,
   onLiveModeChange,
   chatStatusMessage,
+  tweaks,
+  onTweaksChange,
+  layers,
+  selectedLayerId,
+  onLayersChange,
+  onSelectLayer,
 }: MobileTabsProps) {
-  const [activeTab, setActiveTab] = useState<"chat" | "code">("chat");
-  const [showSequencer, setShowSequencer] = useState(true);
+  const [activeTab, setActiveTab] = useState<"chat" | "controls" | "code">("chat");
   const isPlaying = playerState === "playing";
   const canPlay = audioLoaded && playerState !== "loading" && playerState !== "error";
 
@@ -1551,6 +1688,16 @@ function MobileTabs({
           }`}
         >
           Chat
+        </button>
+        <button
+          onClick={() => setActiveTab("controls")}
+          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+            activeTab === "controls"
+              ? "text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10"
+              : "text-slate-400 active:text-cyan-300"
+          }`}
+        >
+          Controls
         </button>
         <button
           onClick={() => setActiveTab("code")}
@@ -1577,14 +1724,32 @@ function MobileTabs({
           />
         )}
 
+        {activeTab === "controls" && (
+          <div className="flex flex-col h-full p-3 gap-3 overflow-y-auto">
+            {/* Timeline */}
+            <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm p-3">
+              <div className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider mb-2">
+                Timeline
+              </div>
+              <TimelineBar barsPerRow={8} totalRows={4} compact />
+            </div>
+
+            {/* Tweaks */}
+            <TweaksPanel tweaks={tweaks} onTweaksChange={onTweaksChange} />
+
+            {/* Layers */}
+            <LayersPanel
+              layers={layers}
+              selectedLayerId={selectedLayerId}
+              isPlaying={isPlaying}
+              onLayersChange={onLayersChange}
+              onSelectLayer={onSelectLayer}
+            />
+          </div>
+        )}
+
         {activeTab === "code" && (
           <div className="flex flex-col h-full">
-            {/* Toggleable Sequencer */}
-            {showSequencer && (
-              <div className="px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50">
-                <TimelineBar barsPerRow={8} totalRows={4} />
-              </div>
-            )}
             <div className="flex-1 min-h-0">
               <CodePanel
                 code={code}
@@ -1593,9 +1758,6 @@ function MobileTabs({
                 defaultCode={defaultCode}
                 liveMode={liveMode}
                 onLiveModeChange={onLiveModeChange}
-                showSequencerToggle
-                sequencerVisible={showSequencer}
-                onSequencerToggle={() => setShowSequencer(!showSequencer)}
               />
             </div>
           </div>

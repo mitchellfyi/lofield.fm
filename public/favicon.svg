@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="6" fill="#0f172a"/>
+  <g stroke="#22d3ee" stroke-width="2" stroke-linecap="round">
+    <!-- Waveform bars representing audio/music -->
+    <line x1="6" y1="20" x2="6" y2="12"/>
+    <line x1="10" y1="22" x2="10" y2="10"/>
+    <line x1="14" y1="24" x2="14" y2="8"/>
+    <line x1="18" y1="22" x2="18" y2="10"/>
+    <line x1="22" y1="20" x2="22" y2="12"/>
+    <line x1="26" y1="18" x2="26" y2="14"/>
+  </g>
+</svg>

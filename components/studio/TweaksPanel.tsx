@@ -1,23 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { TweakSlider } from "./TweakSlider";
 import { type TweaksConfig, DEFAULT_TWEAKS, TWEAK_PARAMS } from "@/lib/types/tweaks";
 
 interface TweaksPanelProps {
   tweaks: TweaksConfig;
-  onTweaksChange: (tweaks: TweaksConfig) => void;
+  onTweaksChange: (tweaks: TweaksConfig, saveToHistory?: boolean) => void;
 }
 
 export function TweaksPanel({ tweaks, onTweaksChange }: TweaksPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  // Track the value at drag start for history
+  const dragStartValueRef = useRef<{ key: keyof TweaksConfig; value: number } | null>(null);
 
   const handleChange = (key: keyof TweaksConfig, value: number) => {
-    onTweaksChange({ ...tweaks, [key]: value });
+    // Record the original value when starting to drag
+    if (!dragStartValueRef.current) {
+      dragStartValueRef.current = { key, value: tweaks[key] };
+    }
+    // Apply change without saving to history (live update only)
+    onTweaksChange({ ...tweaks, [key]: value }, false);
+  };
+
+  const handleChangeEnd = (key: keyof TweaksConfig) => {
+    // Save to history when drag ends (only if value actually changed)
+    if (dragStartValueRef.current && dragStartValueRef.current.key === key) {
+      if (dragStartValueRef.current.value !== tweaks[key]) {
+        onTweaksChange(tweaks, true);
+      }
+      dragStartValueRef.current = null;
+    }
   };
 
   const handleReset = () => {
-    onTweaksChange(DEFAULT_TWEAKS);
+    onTweaksChange(DEFAULT_TWEAKS, true);
   };
 
   return (
@@ -51,6 +68,7 @@ export function TweaksPanel({ tweaks, onTweaksChange }: TweaksPanelProps) {
               step={param.step}
               unit={param.unit}
               onChange={(value) => handleChange(param.key, value)}
+              onChangeEnd={() => handleChangeEnd(param.key)}
             />
           ))}
 

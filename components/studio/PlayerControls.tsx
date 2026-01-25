@@ -11,6 +11,7 @@ interface PlayerControlsProps {
   exportButton?: React.ReactNode;
   shareButton?: React.ReactNode;
   recordButton?: React.ReactNode;
+  hideTimeline?: boolean;
 }
 
 export function PlayerControls({
@@ -21,6 +22,7 @@ export function PlayerControls({
   exportButton,
   shareButton,
   recordButton,
+  hideTimeline = false,
 }: PlayerControlsProps) {
   const isLoading = playerState === "loading";
   const canPlay = audioLoaded && !isLoading && playerState !== "error";
@@ -96,7 +98,7 @@ export function PlayerControls({
       </div>
 
       {/* Timeline Visualization */}
-      <TimelineBar />
+      {!hideTimeline && <TimelineBar />}
     </div>
   );
 }

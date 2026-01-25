@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import CodeMirror, { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { EditorView } from "@codemirror/view";
@@ -116,7 +116,7 @@ export function CodePanel({
   code,
   onChange,
   validationErrors,
-  defaultCode,
+  defaultCode: _defaultCode,
   liveMode = true,
   onLiveModeChange,
   showSequencerToggle,
@@ -124,7 +124,6 @@ export function CodePanel({
   onSequencerToggle,
   actionSlot,
 }: CodePanelProps) {
-  const [copied, setCopied] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const activeLines = useActiveLines();
 
@@ -137,16 +136,6 @@ export function CodePanel({
       });
     }
   }, [activeLines]);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleRevert = () => {
-    onChange(defaultCode);
-  };
 
   return (
     <div className="flex flex-col h-full">
@@ -200,18 +189,6 @@ export function CodePanel({
               </svg>
             </button>
           )}
-          <button
-            onClick={handleRevert}
-            className="min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-3 sm:py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
-          >
-            Revert
-          </button>
-          <button
-            onClick={handleCopy}
-            className="min-h-[44px] sm:min-h-0 px-3 py-2 sm:px-3 sm:py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
-          >
-            {copied ? "Copied!" : "Copy"}
-          </button>
         </div>
       </div>
 

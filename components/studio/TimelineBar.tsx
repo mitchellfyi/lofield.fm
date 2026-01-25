@@ -6,9 +6,14 @@ import { getAudioRuntime } from "@/lib/audio/runtime";
 interface TimelineBarProps {
   barsPerRow?: number;
   totalRows?: number;
+  compact?: boolean;
 }
 
-export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps) {
+export function TimelineBar({
+  barsPerRow = 8,
+  totalRows = 4,
+  compact = false,
+}: TimelineBarProps) {
   const transport = useTransportState();
   const totalBars = barsPerRow * totalRows;
 
@@ -31,37 +36,49 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
   const sectionLabels = ["A", "B", "C", "D"];
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={`flex flex-col ${compact ? "gap-1" : "gap-1.5"}`}>
       {/* Header: BPM and Position */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
+            <span
+              className={`font-semibold text-cyan-400 uppercase tracking-wider ${compact ? "text-[8px]" : "text-[9px] sm:text-[10px]"}`}
+            >
               BPM
             </span>
-            <span className="text-xs sm:text-sm font-mono text-white tabular-nums">
+            <span
+              className={`font-mono text-white tabular-nums ${compact ? "text-[10px]" : "text-xs sm:text-sm"}`}
+            >
               {transport.bpm}
             </span>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-              Loop
-            </span>
-            <span className="text-xs font-mono text-slate-400 tabular-nums">{totalBars} bars</span>
-          </div>
+          {!compact && (
+            <div className="hidden sm:flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                Loop
+              </span>
+              <span className="text-xs font-mono text-slate-400 tabular-nums">
+                {totalBars} bars
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <span className="text-[9px] sm:text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">
+          <span
+            className={`font-semibold text-cyan-400 uppercase tracking-wider ${compact ? "text-[8px]" : "text-[9px] sm:text-[10px]"}`}
+          >
             BAR
           </span>
-          <span className="text-xs sm:text-sm font-mono text-white tabular-nums">
+          <span
+            className={`font-mono text-white tabular-nums ${compact ? "text-[10px]" : "text-xs sm:text-sm"}`}
+          >
             {transport.bar}/{totalBars}
           </span>
         </div>
       </div>
 
       {/* 4 rows x 8 bars grid */}
-      <div className="flex flex-col gap-0.5 sm:gap-0.5">
+      <div className={`flex flex-col ${compact ? "gap-0.5" : "gap-0.5 sm:gap-0.5"}`}>
         {Array.from({ length: totalRows }).map((_, rowIdx) => {
           const isCurrentRow = transport.playing && rowIdx === currentRow;
           const isPastRow = transport.playing && rowIdx < currentRow;
@@ -71,7 +88,8 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
               {/* Section label */}
               <div
                 className={`
-                  w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center rounded text-[10px] font-bold
+                  flex items-center justify-center rounded font-bold
+                  ${compact ? "w-4 h-4 text-[8px]" : "w-6 h-6 sm:w-5 sm:h-5 text-[10px]"}
                   ${isCurrentRow ? "bg-cyan-500 text-white" : isPastRow ? "bg-slate-700 text-slate-400" : "bg-slate-800 text-slate-500"}
                   transition-colors duration-150
                 `}
@@ -80,7 +98,9 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
               </div>
 
               {/* Bar grid for this row */}
-              <div className="flex-1 relative h-6 sm:h-5 rounded bg-slate-900/80 border border-cyan-500/20 overflow-hidden">
+              <div
+                className={`flex-1 relative rounded bg-slate-900/80 border border-cyan-500/20 overflow-hidden ${compact ? "h-4" : "h-6 sm:h-5"}`}
+              >
                 <div className="absolute inset-0 flex">
                   {Array.from({ length: barsPerRow }).map((_, barIdx) => {
                     const absoluteBar = rowIdx * barsPerRow + barIdx;
@@ -101,7 +121,8 @@ export function TimelineBar({ barsPerRow = 8, totalRows = 4 }: TimelineBarProps)
                       >
                         <span
                           className={`
-                            text-[8px] sm:text-[9px] font-mono pointer-events-none select-none
+                            font-mono pointer-events-none select-none
+                            ${compact ? "text-[6px]" : "text-[8px] sm:text-[9px]"}
                             ${isCurrentBarCell ? "text-cyan-300 font-bold" : isPastBar ? "text-slate-600" : "text-slate-500"}
                           `}
                         >
