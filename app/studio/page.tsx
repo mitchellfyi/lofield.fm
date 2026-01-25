@@ -362,7 +362,8 @@ function StudioContent() {
   const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [autoSaveEnabled, _setAutoSaveEnabled] = useState(false);
+  // Auto-save is currently disabled - can be enabled via user settings later
+  const autoSaveEnabled = false;
   const [showSaveAsModal, setShowSaveAsModal] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
   const [saving, setSaving] = useState(false);

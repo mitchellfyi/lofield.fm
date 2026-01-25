@@ -7,6 +7,16 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { generateShareToken, buildShareUrl } from "@/lib/share/token";
 import type { PrivacyLevel, PublicTrackData, SharedTrack } from "@/lib/types/share";
 
+// Type for the track query result with nested project
+interface TrackWithProject {
+  id: string;
+  name: string;
+  current_code: string;
+  created_at: string;
+  privacy: string;
+  project: { user_id: string } | null;
+}
+
 // ============================================================================
 // Public Access (No Auth Required)
 // ============================================================================
@@ -49,12 +59,12 @@ export async function getSharedTrack(token: string): Promise<PublicTrackData | n
 
   // Get the author's display name from profiles
   let authorName: string | null = null;
-  const projectData = trackData.project as unknown as { user_id: string } | null;
-  if (projectData?.user_id) {
+  const track = trackData as TrackWithProject;
+  if (track.project?.user_id) {
     const { data: profileData } = await supabase
       .from("profiles")
       .select("display_name")
-      .eq("id", projectData.user_id)
+      .eq("id", track.project.user_id)
       .single();
 
     authorName = profileData?.display_name ?? null;

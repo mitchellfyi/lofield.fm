@@ -42,7 +42,6 @@ function createMockQueryBuilder(_tableName: string, store: Map<string, Record<st
   let pendingInsert: Record<string, unknown> | Record<string, unknown>[] | null = null;
   let pendingUpdate: Record<string, unknown> | null = null;
   let isDelete = false;
-  let _selectColumns: string | null = null; // Kept for potential future use
   let selectOptions: { count?: "exact"; head?: boolean } | null = null;
   const filters: Array<{
     column: string;
@@ -52,8 +51,8 @@ function createMockQueryBuilder(_tableName: string, store: Map<string, Record<st
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const builder: any = {
-    select: (columns?: string, options?: { count?: "exact"; head?: boolean }) => {
-      _selectColumns = columns || "*";
+    select: (_columns?: string, options?: { count?: "exact"; head?: boolean }) => {
+      // columns parameter is accepted for API compatibility but not used in mock
       selectOptions = options || null;
       return builder;
     },

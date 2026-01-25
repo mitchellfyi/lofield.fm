@@ -18,7 +18,8 @@ interface CodePanelProps {
   code: string;
   onChange: (code: string) => void;
   validationErrors: string[];
-  defaultCode: string;
+  /** @deprecated Currently unused - kept for API compatibility */
+  defaultCode?: string;
   liveMode?: boolean;
   onLiveModeChange?: (enabled: boolean) => void;
   // Mobile-only props for sequencer toggle
@@ -116,7 +117,6 @@ export function CodePanel({
   code,
   onChange,
   validationErrors,
-  defaultCode: _defaultCode,
   liveMode = true,
   onLiveModeChange,
   showSequencerToggle,

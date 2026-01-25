@@ -3,44 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ProjectWithTrackCount } from "@/lib/types/tracks";
 import { getCache, setCache } from "@/lib/storage/localCache";
+import { getFriendlyErrorMessage, extractStatusCode } from "@/lib/errors";
 
 const PROJECTS_CACHE_KEY = "projects";
 const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
-
-/**
- * Get a user-friendly error message based on error type
- */
-function getFriendlyErrorMessage(error: unknown, status?: number): string {
-  // Network errors
-  if (error instanceof TypeError && error.message.includes("fetch")) {
-    return "Unable to connect. Check your internet connection.";
-  }
-
-  // HTTP status-based messages
-  if (status) {
-    switch (status) {
-      case 401:
-        return "Please sign in to view your projects.";
-      case 403:
-        return "You don't have permission to view these projects.";
-      case 404:
-        return "Could not find your projects.";
-      case 500:
-      case 502:
-      case 503:
-        return "Server error. Please try again later.";
-      default:
-        if (status >= 400 && status < 500) {
-          return "There was a problem with your request.";
-        }
-        if (status >= 500) {
-          return "Server error. Please try again later.";
-        }
-    }
-  }
-
-  return "Unable to load projects. Please try again.";
-}
 
 export interface UseProjectsResult {
   projects: ProjectWithTrackCount[];
@@ -77,7 +43,7 @@ export function useProjects(): UseProjectsResult {
         if (cached && cached.length > 0) {
           setProjects(cached);
           setIsUsingCache(true);
-          setError(getFriendlyErrorMessage(null, res.status));
+          setError(getFriendlyErrorMessage(null, "projects", res.status));
           return;
         }
         throw { status: res.status };
@@ -97,13 +63,11 @@ export function useProjects(): UseProjectsResult {
       if (cached && cached.length > 0) {
         setProjects(cached);
         setIsUsingCache(true);
-        const status = (err as { status?: number })?.status;
-        setError(getFriendlyErrorMessage(err, status));
+        setError(getFriendlyErrorMessage(err, "projects", extractStatusCode(err)));
         return;
       }
 
-      const status = (err as { status?: number })?.status;
-      setError(getFriendlyErrorMessage(err, status));
+      setError(getFriendlyErrorMessage(err, "projects", extractStatusCode(err)));
       setProjects([]);
     } finally {
       setLoading(false);
