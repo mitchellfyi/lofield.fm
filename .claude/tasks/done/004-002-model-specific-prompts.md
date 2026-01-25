@@ -12,8 +12,8 @@
 | Completed   | `2026-01-25 20:50`               |
 | Blocked By  |                                  |
 | Blocks      |                                  |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                                  |
+| Assigned At |                                  |
 
 ---
 
@@ -50,19 +50,20 @@ Different models may benefit from different system prompts or prompt variations.
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Research if different models need different prompts | not done | Need to document findings - likely all GPT-4 models work well with same prompt |
-| Add optional `systemPromptVariation` field to AIModel interface | not done | Need to add field to `lib/models.ts` AIModel interface |
-| Update prompt loader to apply model-specific variations | not done | Need to modify `lib/prompts/loader.ts` to accept model and apply variations |
-| Ensure backward compatibility (no variation = default prompt) | not done | Design ensures this - undefined variation = use default prompt |
-| Tests written and passing | not done | Need to create `lib/prompts/__tests__/loader.test.ts` |
-| Quality gates pass | not done | Run `./bin/quality` after implementation |
-| Changes committed with task reference | not done | Final step after all above pass |
+| Criterion                                                       | Status   | Gap                                                                            |
+| --------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| Research if different models need different prompts             | not done | Need to document findings - likely all GPT-4 models work well with same prompt |
+| Add optional `systemPromptVariation` field to AIModel interface | not done | Need to add field to `lib/models.ts` AIModel interface                         |
+| Update prompt loader to apply model-specific variations         | not done | Need to modify `lib/prompts/loader.ts` to accept model and apply variations    |
+| Ensure backward compatibility (no variation = default prompt)   | not done | Design ensures this - undefined variation = use default prompt                 |
+| Tests written and passing                                       | not done | Need to create `lib/prompts/__tests__/loader.test.ts`                          |
+| Quality gates pass                                              | not done | Run `./bin/quality` after implementation                                       |
+| Changes committed with task reference                           | not done | Final step after all above pass                                                |
 
 #### Research Findings (Pre-Implementation Notes)
 
 All three models (gpt-4o-mini, gpt-4o, gpt-4-turbo) are GPT-4 class OpenAI models that:
+
 - Support the same system prompt format
 - Have similar instruction-following capabilities
 - Share the same token limits for system prompts (~8K tokens is safe)
@@ -70,6 +71,7 @@ All three models (gpt-4o-mini, gpt-4o, gpt-4-turbo) are GPT-4 class OpenAI model
 Current system prompt (`prompts/system-prompt.md`) is 249 lines, well within limits for all models.
 
 **Recommendation**: The current prompt works for all models. The variation system should be designed for:
+
 1. Future flexibility (e.g., if we add Claude, Gemini, or local models)
 2. Potential per-model optimizations (e.g., gpt-4o-mini might benefit from shorter prompts for cost)
 
@@ -190,10 +192,12 @@ Current system prompt (`prompts/system-prompt.md`) is 249 lines, well within lim
 ### 2026-01-25 20:50 - Review Complete
 
 Code review:
+
 - Issues found: none
 - Issues fixed: n/a
 
 Consistency:
+
 - All criteria met: yes
 - Test coverage adequate: yes (21 tests covering all loader functions)
 - Docs in sync: yes
@@ -201,6 +205,7 @@ Consistency:
 Follow-up tasks created: none (implementation is complete and self-contained)
 
 Final quality gate:
+
 - ESLint: 0 errors (2 pre-existing warnings in unrelated files)
 - TypeScript: pass
 - Prettier: pass (code files clean, only task markdown files flagged)
@@ -215,6 +220,7 @@ Status field: matches (done)
 Acceptance criteria: 7/7 checked
 
 Verification checklist:
+
 - [x] Task file in correct location (done/)
 - [x] Status field = "done"
 - [x] Started timestamp set (2026-01-25 20:38)
@@ -232,6 +238,7 @@ Verification checklist:
 Issues found: none
 
 Actions taken:
+
 - Task already in done/ with correct state
 - No corrections needed
 
@@ -240,18 +247,22 @@ Task verified: PASS
 ### 2026-01-25 20:47 - Documentation Sync
 
 Docs reviewed:
+
 - `README.md` - No changes needed (AI Model Selection section already covers user-facing features; model-specific prompts are internal implementation detail)
 - `IMPLEMENTATION_SUMMARY.md` - No changes needed (testing implementation doc, unrelated to this task)
 
 Annotations:
+
 - N/A (Next.js project, no Ruby model annotations)
 
 Consistency checks:
+
 - [x] Code matches docs - README AI Model Selection section remains accurate
 - [x] No broken links - All file references in task are valid
 - [x] TypeScript exports consistent - `loadSystemPromptForModel` exported and used correctly
 
 Documentation updates:
+
 - Updated task file Notes section with research findings
 - Updated task file Links section with complete list of modified/created files
 - No external documentation changes required (internal implementation detail per plan)

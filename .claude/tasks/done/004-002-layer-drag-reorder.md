@@ -12,8 +12,8 @@
 | Completed   | `2026-01-25 20:36`           |
 | Blocked By  |                              |
 | Blocks      |                              |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                              |
+| Assigned At |                              |
 
 ---
 
@@ -42,18 +42,21 @@ Users should be able to drag layers to reorder them in the LayersPanel. This is 
 ### Implementation Plan (Generated 2026-01-25 20:30)
 
 #### Gap Analysis
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Layers can be dragged to reorder in the LayersPanel | **no** | No drag-drop functionality exists - need to add from scratch |
-| Visual feedback during drag (drop indicator, ghost element) | **no** | Needs drag styling, drop indicators, and ghost/preview element |
-| Order persists after drag completes | **no** | Need to call `onLayersChange` with reordered array |
-| Order affects playback order (layers combine in displayed order) | **yes** | `combineLayers()` in `lib/audio/layerCombiner.ts` already processes layers in array order - playback order = display order |
-| Keyboard accessibility for reordering (optional) | **no** | Not implemented but marked optional |
-| Tests for drag reorder functionality | **no** | Need to add new test cases |
-| Quality gates pass | **pending** | Will verify after implementation |
+
+| Criterion                                                        | Status      | Gap                                                                                                                        |
+| ---------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Layers can be dragged to reorder in the LayersPanel              | **no**      | No drag-drop functionality exists - need to add from scratch                                                               |
+| Visual feedback during drag (drop indicator, ghost element)      | **no**      | Needs drag styling, drop indicators, and ghost/preview element                                                             |
+| Order persists after drag completes                              | **no**      | Need to call `onLayersChange` with reordered array                                                                         |
+| Order affects playback order (layers combine in displayed order) | **yes**     | `combineLayers()` in `lib/audio/layerCombiner.ts` already processes layers in array order - playback order = display order |
+| Keyboard accessibility for reordering (optional)                 | **no**      | Not implemented but marked optional                                                                                        |
+| Tests for drag reorder functionality                             | **no**      | Need to add new test cases                                                                                                 |
+| Quality gates pass                                               | **pending** | Will verify after implementation                                                                                           |
 
 #### Library Selection: @dnd-kit/core
+
 Rationale (per task notes):
+
 - More modern than react-beautiful-dnd (which is deprecated and no longer maintained)
 - Built-in accessibility support (keyboard navigation, screen readers)
 - Tree-shakeable - only imports what we need
@@ -98,6 +101,7 @@ Rationale (per task notes):
    - Test: sortable attributes are applied
 
 #### Implementation Order
+
 1. Install @dnd-kit packages (package.json)
 2. Update LayerRow to be sortable (add useSortable hook and visual feedback)
 3. Update LayersPanel to provide drag context (DndContext + SortableContext + handleDragEnd)
@@ -105,6 +109,7 @@ Rationale (per task notes):
 5. Run quality gates to verify
 
 #### CSS Styling Plan
+
 ```css
 /* When dragging an item */
 .layer-row--dragging {
@@ -121,12 +126,14 @@ Rationale (per task notes):
 ```
 
 #### Accessibility Considerations
+
 - Keyboard support: Arrow keys to navigate, Space/Enter to pick up/drop
 - Screen reader announcements: "Grabbed item", "Moved to position X", "Dropped"
 - Focus management: Return focus to moved item after drop
 - @dnd-kit provides most of this out of the box
 
 #### Test Plan
+
 - [ ] Unit: `handleDragEnd` correctly reorders layers array
 - [ ] Unit: Moving first to last position preserves all other items
 - [ ] Unit: Moving last to first position preserves all other items
@@ -135,6 +142,7 @@ Rationale (per task notes):
 - [ ] Integration: Full drag reorder updates combined code for playback
 
 #### Docs to Update
+
 - None required (internal UI feature, no public API changes)
 
 ---
@@ -148,10 +156,12 @@ Status field: matches (done)
 Acceptance criteria: 7/7 checked
 
 Issues found:
+
 - TASKBOARD.md was stale (not regenerated after task completion)
 - Fixed by manually updating TASKBOARD.md
 
 Actions taken:
+
 - Verified task file is in done/ with correct status
 - Updated TASKBOARD.md to reflect completed task
 - Committed task file changes to git
@@ -163,6 +173,7 @@ Task verified: PASS
 ### 2026-01-25 20:36 - Review Complete
 
 **Code review:**
+
 - Issues found: none
 - Code follows project conventions (TypeScript, React hooks, Tailwind CSS)
 - No code smells or anti-patterns
@@ -172,17 +183,20 @@ Task verified: PASS
 - Clean accessibility implementation (keyboard navigation)
 
 **Consistency:**
+
 - All criteria met: yes
 - Test coverage adequate: yes (47 new tests for drag reorder)
 - Docs in sync: yes (internal UI feature, no public docs to update)
 
 **Quality gates:**
+
 - ESLint: ✅ 0 errors, 2 unrelated warnings
 - TypeScript: ✅ No errors
 - Tests: ✅ 2089/2089 pass
 - Prettier: ✅ (warnings only in markdown task files)
 
 **Follow-up tasks created:**
+
 - None required - implementation is complete and clean
 
 **Final status:** COMPLETE
@@ -192,18 +206,22 @@ Task verified: PASS
 ### 2026-01-25 20:34 - Documentation Sync
 
 **Docs reviewed:**
+
 - README.md - No update needed (internal UI feature, no user-facing changes)
 - No docs/ directory exists in this project
 
 **Model annotations:**
+
 - N/A - This is a Next.js/TypeScript project, not Rails
 
 **Consistency checks:**
+
 - [x] Code matches docs - feature is internal, no doc references to update
 - [x] No broken links - all file paths in Links section verified
 - [x] Schema annotations current - N/A (no Rails models)
 
 **Links verified:**
+
 - Parent task 003-007-multi-track-support.md exists in done/
 - components/studio/LayersPanel.tsx exists
 - components/studio/LayerRow.tsx exists
@@ -213,10 +231,12 @@ Task verified: PASS
 ### 2026-01-25 20:33 - Testing Complete
 
 **Tests written:**
+
 - `components/studio/__tests__/LayersPanel.test.ts` - 20 new tests
 - `components/studio/__tests__/LayerRow.test.ts` - 27 new tests
 
 **Test coverage areas:**
+
 - arrayMove utility (move, preserve, immutability)
 - handleDragEnd logic (first-to-last, last-to-first, middle moves)
 - Edge cases (same position, dropped outside, invalid IDs)
@@ -231,10 +251,12 @@ Task verified: PASS
 - Layer ID uniqueness
 
 **Test results:**
+
 - Total: 2089 examples, 0 failures
 - Coverage: Logic-only tests (no component rendering, per project pattern)
 
 **Quality gates:**
+
 - ESLint: ✅ Pass (2 unrelated warnings)
 - TypeScript: ✅ Pass
 - Prettier: ✅ Pass (after formatting)
@@ -269,6 +291,7 @@ Task verified: PASS
    - Order persists through onLayersChange callback
 
 **Quality Checks:**
+
 - ESLint: ✅ Pass
 - TypeScript: ✅ Pass
 - All 2048 tests: ✅ Pass
@@ -278,16 +301,19 @@ Task verified: PASS
 ### 2026-01-25 20:30 - Planning Complete
 
 **Gap Analysis Findings:**
+
 - No drag-drop functionality exists - must be built from scratch
 - Key insight: `combineLayers()` in `lib/audio/layerCombiner.ts` already processes layers in array order, so playback order matches display order automatically - no additional work needed there
 - Existing tests are logic-only (no component rendering) - will follow same pattern
 
 **Library Decision:** @dnd-kit/core (not react-beautiful-dnd)
+
 - react-beautiful-dnd is deprecated and unmaintained
 - @dnd-kit is modern, accessible, and works with React 19
 - Packages needed: @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
 
 **Files identified for modification:**
+
 1. package.json - add dependencies
 2. LayersPanel.tsx - wrap in DndContext, add handleDragEnd
 3. LayerRow.tsx - use useSortable hook, add drag handle and visual feedback
@@ -330,6 +356,7 @@ $ npm run format:check
 ```
 
 **New tests added (47 total):**
+
 - LayersPanel.test.ts: 20 tests in "drag to reorder behavior" describe block
 - LayerRow.test.ts: 27 tests in "drag and drop behavior" describe block
 

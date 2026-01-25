@@ -12,8 +12,8 @@
 | Completed   | `2026-01-25 20:25`             |
 | Blocked By  | `003-011-record-mode`          |
 | Blocks      |                                |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                                |
+| Assigned At |                                |
 
 ---
 
@@ -45,17 +45,17 @@ This would enable users to fine-tune their recordings without having to re-recor
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Click on event in RecordingTimeline to select it | ✅ Complete | Already implemented (lines 110-114 `handleEventClick`) |
-| Show value editor (slider or input) for selected event | ❌ Missing | Need to add value editor UI in selected event details panel |
-| Support numeric values (BPM, filter, reverb, delay, volume) | ❌ Missing | Need slider for numeric events; reuse `TweakSlider` pattern |
-| Support boolean values (mute, solo) | ❌ Missing | Need toggle button for boolean events |
-| Update recording events in real-time | ❌ Missing | Need local state update + `onUpdateEvent` callback |
-| Save changes to database | ❌ Missing | Need to wire up `updateRecordingApi` in parent |
-| Tests for value editing | ❌ Missing | Need to add tests for new functionality |
-| Quality gates pass | ⏳ Pending | Run after implementation |
-| Changes committed with task reference | ⏳ Pending | After completion |
+| Criterion                                                   | Status      | Gap                                                         |
+| ----------------------------------------------------------- | ----------- | ----------------------------------------------------------- |
+| Click on event in RecordingTimeline to select it            | ✅ Complete | Already implemented (lines 110-114 `handleEventClick`)      |
+| Show value editor (slider or input) for selected event      | ❌ Missing  | Need to add value editor UI in selected event details panel |
+| Support numeric values (BPM, filter, reverb, delay, volume) | ❌ Missing  | Need slider for numeric events; reuse `TweakSlider` pattern |
+| Support boolean values (mute, solo)                         | ❌ Missing  | Need toggle button for boolean events                       |
+| Update recording events in real-time                        | ❌ Missing  | Need local state update + `onUpdateEvent` callback          |
+| Save changes to database                                    | ❌ Missing  | Need to wire up `updateRecordingApi` in parent              |
+| Tests for value editing                                     | ❌ Missing  | Need to add tests for new functionality                     |
+| Quality gates pass                                          | ⏳ Pending  | Run after implementation                                    |
+| Changes committed with task reference                       | ⏳ Pending  | After completion                                            |
 
 #### Files to Modify
 
@@ -93,28 +93,33 @@ None - all changes fit within existing files.
 **1. Value Editor UI (RecordingTimeline.tsx)**
 
 The selected event details panel currently shows:
+
 ```
 [color dot] [event label] [timestamp] [delete button]
 ```
 
 Change to:
+
 ```
 [color dot] [event label] [timestamp]
 [value editor: slider OR toggle] [delete button]
 ```
 
 For **numeric values** - use inline slider similar to TweakSlider:
+
 - Import slider styles from TweakSlider or use same pattern
 - Show current value label
 - On change: call `onUpdateEvent({ ...event, newValue: value })`
 
 For **boolean values** (mute, solo) - use toggle button:
+
 - Show "On/Off" toggle
 - On click: call `onUpdateEvent({ ...event, newValue: !event.newValue })`
 
 **2. Parent Integration (studio/page.tsx)**
 
 Add handler near line 1407:
+
 ```typescript
 onUpdateEvent={(updatedEvent) => {
   // Update local state
@@ -133,6 +138,7 @@ onUpdateEvent={(updatedEvent) => {
 **3. Value Config Reference**
 
 Use existing TWEAK_PARAMS from `lib/types/tweaks.ts` for tweak events:
+
 - bpm: 60-200, step 1
 - swing: 0-100, step 1
 - filter: 100-10000, step 100
@@ -140,6 +146,7 @@ Use existing TWEAK_PARAMS from `lib/types/tweaks.ts` for tweak events:
 - delay: 0-100, step 1
 
 For layer events:
+
 - layer_volume: 0-100 (percentage), step 1
 - layer_mute/layer_solo: boolean toggle
 
@@ -175,6 +182,7 @@ None required - this is internal UI functionality.
 - **Ready to proceed**: Yes
 
 **Notes from code review**:
+
 - `RecordingTimeline.tsx` already has `onSelectEvent` callback and displays selected event details
 - Current UI shows event info + delete button, but no value editor
 - Types support `newValue: number | boolean` - need different UI for each
@@ -194,6 +202,7 @@ None required - this is internal UI functionality.
 - Next: Testing phase
 
 **Implementation details**:
+
 - Added `onUpdateEvent?: (event: RecordingEvent) => void` prop to RecordingTimelineProps
 - Created `getEventValueConfig()` helper to return min/max/step/unit for each event type
 - Uses TWEAK_PARAMS from lib/types/tweaks.ts for tweak parameter ranges
@@ -209,9 +218,11 @@ None required - this is internal UI functionality.
 ### 2026-01-25 20:20 - Testing Complete
 
 Tests written:
+
 - `components/studio/__tests__/RecordingTimeline.test.ts` - 29 new tests added (72 total in file)
 
 New test suites added:
+
 - `onUpdateEvent prop` - 2 tests: callback acceptance, called with updated event
 - `getEventValueConfig` - 18 tests:
   - BPM tweak events: min/max/step/isBoolean (4 tests)
@@ -227,11 +238,13 @@ New test suites added:
 - `value editor visibility` - 3 tests: show when selected, hide when not selected/interactive
 
 Test results:
+
 - Total: 2048 examples, 0 failures (up from 2019)
 - New tests: 29 passed
 - Coverage: All value editing functionality covered
 
 Quality gates:
+
 - ESLint: pass (warnings are pre-existing, unrelated to this task)
 - TypeScript: pass
 - Prettier: pass (task .md files have pre-existing format issues)
@@ -240,6 +253,7 @@ Quality gates:
 ### 2026-01-25 20:25 - Review Complete
 
 Code review:
+
 - Issues found: none
 - Code follows project conventions (TypeScript, Tailwind, React patterns)
 - No security vulnerabilities (no user input injection risks)
@@ -248,11 +262,13 @@ Code review:
 - No orphaned code
 
 Consistency:
+
 - All criteria met: yes (9/9 checked)
 - Test coverage adequate: yes (29 new tests, 72 total in file)
 - Docs in sync: yes (inline code comments comprehensive)
 
 Follow-up tasks created: none needed
+
 - Implementation is clean and complete
 - No technical debt introduced
 
@@ -263,17 +279,21 @@ Final status: COMPLETE
 ### 2026-01-25 20:22 - Documentation Sync
 
 Docs updated:
+
 - None required - this is internal UI functionality (per plan)
 - Inline code comments already present and comprehensive
 
 Code documentation verified:
+
 - `components/studio/RecordingTimeline.tsx` - JSDoc on interfaces and helpers (`EventValueConfig`, `getEventValueConfig`)
 - `lib/types/recording.ts` - Full JSDoc coverage on all types and functions
 
 Annotations:
+
 - N/A (Node.js project, not Rails)
 
 Consistency checks:
+
 - [x] Code matches docs - README.md describes studio features at appropriate high level
 - [x] No broken links - verified markdown files in root
 - [x] Schema annotations current - N/A (no Rails models)
@@ -285,9 +305,11 @@ Status field: matches (done)
 Acceptance criteria: 9/9 checked
 
 Issues found:
+
 - none
 
 Actions taken:
+
 - Verified task file already in done/ with correct status
 - Confirmed all acceptance criteria implemented (code verified via grep)
 - Confirmed implementation commits exist (0b4fef9, 8dca49b)

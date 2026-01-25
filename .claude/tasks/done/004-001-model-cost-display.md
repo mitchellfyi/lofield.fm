@@ -154,9 +154,11 @@ Status field: matches (done)
 Acceptance criteria: 7/7 checked
 
 Issues found:
+
 - Minor: Uncommitted Prettier formatting changes in model files (now committed as 52218ab)
 
 Actions taken:
+
 - Verified task file in correct location (done/)
 - Verified all 7 acceptance criteria are checked [x]
 - Verified work log has entries for all phases (triage, plan, implement, test, docs, review)
