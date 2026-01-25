@@ -1,13 +1,13 @@
 # Actions Bar Functionality and Tests
 
-| Field | Value |
-|-------|-------|
-| ID | 002-005-actions-bar-functionality-tests |
-| Status | todo |
-| Priority | High |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                                   |
+| ----------- | --------------------------------------- |
+| ID          | 002-005-actions-bar-functionality-tests |
+| Status      | todo                                    |
+| Priority    | High                                    |
+| Created     | 2025-01-25                              |
+| Assigned To |                                         |
+| Assigned At |                                         |
 
 ## Context
 

@@ -12,8 +12,8 @@
 | Completed   | `2026-01-24 18:59`         |
 | Blocked By  |                            |
 | Blocks      |                            |
-| Assigned To | |
-| Assigned At | |
+| Assigned To |                            |
+| Assigned At |                            |
 
 ---
 
@@ -48,22 +48,25 @@ Mobile users should have a functional (if simplified) experience. The current tw
 ### Implementation Plan (Generated 2026-01-24 18:50)
 
 #### Gap Analysis
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Responsive layout works on mobile (< 768px) | **COMPLETE** | MobileTabs component exists (lines 1498-1665), `md:hidden`/`hidden md:flex` breakpoints working |
-| Single-column layout with tab switching | **COMPLETE** | MobileTabs has Chat/Code tabs with state management |
-| Touch-friendly button sizes (min 44px) | **PARTIAL** | Many buttons use `py-3` (48px) on mobile but some are smaller - need audit |
-| Virtual keyboard doesn't break layout | **PARTIAL** | `interactiveWidget: "resizes-content"` set in viewport, but needs verification |
-| Audio initialization works on iOS Safari | **PARTIAL** | Uses `Tone.start()` which requires user gesture, but no explicit iOS-specific handling or user guidance |
-| Audio plays after user interaction | **COMPLETE** | Play button triggers `playCode()` which calls `runtime.play()` → auto-inits via `Tone.start()` |
-| Code editor usable on mobile | **NEEDS WORK** | CodeMirror loads, but may need read-only mode or mobile-specific UX |
-| Tested on iOS Safari and Android Chrome | **NOT DONE** | No mobile tests exist |
-| Tests written and passing | **NOT DONE** | Need system tests for mobile viewport |
-| Quality gates pass | **PENDING** | Run after implementation |
-| Changes committed | **PENDING** | After all work complete |
+
+| Criterion                                   | Status         | Gap                                                                                                     |
+| ------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
+| Responsive layout works on mobile (< 768px) | **COMPLETE**   | MobileTabs component exists (lines 1498-1665), `md:hidden`/`hidden md:flex` breakpoints working         |
+| Single-column layout with tab switching     | **COMPLETE**   | MobileTabs has Chat/Code tabs with state management                                                     |
+| Touch-friendly button sizes (min 44px)      | **PARTIAL**    | Many buttons use `py-3` (48px) on mobile but some are smaller - need audit                              |
+| Virtual keyboard doesn't break layout       | **PARTIAL**    | `interactiveWidget: "resizes-content"` set in viewport, but needs verification                          |
+| Audio initialization works on iOS Safari    | **PARTIAL**    | Uses `Tone.start()` which requires user gesture, but no explicit iOS-specific handling or user guidance |
+| Audio plays after user interaction          | **COMPLETE**   | Play button triggers `playCode()` which calls `runtime.play()` → auto-inits via `Tone.start()`          |
+| Code editor usable on mobile                | **NEEDS WORK** | CodeMirror loads, but may need read-only mode or mobile-specific UX                                     |
+| Tested on iOS Safari and Android Chrome     | **NOT DONE**   | No mobile tests exist                                                                                   |
+| Tests written and passing                   | **NOT DONE**   | Need system tests for mobile viewport                                                                   |
+| Quality gates pass                          | **PENDING**    | Run after implementation                                                                                |
+| Changes committed                           | **PENDING**    | After all work complete                                                                                 |
 
 #### 1. Touch Target Audit & Fixes
+
 Files to modify:
+
 - `components/studio/TweakSlider.tsx` - Slider thumb is 12x12px (w-3 h-3), needs to be 44x44px touch area
 - `components/studio/LayerRow.tsx` - M/S/Delete buttons are 24x24px (w-6 h-6), need larger touch targets
 - `components/studio/CodePanel.tsx` - Revert/Copy buttons are small on mobile
@@ -72,6 +75,7 @@ Files to modify:
 - `components/studio/PlayerControls.tsx` - Already py-4, OK
 
 Specific changes:
+
 ```
 TweakSlider.tsx:
 - Change thumb from w-3 h-3 to w-4 h-4 (16px)
@@ -88,11 +92,14 @@ CodePanel.tsx:
 ```
 
 #### 2. iOS Safari Audio Handling
+
 Files to modify:
+
 - `lib/audio/runtime.ts` - Add iOS detection and AudioContext resume strategy
 - `app/studio/page.tsx` (MobileTabs) - Add audio init prompt/indicator for mobile
 
 Implementation:
+
 ```typescript
 // runtime.ts - Add iOS-specific handling
 // 1. Detect iOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -105,30 +112,39 @@ Implementation:
 ```
 
 #### 3. Virtual Keyboard Handling
+
 Files to modify:
+
 - `app/globals.css` - Already has dvh support
 - `app/studio/page.tsx` - MobileTabs may need adjustment
 
 Verification needed:
+
 - Test that `interactiveWidget: "resizes-content"` works correctly
 - Ensure chat input doesn't get obscured by keyboard
 - Consider using visualViewport API for precise keyboard detection
 
 #### 4. Code Editor Mobile UX
+
 Files to modify:
+
 - `components/studio/CodePanel.tsx` - Add mobile-specific mode option
 - `app/studio/page.tsx` (MobileTabs) - Consider read-only toggle
 
 Options:
+
 - Option A: Keep editable but warn about mobile editing limitations
 - Option B: Default to read-only with "Edit" toggle on mobile
 - Recommendation: Option A with clear copy button for sharing
 
 #### 5. System Tests for Mobile
+
 Files to create:
+
 - `spec/system/mobile_studio_spec.rb` - Mobile viewport tests
 
 Test cases:
+
 - [ ] Studio loads at 375x667 viewport (iPhone SE)
 - [ ] Tab switching between Chat and Code works
 - [ ] Play button starts audio after tap (user gesture)
@@ -138,6 +154,7 @@ Test cases:
 - [ ] Toast notifications visible on mobile
 
 #### Implementation Order
+
 1. Touch target fixes (lowest risk, high impact)
 2. iOS Safari audio handling (critical for acceptance)
 3. Virtual keyboard verification (test existing implementation)
@@ -146,6 +163,7 @@ Test cases:
 6. Manual testing on real devices (document findings)
 
 #### Docs to Update
+
 - [ ] README.md - Add mobile browser support notes
 - [ ] Task file - Document any mobile limitations discovered
 
@@ -160,9 +178,11 @@ Status field: matches (done)
 Acceptance criteria: 11/11 checked
 
 Issues found:
+
 - TASKBOARD.md was out of date (still showed task in todo/) - fixed
 
 Actions taken:
+
 - Verified task file is in .claude/tasks/done/
 - Verified all 11 acceptance criteria are checked [x]
 - Verified Status: done, Started: 2026-01-24 18:43, Completed: 2026-01-24 18:59
@@ -177,21 +197,25 @@ Task verified: PASS
 ### 2026-01-24 18:59 - Review Complete
 
 **Code Review:**
+
 - Issues found: None
 - Issues fixed: N/A
 
 **Consistency:**
+
 - All criteria met: Yes
 - Test coverage adequate: Yes (92 new tests added)
 - Docs in sync: Yes (README.md updated with Mobile Browser Support section)
 
 **Quality Gates (Final):**
+
 - ESLint: PASS (no errors)
 - TypeScript: PASS (no type errors)
 - Prettier: PASS (source files only; markdown excluded)
 - Vitest: PASS (1755/1755 tests passing)
 
 **Code Review Notes:**
+
 1. TweakSlider.tsx - Clean implementation, proper touch-none and padding for mobile
 2. LayerRow.tsx - Responsive touch targets with md: breakpoint fallback
 3. CodePanel.tsx - 44px minimum touch targets on mobile buttons
@@ -206,6 +230,7 @@ Task verified: PASS
 ### 2026-01-24 18:57 - Documentation Sync
 
 **Docs Updated:**
+
 - `README.md` - Added "Mobile Browser Support" section under Known Quirks
   - Documents responsive design approach (single-column, tab switching)
   - Lists touch target compliance (44px minimum)
@@ -214,15 +239,18 @@ Task verified: PASS
   - Adds mobile-specific usage notes
 
 **Task File Updated:**
+
 - Expanded Notes section with mobile limitations discovered
 - Added future improvements list (out of scope items)
 - Added proper markdown links to Links section
 - Listed all modified files and new test files
 
 **Annotations:**
+
 - N/A - This is a Next.js/TypeScript project without Rails models
 
 **Consistency Checks:**
+
 - [x] Code matches docs - README accurately describes implemented behavior
 - [x] No broken links - All links are valid external URLs
 - [x] Schema annotations current - N/A (no database models changed)
@@ -271,6 +299,7 @@ Task verified: PASS
    - This satisfies the browser requirement for user gesture before audio
 
 **Files Modified:**
+
 - `components/studio/TweakSlider.tsx`
 - `components/studio/LayerRow.tsx`
 - `components/studio/CodePanel.tsx`
@@ -281,11 +310,13 @@ Task verified: PASS
 ### 2026-01-24 18:50 - Planning Complete
 
 **Gap Analysis Summary:**
+
 - **2 criteria COMPLETE**: Responsive layout, tab switching both already implemented
 - **4 criteria PARTIAL**: Touch targets, virtual keyboard, iOS audio, code editor
 - **3 criteria NOT DONE**: Testing (iOS/Android, system tests), quality gates, commit
 
 **Key Findings:**
+
 1. MobileTabs component is comprehensive (166 lines) with Chat/Code tabs, player bar, safe-area support
 2. Touch targets are the main gap - sliders (12px thumb), layer buttons (24px) are too small
 3. iOS audio: `Tone.start()` is called but no iOS-specific resume handling for interrupted state
@@ -293,6 +324,7 @@ Task verified: PASS
 5. Code editor: CodeMirror works but may need mobile UX improvements
 
 **Implementation Priority:**
+
 1. Touch target fixes (high impact, low risk)
 2. iOS Safari audio handling (critical for acceptance)
 3. Virtual keyboard verification
@@ -301,6 +333,7 @@ Task verified: PASS
 6. Real device testing
 
 **Files Identified for Modification:**
+
 - `components/studio/TweakSlider.tsx` - slider touch area
 - `components/studio/LayerRow.tsx` - M/S/delete buttons
 - `components/studio/CodePanel.tsx` - button sizes
@@ -329,6 +362,7 @@ Task verified: PASS
 ### 2026-01-24 18:56 - Testing Complete
 
 **Tests Written:**
+
 - `components/studio/__tests__/TweakSlider.test.ts` - Added 5 tests for mobile touch target styling
   - py-2 padding for larger touch area
   - touch-none class for scroll prevention
@@ -369,6 +403,7 @@ Task verified: PASS
   - keepPosition parameter
 
 **Test Results:**
+
 ```
 Test Files:  58 passed (58)
 Tests:       1755 passed (1755)
@@ -376,6 +411,7 @@ Duration:    6.79s
 ```
 
 **Quality Gates:**
+
 - ESLint: PASS (no errors)
 - TypeScript: PASS (no type errors)
 - Prettier: PASS (source code only - markdown task files excluded)

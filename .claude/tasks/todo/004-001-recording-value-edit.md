@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field       | Value                       |
-| ----------- | --------------------------- |
+| Field       | Value                          |
+| ----------- | ------------------------------ |
 | ID          | `004-001-recording-value-edit` |
-| Status      | `todo`                      |
-| Priority    | `004` Low                   |
-| Created     | `2026-01-24 18:05`          |
-| Started     |                             |
-| Completed   |                             |
-| Blocked By  | `003-011-record-mode`       |
-| Blocks      |                             |
-| Assigned To |                             |
-| Assigned At |                             |
+| Status      | `todo`                         |
+| Priority    | `004` Low                      |
+| Created     | `2026-01-24 18:05`             |
+| Started     |                                |
+| Completed   |                                |
+| Blocked By  | `003-011-record-mode`          |
+| Blocks      |                                |
+| Assigned To |                                |
+| Assigned At |                                |
 
 ---
 
@@ -88,8 +88,10 @@ _(Empty - task not started)_
 ## Links
 
 **Dependencies:**
+
 - `003-011-record-mode` (completed) - provides base recording infrastructure
 
 **Related Files:**
+
 - `components/studio/RecordingTimeline.tsx` - timeline component
 - `lib/types/recording.ts` - RecordingEvent type

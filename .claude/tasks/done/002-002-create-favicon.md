@@ -1,13 +1,13 @@
 # Create SVG Favicon and Convert to ICO
 
-| Field | Value |
-|-------|-------|
-| ID | 002-002-create-favicon |
-| Status | todo |
-| Priority | High |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                  |
+| ----------- | ---------------------- |
+| ID          | 002-002-create-favicon |
+| Status      | todo                   |
+| Priority    | High                   |
+| Created     | 2025-01-25             |
+| Assigned To |                        |
+| Assigned At |                        |
 
 ## Context
 

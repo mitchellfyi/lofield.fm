@@ -1,13 +1,13 @@
 # Move Settings and Help to User Dropdown
 
-| Field | Value |
-|-------|-------|
-| ID | 003-001-move-settings-to-dropdown |
-| Status | todo |
-| Priority | Medium |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                             |
+| ----------- | --------------------------------- |
+| ID          | 003-001-move-settings-to-dropdown |
+| Status      | todo                              |
+| Priority    | Medium                            |
+| Created     | 2025-01-25                        |
+| Assigned To |                                   |
+| Assigned At |                                   |
 
 ## Context
 

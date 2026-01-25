@@ -1,13 +1,13 @@
 # Mobile Controls Tab
 
-| Field | Value |
-|-------|-------|
-| ID | 002-001-mobile-controls-tab |
-| Status | todo |
-| Priority | High |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                       |
+| ----------- | --------------------------- |
+| ID          | 002-001-mobile-controls-tab |
+| Status      | todo                        |
+| Priority    | High                        |
+| Created     | 2025-01-25                  |
+| Assigned To |                             |
+| Assigned At |                             |
 
 ## Context
 

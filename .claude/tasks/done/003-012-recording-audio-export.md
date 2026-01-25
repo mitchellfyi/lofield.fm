@@ -2,18 +2,18 @@
 
 ## Metadata
 
-| Field       | Value                           |
-| ----------- | ------------------------------- |
+| Field       | Value                            |
+| ----------- | -------------------------------- |
 | ID          | `003-012-recording-audio-export` |
-| Status      | `done`                          |
-| Priority    | `003` Medium                    |
-| Created     | `2026-01-24 18:05`              |
-| Started     | `2026-01-24 18:21`              |
-| Completed   | `2026-01-24 18:40`              |
-| Blocked By  | `003-011-record-mode`           |
-| Blocks      |                                 |
-| Assigned To | |
-| Assigned At | |
+| Status      | `done`                           |
+| Priority    | `003` Medium                     |
+| Created     | `2026-01-24 18:05`               |
+| Started     | `2026-01-24 18:21`               |
+| Completed   | `2026-01-24 18:40`               |
+| Blocked By  | `003-011-record-mode`            |
+| Blocks      |                                  |
+| Assigned To |                                  |
+| Assigned At |                                  |
 
 ---
 
@@ -43,15 +43,15 @@ The existing `audioExport.ts` uses OfflineAudioContext for faster-than-realtime 
 
 #### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| Add `recording?: Recording` parameter to `renderAudio` | no | Need to add optional parameter and type import |
-| Schedule tweak injections at event timestamps during offline render | no | Need to implement event scheduling with `transport.schedule()` |
-| Handle timing precision (ms → audio context time) | no | Need conversion: `event.timestamp_ms / 1000` for seconds |
-| Expose "Export with Automation" option in ExportModal when recording is active | no | Need to add toggle + pass recording to component |
-| Tests for automation rendering | no | Need new test file or extend existing |
-| Quality gates pass | pending | Will run after implementation |
-| Changes committed with task reference | pending | Will commit after quality passes |
+| Criterion                                                                      | Status  | Gap                                                            |
+| ------------------------------------------------------------------------------ | ------- | -------------------------------------------------------------- |
+| Add `recording?: Recording` parameter to `renderAudio`                         | no      | Need to add optional parameter and type import                 |
+| Schedule tweak injections at event timestamps during offline render            | no      | Need to implement event scheduling with `transport.schedule()` |
+| Handle timing precision (ms → audio context time)                              | no      | Need conversion: `event.timestamp_ms / 1000` for seconds       |
+| Expose "Export with Automation" option in ExportModal when recording is active | no      | Need to add toggle + pass recording to component               |
+| Tests for automation rendering                                                 | no      | Need new test file or extend existing                          |
+| Quality gates pass                                                             | pending | Will run after implementation                                  |
+| Changes committed with task reference                                          | pending | Will commit after quality passes                               |
 
 #### Technical Approach
 
@@ -62,11 +62,13 @@ The existing `audioExport.ts:renderAudio()` already uses `transport.schedule()` 
 **BPM special handling**: BPM changes affect transport timing. When BPM changes mid-recording, subsequent event timestamps (in ms) may not align correctly with transport position. For simplicity in v1, we'll schedule events using absolute seconds (`timestamp_ms / 1000`), which works as long as the initial BPM matches the recording. A warning will be logged if BPM changes are detected.
 
 **Tweak application strategy**:
+
 1. Parse the recording events
 2. For each tweak event, use `transport.schedule()` to schedule a callback at `event.timestamp_ms / 1000` seconds
 3. In the callback, apply the tweak value to the running Tone.js graph (via the same injection pattern used in live playback)
 
 **Challenge**: The code is evaluated once at the start. To change parameters mid-render, we need to:
+
 - Track Tone.js objects that were created (already done via `disposables` array)
 - Schedule parameter changes on those objects directly using Tone.js param automation (e.g., `filter.frequency.setValueAtTime()`)
 
@@ -186,23 +188,28 @@ _(None required - internal feature)_
 ### 2026-01-24 18:37 - Testing Complete
 
 Tests written:
+
 - `lib/export/__tests__/audioExport.test.ts` - 37 examples (scheduleAutomationEvents function)
 - `components/studio/__tests__/ExportModal.test.ts` - 51 examples (added 9 for recording automation)
 
 Test results:
+
 - Total: 1651 examples, 0 failures
 - All 56 test files passing
 
 Quality gates:
+
 - ESLint: pass
 - Prettier: pass (source files)
 - TypeScript: pass
 - RSpec/Vitest: pass
 
 Commits:
+
 - `b951593` - test: Add tests for ExportModal recording automation feature
 
 Test Plan Coverage:
+
 - [x] `scheduleAutomationEvents` function is exported and callable
 - [x] Events are scheduled at correct transport times (mock transport.schedule)
 - [x] Filter frequency changes are correctly scheduled
@@ -213,6 +220,7 @@ Test Plan Coverage:
 - [x] `renderAudio` accepts recording option without error
 
 Additional ExportModal tests:
+
 - [x] Recording prop handling (events, no events, null, undefined)
 - [x] includeAutomation toggle state (initial, toggle, conditional passing)
 - [x] Event count display in automation toggle label
@@ -220,6 +228,7 @@ Additional ExportModal tests:
 ### 2026-01-24 18:38 - Documentation Sync
 
 Docs updated:
+
 - No external docs needed (internal feature enhancement as noted in plan)
 - Code has appropriate inline documentation:
   - `scheduleAutomationEvents` function has JSDoc comment explaining purpose
@@ -227,9 +236,11 @@ Docs updated:
   - Inline comments explain BPM warning, swing handling, filter/reverb/delay logic
 
 Annotations:
+
 - N/A (Node.js/Next.js project, no Rails model annotations)
 
 Consistency checks:
+
 - [x] Code matches docs - implementation matches task plan
 - [x] No broken links - all referenced files verified to exist:
   - `lib/export/audioExport.ts` ✓
@@ -245,10 +256,12 @@ Consistency checks:
 ### 2026-01-24 18:40 - Review Complete
 
 Code review:
+
 - Issues found: none
 - Issues fixed: N/A
 
 Code review checklist:
+
 - [x] Code follows project conventions
 - [x] No code smells or anti-patterns
 - [x] Error handling is appropriate
@@ -257,14 +270,17 @@ Code review checklist:
 - [x] Proper use of transactions where needed (N/A - frontend code)
 
 Consistency:
+
 - All criteria met: yes
 - Test coverage adequate: yes (22 new tests for automation feature)
 - Docs in sync: yes (internal feature, code comments sufficient)
 
 Follow-up tasks created:
+
 - None needed - feature is complete and well-tested
 
 Quality gates final run:
+
 - ESLint: pass
 - TypeScript: pass
 - Tests: 1651 passed (56 files)
@@ -278,9 +294,11 @@ Status field: matches (done)
 Acceptance criteria: 7/7 checked
 
 Issues found:
+
 - none
 
 Actions taken:
+
 - Verified task file is in done/ (moved previously)
 - Verified all acceptance criteria are marked complete
 - Verified timestamps set correctly (Started: 18:21, Completed: 18:40)
@@ -339,11 +357,13 @@ $ npm run test
 ## Notes
 
 **Initial Planning Notes:**
+
 - This is a complex feature requiring careful timing coordination
 - Consider starting with simpler params (filter, reverb, delay) before tackling BPM
 - May need to investigate Tone.js offline rendering limitations
 
 **Implementation Observations:**
+
 - Used `ReturnType<typeof Tone.getTransport>` for Transport type since Tone.js doesn't export it directly
 - BPM automation intentionally skipped in export with console warning - changing BPM mid-render affects transport timing which desynchronizes scheduled events
 - Used `rampTo()` with 50ms duration for smooth parameter transitions instead of instant value changes
@@ -351,6 +371,7 @@ $ npm run test
 - Proxy pattern on Tone namespace intercepts object creation without modifying user code
 
 **Design Decisions:**
+
 - Chose transport.schedule() over pre-baking values into code to preserve timeline fidelity
 - Optional "Include Automation" toggle UI only shown when recording prop is provided
 - Event count displayed in toggle label for user awareness
@@ -360,14 +381,17 @@ $ npm run test
 ## Links
 
 **Dependencies:**
+
 - `003-011-record-mode` (completed) - provides Recording type and automation capture
 
 **Related Files:**
+
 - `lib/export/audioExport.ts` - audio export with automation scheduling
 - `lib/types/recording.ts` - Recording type definitions
 - `lib/audio/tweaksInjector.ts` - tweak injection utilities
 - `components/studio/ExportModal.tsx` - export UI with automation toggle
 
 **Test Files:**
+
 - `lib/export/__tests__/audioExport.test.ts` - scheduleAutomationEvents tests
 - `components/studio/__tests__/ExportModal.test.ts` - recording automation UI tests

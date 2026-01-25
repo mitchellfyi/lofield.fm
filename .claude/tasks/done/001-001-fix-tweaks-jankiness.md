@@ -1,13 +1,13 @@
 # Fix Tweaks Playback Jankiness and Revert Issues
 
-| Field | Value |
-|-------|-------|
-| ID | 001-001-fix-tweaks-jankiness |
-| Status | todo |
-| Priority | Critical |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                        |
+| ----------- | ---------------------------- |
+| ID          | 001-001-fix-tweaks-jankiness |
+| Status      | todo                         |
+| Priority    | Critical                     |
+| Created     | 2025-01-25                   |
+| Assigned To |                              |
+| Assigned At |                              |
 
 ## Context
 

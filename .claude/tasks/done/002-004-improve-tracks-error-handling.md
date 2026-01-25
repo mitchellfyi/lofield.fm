@@ -8,8 +8,8 @@
 | Priority    | High                                  |
 | Created     | 2025-01-25                            |
 | Started     | 2026-01-25 16:03                      |
-| Assigned To |                                       |
-| Assigned At |                                       |
+| Assigned To | |
+| Assigned At | |
 
 ## Context
 

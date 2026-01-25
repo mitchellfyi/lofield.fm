@@ -1,13 +1,13 @@
 # Fix Saving Tracks
 
-| Field | Value |
-|-------|-------|
-| ID | 001-002-fix-saving-tracks |
-| Status | todo |
-| Priority | Critical |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                     |
+| ----------- | ------------------------- |
+| ID          | 001-002-fix-saving-tracks |
+| Status      | todo                      |
+| Priority    | Critical                  |
+| Created     | 2025-01-25                |
+| Assigned To |                           |
+| Assigned At |                           |
 
 ## Context
 

@@ -1,13 +1,13 @@
 # Remove Headers from Code and Chat Sections
 
-| Field | Value |
-|-------|-------|
-| ID | 003-002-remove-section-headers |
-| Status | todo |
-| Priority | Medium |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                          |
+| ----------- | ------------------------------ |
+| ID          | 003-002-remove-section-headers |
+| Status      | todo                           |
+| Priority    | Medium                         |
+| Created     | 2025-01-25                     |
+| Assigned To |                                |
+| Assigned At |                                |
 
 ## Context
 

@@ -1,13 +1,13 @@
 # Fix Model Select Dropdown Overflow Issue
 
-| Field | Value |
-|-------|-------|
-| ID | 001-003-fix-model-dropdown-overflow |
-| Status | todo |
-| Priority | Critical |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                               |
+| ----------- | ----------------------------------- |
+| ID          | 001-003-fix-model-dropdown-overflow |
+| Status      | todo                                |
+| Priority    | Critical                            |
+| Created     | 2025-01-25                          |
+| Assigned To |                                     |
+| Assigned At |                                     |
 
 ## Context
 

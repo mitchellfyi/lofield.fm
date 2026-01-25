@@ -1,13 +1,13 @@
 # Remove Duplicate Revert/Copy from Code Header
 
-| Field | Value |
-|-------|-------|
-| ID | 002-003-remove-duplicate-code-actions |
-| Status | todo |
-| Priority | High |
-| Created | 2025-01-25 |
-| Assigned To | |
-| Assigned At | |
+| Field       | Value                                 |
+| ----------- | ------------------------------------- |
+| ID          | 002-003-remove-duplicate-code-actions |
+| Status      | todo                                  |
+| Priority    | High                                  |
+| Created     | 2025-01-25                            |
+| Assigned To |                                       |
+| Assigned At |                                       |
 
 ## Context
 
