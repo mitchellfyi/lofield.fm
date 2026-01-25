@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { type AudioLayer } from "@/lib/types/audioLayer";
 
 interface LayerRowProps {
   layer: AudioLayer;
   isSelected: boolean;
   isPlaying: boolean;
+  isDragging?: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<AudioLayer>) => void;
   onDelete: () => void;
@@ -17,6 +20,7 @@ export function LayerRow({
   layer,
   isSelected,
   isPlaying,
+  isDragging: isDraggingProp,
   onSelect,
   onUpdate,
   onDelete,
@@ -25,6 +29,22 @@ export function LayerRow({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(layer.name);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging: isDraggingSortable,
+  } = useSortable({ id: layer.id });
+
+  const isDragging = isDraggingProp ?? isDraggingSortable;
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -56,13 +76,38 @@ export function LayerRow({
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors cursor-pointer ${
         isSelected
           ? "bg-cyan-500/20 border border-cyan-500/40"
           : "hover:bg-slate-800/50 border border-transparent"
+      } ${
+        isDragging
+          ? "opacity-80 scale-[1.02] shadow-lg shadow-cyan-500/20 z-10 bg-slate-800/80"
+          : ""
       }`}
       onClick={onSelect}
+      {...attributes}
     >
+      {/* Drag handle */}
+      <div
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 touch-none"
+        title="Drag to reorder"
+      >
+        <svg className="w-3 h-4" fill="currentColor" viewBox="0 0 6 16">
+          <circle cx="1.5" cy="2" r="1" />
+          <circle cx="4.5" cy="2" r="1" />
+          <circle cx="1.5" cy="6" r="1" />
+          <circle cx="4.5" cy="6" r="1" />
+          <circle cx="1.5" cy="10" r="1" />
+          <circle cx="4.5" cy="10" r="1" />
+          <circle cx="1.5" cy="14" r="1" />
+          <circle cx="4.5" cy="14" r="1" />
+        </svg>
+      </div>
+
       {/* Color indicator with playing animation */}
       <div
         className={`w-2 h-2 rounded-full flex-shrink-0 transition-all ${
