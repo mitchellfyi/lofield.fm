@@ -22,6 +22,8 @@ export function TrackBrowser({
     projects,
     loading: projectsLoading,
     error: projectsError,
+    isUsingCache,
+    refresh: refreshProjects,
     createProject,
     deleteProject,
     updateProject,
@@ -130,10 +132,36 @@ export function TrackBrowser({
 
         {/* Content */}
         <div className="p-4 max-h-96 overflow-y-auto">
+          {/* Offline/cached data indicator */}
+          {isUsingCache && projects.length > 0 && (
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span className="text-sm text-amber-300">Showing cached data</span>
+              </div>
+              <button
+                onClick={refreshProjects}
+                className="text-xs text-amber-400 hover:text-amber-300 underline transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {projectsLoading ? (
             <div className="text-center py-8 text-slate-400">Loading...</div>
-          ) : projectsError ? (
-            <div className="text-center py-8 text-rose-400">{projectsError}</div>
+          ) : projectsError && projects.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-rose-400 mb-4">{projectsError}</div>
+              <button
+                onClick={refreshProjects}
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
           ) : projects.length === 0 && !showNewProject ? (
             <div className="text-center py-8">
               <p className="text-slate-400 mb-4">No projects yet</p>
