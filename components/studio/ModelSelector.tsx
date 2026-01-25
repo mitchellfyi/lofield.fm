@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { MODELS, getModelById } from "@/lib/models";
+import { MODELS, getModelById, formatModelCost } from "@/lib/models";
 
 // SSR-safe check for document existence
 const subscribe = () => () => {};
@@ -145,6 +145,11 @@ export function ModelSelector({
                 </span>
               </div>
               <p className="text-xs text-slate-400">{model.description}</p>
+              {formatModelCost(model) && (
+                <p className="text-xs text-slate-500 mt-1 font-mono">
+                  {formatModelCost(model)}
+                </p>
+              )}
               {model.id === selectedModel && (
                 <div className="mt-2 flex items-center gap-1 text-xs text-cyan-400">
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
