@@ -98,24 +98,16 @@ export function ReadonlyCodePanel({ code }: ReadonlyCodePanelProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 sm:px-4 h-12 sm:h-14 border-b border-cyan-500/20 bg-slate-900/50">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xs sm:text-sm font-bold text-cyan-400 uppercase tracking-wider">
-            Code
-          </h2>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-slate-700/50 text-slate-400 border border-slate-600">
-            Read Only
-          </span>
-        </div>
-        <button
-          onClick={handleCopy}
-          className="px-2 sm:px-3 py-1.5 rounded-sm text-[10px] sm:text-xs font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200"
-        >
-          {copied ? "Copied!" : "Copy"}
-        </button>
-      </div>
-
       <div className="flex-1 relative bg-slate-900 min-h-0 overflow-hidden">
+        {/* Floating copy button at top-right */}
+        <div className="absolute top-2 right-2 z-10">
+          <button
+            onClick={handleCopy}
+            className="px-2 py-1 rounded-sm text-[10px] font-medium text-slate-300 hover:text-cyan-300 active:text-cyan-400 border border-slate-600 hover:border-cyan-500/50 transition-all duration-200 backdrop-blur-sm bg-slate-800/80"
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
         <div className="absolute inset-0 overflow-auto">
           <CodeMirror
             ref={editorRef}
