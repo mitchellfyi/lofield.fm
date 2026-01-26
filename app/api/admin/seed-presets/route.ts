@@ -56,7 +56,7 @@ export async function POST(request: Request) {
           results.push({ name: preset.name, status: "updated" });
         }
       } else {
-        // Insert new preset (user_id is nullable for system tracks after migration)
+        // Insert new preset (project_id is nullable for system tracks after migration)
         const { error } = await supabase.from("tracks").insert({
           name: preset.name,
           current_code: preset.code,
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
           privacy: "public",
           is_system: true,
           is_featured: true,
-          // user_id is null for system tracks
+          // project_id is null for system tracks
         });
 
         if (error) {

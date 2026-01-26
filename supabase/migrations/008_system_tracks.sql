@@ -1,27 +1,35 @@
--- Allow system tracks to have null user_id
--- This is needed for preset/demo tracks that don't belong to any user
+-- Allow system tracks to have null project_id
+-- This is needed for preset/demo tracks that don't belong to any project
 
--- First, drop the NOT NULL constraint on user_id for tracks
+-- First, drop the NOT NULL constraint and foreign key on project_id for tracks
 ALTER TABLE public.tracks
-  ALTER COLUMN user_id DROP NOT NULL;
+  DROP CONSTRAINT IF EXISTS tracks_project_id_fkey;
 
--- Add a constraint that requires user_id for non-system tracks
 ALTER TABLE public.tracks
-  ADD CONSTRAINT tracks_user_id_required_for_non_system
-  CHECK (is_system = true OR user_id IS NOT NULL);
+  ALTER COLUMN project_id DROP NOT NULL;
+
+-- Re-add foreign key without the NOT NULL requirement
+ALTER TABLE public.tracks
+  ADD CONSTRAINT tracks_project_id_fkey
+  FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+-- Add a constraint that requires project_id for non-system tracks
+ALTER TABLE public.tracks
+  ADD CONSTRAINT tracks_project_id_required_for_non_system
+  CHECK (is_system = true OR project_id IS NOT NULL);
 
 -- Update RLS policies to handle system tracks (no owner)
 -- System tracks with is_system=true should be viewable by everyone
 
-DROP POLICY IF EXISTS "Users can view their own tracks" ON public.tracks;
+DROP POLICY IF EXISTS "Users can view tracks in own projects" ON public.tracks;
 
-CREATE POLICY "Users can view their own tracks or system tracks"
+CREATE POLICY "Users can view tracks in own projects or system tracks"
   ON public.tracks FOR SELECT
   USING (
     -- System tracks are viewable by everyone
     is_system = true
     OR
-    -- User's own tracks
+    -- User's own tracks via project ownership
     EXISTS (
       SELECT 1 FROM public.projects
       WHERE projects.id = tracks.project_id
@@ -55,7 +63,6 @@ BEGIN
     privacy,
     is_system,
     is_featured,
-    user_id,
     project_id
   ) VALUES (
     p_name,
@@ -68,8 +75,7 @@ BEGIN
     'public',
     true,
     true,
-    NULL, -- No user for system tracks
-    NULL  -- No project for system tracks
+    NULL -- No project for system tracks
   )
   RETURNING id INTO new_track_id;
 
