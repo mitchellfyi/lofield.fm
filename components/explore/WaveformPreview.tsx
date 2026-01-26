@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
+import { useAudioAnalysis } from "@/lib/audio/useVisualization";
 
 interface WaveformPreviewProps {
   code: string;
@@ -12,7 +13,7 @@ interface WaveformPreviewProps {
 
 /**
  * Generates a deterministic pseudo-random waveform from track code.
- * Uses a simple hash function to generate consistent bar heights.
+ * Used as the static/idle display pattern.
  */
 function generateWaveformBars(code: string, barCount: number): number[] {
   // Simple hash function for deterministic randomness
@@ -48,8 +49,40 @@ function generateWaveformBars(code: string, barCount: number): number[] {
 }
 
 /**
+ * Convert FFT dB values to normalized bar heights
+ */
+function fftToBarHeights(fft: Float32Array, barCount: number): number[] {
+  const bars: number[] = [];
+  const binCount = fft.length;
+
+  // Group FFT bins into bars (logarithmic distribution for better visual)
+  for (let i = 0; i < barCount; i++) {
+    // Use logarithmic distribution to emphasize lower frequencies
+    const startBin = Math.floor((i / barCount) ** 1.5 * binCount);
+    const endBin = Math.floor(((i + 1) / barCount) ** 1.5 * binCount);
+    const actualEndBin = Math.max(startBin + 1, endBin);
+
+    // Average the bins in this range
+    let sum = 0;
+    for (let j = startBin; j < actualEndBin && j < binCount; j++) {
+      // FFT values are in dB (typically -100 to 0)
+      // Convert to 0-1 range
+      const normalized = (fft[j] + 100) / 100;
+      sum += Math.max(0, Math.min(1, normalized));
+    }
+    const avg = sum / (actualEndBin - startBin);
+
+    // Apply some scaling and minimum height
+    bars.push(Math.max(0.1, Math.min(1, avg * 1.5)));
+  }
+
+  return bars;
+}
+
+/**
  * A visual waveform preview for a track card.
- * Generates a deterministic waveform pattern based on the track's code.
+ * Shows real-time audio visualization when playing,
+ * or a deterministic pattern based on track code when idle.
  */
 export function WaveformPreview({
   code,
@@ -58,7 +91,47 @@ export function WaveformPreview({
   barCount = 24,
   className = "",
 }: WaveformPreviewProps) {
-  const bars = useMemo(() => generateWaveformBars(code, barCount), [code, barCount]);
+  const staticBars = useMemo(() => generateWaveformBars(code, barCount), [code, barCount]);
+  const audioAnalysis = useAudioAnalysis();
+  const barsRef = useRef<HTMLDivElement[]>([]);
+
+  // Use requestAnimationFrame for smooth bar height updates when playing
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    let animationId: number;
+
+    const updateBars = () => {
+      if (!isPlaying) return;
+
+      const liveBars = fftToBarHeights(audioAnalysis.fft, barCount);
+
+      barsRef.current.forEach((bar, index) => {
+        if (bar && liveBars[index] !== undefined) {
+          bar.style.height = `${liveBars[index] * 100}%`;
+        }
+      });
+
+      animationId = requestAnimationFrame(updateBars);
+    };
+
+    animationId = requestAnimationFrame(updateBars);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [isPlaying, audioAnalysis.fft, barCount]);
+
+  // When not playing, reset bar heights to static values
+  useEffect(() => {
+    if (!isPlaying) {
+      barsRef.current.forEach((bar, index) => {
+        if (bar && staticBars[index] !== undefined) {
+          bar.style.height = `${staticBars[index] * 100}%`;
+        }
+      });
+    }
+  }, [isPlaying, staticBars]);
 
   return (
     <div
@@ -66,17 +139,20 @@ export function WaveformPreview({
       style={{ height }}
       aria-hidden="true"
     >
-      {bars.map((barHeight, index) => (
+      {staticBars.map((barHeight, index) => (
         <div
           key={index}
-          className={`flex-1 rounded-full transition-all duration-300 ${
+          ref={(el) => {
+            if (el) barsRef.current[index] = el;
+          }}
+          className={`flex-1 rounded-full transition-colors duration-200 ${
             isPlaying
               ? "bg-gradient-to-t from-cyan-500 to-cyan-400"
               : "bg-gradient-to-t from-slate-600 to-slate-500"
           }`}
           style={{
             height: `${barHeight * 100}%`,
-            animationDelay: isPlaying ? `${index * 50}ms` : undefined,
+            transition: isPlaying ? "height 50ms ease-out" : "height 300ms ease-out",
           }}
         />
       ))}

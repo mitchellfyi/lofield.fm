@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useExplore } from "@/lib/hooks/useExplore";
 import { usePlayQueue } from "@/lib/hooks/usePlayQueue";
 import { ExploreFilters, TrackGrid, ExplorePlayer } from "@/components/explore";
 import type { PublicTrack } from "@/lib/types/explore";
+import { getAudioRuntime } from "@/lib/audio/runtime";
 
 /**
  * Loading skeleton for explore page
@@ -53,16 +54,39 @@ function ExploreContent() {
   const queue = usePlayQueue();
   const [loadingTrackId, setLoadingTrackId] = useState<string | null>(null);
 
-  // Handle playing a track
+  // Get audio runtime state to know if currently playing
+  const runtime = getAudioRuntime();
+  const playerState = useSyncExternalStore(
+    (callback) => runtime.subscribe(callback),
+    () => runtime.getState(),
+    () => "idle" as const
+  );
+  const isPlaying = playerState === "playing";
+
+  // Handle playing/pausing a track
   const handlePlayTrack = useCallback(
     (track: PublicTrack) => {
+      // If clicking the currently playing track, toggle playback
+      if (queue.currentTrack?.id === track.id) {
+        if (isPlaying) {
+          runtime.stop();
+        } else {
+          // Resume playing the same track
+          setLoadingTrackId(track.id);
+          runtime.play(track.current_code).catch(console.error);
+          setTimeout(() => setLoadingTrackId(null), 500);
+        }
+        return;
+      }
+
+      // Playing a different track
       setLoadingTrackId(track.id);
       // Play the track and set the queue to all visible tracks
       queue.playTrack(track, explore.tracks);
       // Clear loading state after a short delay
       setTimeout(() => setLoadingTrackId(null), 500);
     },
-    [queue, explore.tracks]
+    [queue, explore.tracks, isPlaying, runtime]
   );
 
   // Handle tag click from card - toggle tag filter
@@ -177,6 +201,7 @@ function ExploreContent() {
                 hasMore={explore.hasMore}
                 currentTrackId={queue.currentTrack?.id || null}
                 loadingTrackId={loadingTrackId}
+                isAudioPlaying={isPlaying}
                 onLoadMore={explore.loadMore}
                 onPlayTrack={handlePlayTrack}
                 onTagClick={handleTagClick}

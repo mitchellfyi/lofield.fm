@@ -10,6 +10,7 @@ interface TrackGridProps {
   hasMore: boolean;
   currentTrackId: string | null;
   loadingTrackId: string | null;
+  isAudioPlaying: boolean;
   onLoadMore: () => Promise<void>;
   onPlayTrack: (track: PublicTrack) => void;
   onTagClick?: (tag: string) => void;
@@ -25,6 +26,7 @@ export function TrackGrid({
   hasMore,
   currentTrackId,
   loadingTrackId,
+  isAudioPlaying,
   onLoadMore,
   onPlayTrack,
   onTagClick,
@@ -96,7 +98,8 @@ export function TrackGrid({
           <ExploreTrackCard
             key={track.id}
             track={track}
-            isPlaying={currentTrackId === track.id}
+            isPlaying={currentTrackId === track.id && isAudioPlaying}
+            isCurrentTrack={currentTrackId === track.id}
             isLoading={loadingTrackId === track.id}
             onPlay={onPlayTrack}
             onTagClick={onTagClick}

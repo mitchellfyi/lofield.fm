@@ -6,6 +6,7 @@ import { WaveformPreview } from "./WaveformPreview";
 interface ExploreTrackCardProps {
   track: PublicTrack;
   isPlaying: boolean;
+  isCurrentTrack?: boolean;
   isLoading: boolean;
   onPlay: (track: PublicTrack) => void;
   onTagClick?: (tag: string) => void;
@@ -18,6 +19,7 @@ interface ExploreTrackCardProps {
 export function ExploreTrackCard({
   track,
   isPlaying,
+  isCurrentTrack = false,
   isLoading,
   onPlay,
   onTagClick,
@@ -47,7 +49,9 @@ export function ExploreTrackCard({
       className={`group relative bg-slate-800/50 border rounded-xl p-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${
         isPlaying
           ? "border-cyan-500 shadow-lg shadow-cyan-500/20"
-          : "border-slate-700 hover:border-cyan-500/50 hover:shadow-cyan-500/5"
+          : isCurrentTrack
+            ? "border-cyan-500/50 shadow-md shadow-cyan-500/10"
+            : "border-slate-700 hover:border-cyan-500/50 hover:shadow-cyan-500/5"
       }`}
       onClick={handlePlay}
     >

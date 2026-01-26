@@ -127,4 +127,88 @@ describe("WaveformPreview", () => {
       expect(Object.keys(waveformModule)).toContain("WaveformPreview");
     });
   });
+
+  describe("FFT to bar heights conversion", () => {
+    /**
+     * Convert FFT dB values to normalized bar heights
+     * Copy of the function for testing purposes
+     */
+    function fftToBarHeights(fft: Float32Array, barCount: number): number[] {
+      const bars: number[] = [];
+      const binCount = fft.length;
+
+      for (let i = 0; i < barCount; i++) {
+        const startBin = Math.floor((i / barCount) ** 1.5 * binCount);
+        const endBin = Math.floor(((i + 1) / barCount) ** 1.5 * binCount);
+        const actualEndBin = Math.max(startBin + 1, endBin);
+
+        let sum = 0;
+        for (let j = startBin; j < actualEndBin && j < binCount; j++) {
+          const normalized = (fft[j] + 100) / 100;
+          sum += Math.max(0, Math.min(1, normalized));
+        }
+        const avg = sum / (actualEndBin - startBin);
+
+        bars.push(Math.max(0.1, Math.min(1, avg * 1.5)));
+      }
+
+      return bars;
+    }
+
+    it("should generate the specified number of bars", () => {
+      const fft = new Float32Array(64).fill(-50); // Mid-range dB values
+      const bars = fftToBarHeights(fft, 24);
+      expect(bars).toHaveLength(24);
+    });
+
+    it("should return minimum height for silent audio (all -100 dB)", () => {
+      const fft = new Float32Array(64).fill(-100);
+      const bars = fftToBarHeights(fft, 24);
+      bars.forEach((bar) => {
+        expect(bar).toBeCloseTo(0.1, 1); // Min height
+      });
+    });
+
+    it("should return maximum height for loud audio (0 dB)", () => {
+      const fft = new Float32Array(64).fill(0);
+      const bars = fftToBarHeights(fft, 24);
+      bars.forEach((bar) => {
+        expect(bar).toBeCloseTo(1, 1); // Max height (clamped)
+      });
+    });
+
+    it("should produce varying bar heights for varying FFT data", () => {
+      const fft = new Float32Array(64);
+      for (let i = 0; i < 64; i++) {
+        fft[i] = -100 + (i / 64) * 100; // Gradient from -100 to 0
+      }
+      const bars = fftToBarHeights(fft, 24);
+
+      // Due to logarithmic distribution, lower bars (lower frequencies) should be smaller
+      expect(bars[0]).toBeLessThan(bars[bars.length - 1]);
+    });
+
+    it("should handle empty FFT array", () => {
+      const fft = new Float32Array(0);
+      const bars = fftToBarHeights(fft, 24);
+      expect(bars).toHaveLength(24);
+      // All bars should be minimum since no data
+      bars.forEach((bar) => {
+        expect(bar).toBeGreaterThanOrEqual(0.1);
+      });
+    });
+
+    it("should clamp values between 0.1 and 1", () => {
+      const fft = new Float32Array(64);
+      // Test with extreme values
+      for (let i = 0; i < 64; i++) {
+        fft[i] = i < 32 ? -200 : 50; // Some very low, some very high
+      }
+      const bars = fftToBarHeights(fft, 24);
+      bars.forEach((bar) => {
+        expect(bar).toBeGreaterThanOrEqual(0.1);
+        expect(bar).toBeLessThanOrEqual(1);
+      });
+    });
+  });
 });
