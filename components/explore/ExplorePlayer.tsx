@@ -18,6 +18,17 @@ interface ExplorePlayerProps {
   onStop: () => void;
 }
 
+// Module-level flag to track user-initiated stops
+// This prevents auto-play from triggering when user manually pauses
+let userInitiatedStop = false;
+
+/**
+ * Mark the next stop as user-initiated (won't trigger auto-play)
+ */
+export function markUserInitiatedStop() {
+  userInitiatedStop = true;
+}
+
 /**
  * Map runtime state to player state
  */
@@ -102,12 +113,19 @@ export function ExplorePlayer({
 
       // Detect transition from playing to stopped/idle
       if (wasPlaying && !isPlaying && state !== "loading") {
-        // Track ended - trigger auto-play on next tick
-        setTimeout(() => {
-          if (autoPlayRef.current && hasNextRef.current) {
-            onPlayNextRef.current();
-          }
-        }, 0);
+        // Check if this was a user-initiated stop (pause button clicked)
+        // If so, don't auto-play the next track
+        const wasUserInitiated = userInitiatedStop;
+        userInitiatedStop = false; // Reset the flag
+
+        if (!wasUserInitiated) {
+          // Track ended naturally - trigger auto-play on next tick
+          setTimeout(() => {
+            if (autoPlayRef.current && hasNextRef.current) {
+              onPlayNextRef.current();
+            }
+          }, 0);
+        }
       }
 
       wasPlaying = isPlaying;
@@ -121,6 +139,7 @@ export function ExplorePlayer({
 
     const runtime = runtimeRef.current;
     if (playerState === "playing") {
+      userInitiatedStop = true;
       runtime.stop();
     } else {
       runtime.play(currentTrack.current_code).catch((err) => {

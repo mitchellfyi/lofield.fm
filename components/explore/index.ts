@@ -3,6 +3,6 @@
  */
 export { ExploreTrackCard } from "./ExploreTrackCard";
 export { ExploreFilters } from "./ExploreFilters";
-export { ExplorePlayer } from "./ExplorePlayer";
+export { ExplorePlayer, markUserInitiatedStop } from "./ExplorePlayer";
 export { TrackGrid } from "./TrackGrid";
 export { WaveformPreview } from "./WaveformPreview";

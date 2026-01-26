@@ -4,7 +4,12 @@ import { Suspense, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useExplore } from "@/lib/hooks/useExplore";
 import { usePlayQueue } from "@/lib/hooks/usePlayQueue";
-import { ExploreFilters, TrackGrid, ExplorePlayer } from "@/components/explore";
+import {
+  ExploreFilters,
+  TrackGrid,
+  ExplorePlayer,
+  markUserInitiatedStop,
+} from "@/components/explore";
 import type { PublicTrack } from "@/lib/types/explore";
 import { getAudioRuntime } from "@/lib/audio/runtime";
 
@@ -69,6 +74,7 @@ function ExploreContent() {
       // If clicking the currently playing track, toggle playback
       if (queue.currentTrack?.id === track.id) {
         if (isPlaying) {
+          markUserInitiatedStop();
           runtime.stop();
         } else {
           // Resume playing the same track
