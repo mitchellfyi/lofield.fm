@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { Suspense, useState, useCallback } from "react";
 import Link from "next/link";
 import { useExplore } from "@/lib/hooks/useExplore";
 import { usePlayQueue } from "@/lib/hooks/usePlayQueue";
@@ -8,10 +8,47 @@ import { ExploreFilters, TrackGrid, ExplorePlayer } from "@/components/explore";
 import type { PublicTrack } from "@/lib/types/explore";
 
 /**
- * Public track exploration page
- * Browse and play public tracks with filtering and auto-play
+ * Loading skeleton for explore page
  */
-export default function ExplorePage() {
+function ExploreLoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
+      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-lg border-b border-slate-700/50">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-6 h-6 bg-slate-700 rounded animate-pulse" />
+              <div>
+                <div className="h-6 w-32 bg-slate-700 rounded animate-pulse" />
+                <div className="h-3 w-20 bg-slate-700 rounded animate-pulse mt-1" />
+              </div>
+            </div>
+            <div className="h-10 w-28 bg-slate-700 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </header>
+      <main className="max-w-7xl mx-auto px-4 py-6 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <aside className="lg:col-span-1">
+            <div className="h-64 bg-slate-800/50 rounded-xl animate-pulse" />
+          </aside>
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-48 bg-slate-800/50 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+/**
+ * Main explore page content (uses useSearchParams via useExplore)
+ */
+function ExploreContent() {
   const explore = useExplore();
   const queue = usePlayQueue();
   const [loadingTrackId, setLoadingTrackId] = useState<string | null>(null);
@@ -162,5 +199,17 @@ export default function ExplorePage() {
         onStop={handleStop}
       />
     </div>
+  );
+}
+
+/**
+ * Public track exploration page
+ * Wrapped in Suspense to support useSearchParams in useExplore
+ */
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={<ExploreLoadingSkeleton />}>
+      <ExploreContent />
+    </Suspense>
   );
 }
