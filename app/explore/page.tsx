@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback, useSyncExternalStore } from "react";
+import { Suspense, useState, useCallback, useSyncExternalStore, useEffect } from "react";
 import Link from "next/link";
 import { useExplore } from "@/lib/hooks/useExplore";
 import { usePlayQueue } from "@/lib/hooks/usePlayQueue";
@@ -67,6 +67,13 @@ function ExploreContent() {
     () => "idle" as const
   );
   const isPlaying = playerState === "playing";
+
+  // Stop playback when navigating away from the explore page
+  useEffect(() => {
+    return () => {
+      runtime.stop();
+    };
+  }, [runtime]);
 
   // Handle playing/pausing a track
   const handlePlayTrack = useCallback(
