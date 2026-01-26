@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { PlayerState } from "@/lib/audio/runtime";
 import { WaveformVisualizer } from "./WaveformVisualizer";
 import { PresetBrowser } from "./PresetBrowser";
@@ -121,6 +122,28 @@ export function TopBar({
                 <span className="hidden sm:inline">Presets</span>
               </button>
             )}
+
+            {/* Explore Link */}
+            <Link
+              href="/explore"
+              className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-sm text-sm font-medium text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10 transition-all duration-200 backdrop-blur-sm"
+              aria-label="Explore Tracks"
+            >
+              <svg
+                className="w-5 h-5 sm:w-4 sm:h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                />
+              </svg>
+              <span className="hidden sm:inline">Explore</span>
+            </Link>
 
             {/* User Menu */}
             <UserMenu />
