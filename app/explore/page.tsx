@@ -107,7 +107,9 @@ function ExploreContent() {
               <div>
                 <h1 className="text-xl font-bold text-cyan-100">Explore Tracks</h1>
                 <p className="text-xs text-slate-400">
-                  {explore.total > 0 ? `${explore.total} tracks` : "Loading..."}
+                  {explore.loading && explore.tracks.length === 0
+                    ? "Loading..."
+                    : `${explore.total} track${explore.total !== 1 ? "s" : ""}`}
                 </p>
               </div>
             </div>
