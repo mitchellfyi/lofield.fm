@@ -50,3 +50,8 @@ supabase/.temp
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# doyaken runtime files (keep config, ignore runtime)
+.doyaken/locks/
+.doyaken/logs/
+.doyaken/state/

@@ -1,0 +1,44 @@
+# AI Agent Project Manifest
+# Generated: 2026-01-27T19:18:13Z
+
+version: 1
+
+project:
+  name: "lofield.fm"
+  description: "AI-powered lofi music creation platform with Tone.js"
+
+# Git configuration (auto-detected)
+git:
+  remote: "git@github.com:mitchellfyi/lofield.fm.git"
+  branch: "main"
+
+# Domains and URLs associated with this project
+domains:
+  production: "https://lofield.fm"
+
+# External tool integrations
+tools:
+  github:
+    enabled: true
+    repo: "mitchellfyi/lofield.fm"
+
+# Quality gate commands (auto-detected or configured)
+quality:
+  test_command: "npm test"
+  lint_command: "npm run lint"
+  format_command: "npm run format"
+  build_command: "npm run build"
+
+# Agent behavior settings
+agent:
+  # Agent to use: claude, codex, gemini, copilot, opencode
+  name: "claude"
+  # Model depends on agent:
+  #   claude: opus, sonnet, haiku
+  #   codex: gpt-5, o3, o4-mini
+  #   gemini: gemini-2.5-pro, gemini-2.5-flash
+  #   copilot: claude-sonnet-4.5, gpt-5
+  #   opencode: claude-sonnet-4, gpt-5
+  model: "opus"
+  max_retries: 2
+  parallel_workers: 2
