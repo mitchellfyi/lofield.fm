@@ -2,6 +2,9 @@
 
 **Create lofi beats using natural language.** Just describe what you want, and AI generates the music for you.
 
+<img width="1673" height="803" alt="image" src="https://github.com/user-attachments/assets/eb9e60a2-0577-41af-82cf-ef3aadd57999" />
+
+
 [Try it live](https://lofield.fm)
 
 ---
