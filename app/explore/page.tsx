@@ -18,7 +18,7 @@ import { getAudioRuntime } from "@/lib/audio/runtime";
  */
 function ExploreLoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
+    <div className="h-screen overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-lg border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -125,7 +125,7 @@ function ExploreContent() {
   }, [queue]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
+    <div className="h-screen overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-lg border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto px-4 py-4">
