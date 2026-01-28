@@ -22,7 +22,6 @@ export function PresetBrowser({
   const [selectedGenre, setSelectedGenre] = useState<string | undefined>(undefined);
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const [previewingPreset, setPreviewingPreset] = useState<Preset | null>(null);
   const [pendingLoadPreset, setPendingLoadPreset] = useState<Preset | null>(null);
 
   const genres = getUniqueGenres();
@@ -33,11 +32,6 @@ export function PresetBrowser({
     tag: selectedTag,
     search: searchQuery,
   });
-
-  const handlePreview = useCallback((preset: Preset) => {
-    setPreviewingPreset((current) => (current?.id === preset.id ? null : preset));
-    // TODO: Implement actual audio preview when runtime supports it
-  }, []);
 
   const handleLoad = useCallback(
     (preset: Preset) => {
@@ -195,13 +189,7 @@ export function PresetBrowser({
             {filteredPresets.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredPresets.map((preset) => (
-                  <PresetCard
-                    key={preset.id}
-                    preset={preset}
-                    onPreview={handlePreview}
-                    onLoad={handleLoad}
-                    isPlaying={previewingPreset?.id === preset.id}
-                  />
+                  <PresetCard key={preset.id} preset={preset} onLoad={handleLoad} />
                 ))}
               </div>
             ) : (

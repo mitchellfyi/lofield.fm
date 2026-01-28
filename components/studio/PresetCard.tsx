@@ -4,12 +4,10 @@ import type { Preset } from "@/lib/audio/presets";
 
 interface PresetCardProps {
   preset: Preset;
-  onPreview: (preset: Preset) => void;
   onLoad: (preset: Preset) => void;
-  isPlaying?: boolean;
 }
 
-export function PresetCard({ preset, onPreview, onLoad, isPlaying = false }: PresetCardProps) {
+export function PresetCard({ preset, onLoad }: PresetCardProps) {
   return (
     <div className="group relative bg-slate-800/50 border border-slate-700 hover:border-cyan-500/50 rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/5">
       {/* Header */}
@@ -43,28 +41,14 @@ export function PresetCard({ preset, onPreview, onLoad, isPlaying = false }: Pre
       {/* Actions */}
       <div className="flex gap-2">
         <button
-          onClick={() => onPreview(preset)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-            isPlaying
-              ? "bg-amber-500/20 text-amber-300 border border-amber-500/50"
-              : "bg-slate-700/50 text-slate-300 border border-slate-600 hover:border-cyan-500/30 hover:text-cyan-300"
-          }`}
+          disabled
+          title="Audio preview coming soon"
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all duration-200 bg-slate-700/30 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50"
         >
-          {isPlaying ? (
-            <>
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-              </svg>
-              Stop
-            </>
-          ) : (
-            <>
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Preview
-            </>
-          )}
+          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          Preview
         </button>
         <button
           onClick={() => onLoad(preset)}

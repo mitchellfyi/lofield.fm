@@ -926,6 +926,44 @@ Request: ${inputValue}`;
     [selectedLayerId, createSnapshot, pushHistoryDebounced]
   );
 
+  // Handle loading a preset - properly syncs with layers, history, and tweaks
+  const handleLoadPreset = useCallback(
+    (presetCode: string) => {
+      // Push current state to history for undo capability
+      if (!isRestoringFromHistoryRef.current) {
+        pushHistory(createSnapshot());
+      }
+
+      // Update code state
+      setCode(presetCode);
+
+      // Update the selected layer's code
+      if (selectedLayerId) {
+        setLayers((prevLayers) =>
+          prevLayers.map((layer) =>
+            layer.id === selectedLayerId ? { ...layer, code: presetCode } : layer
+          )
+        );
+      }
+
+      // Extract and apply tweaks from the preset
+      const presetTweaks = extractTweaks(presetCode);
+      if (presetTweaks) {
+        setTweaks(presetTweaks);
+      }
+
+      // If audio is playing, update playback with the new code
+      if (playerState === "playing") {
+        const runtime = runtimeRef.current;
+        lastPlayedCodeRef.current = presetCode;
+        runtime.play(presetCode, true).catch((err) => {
+          console.warn("Preset load playback error:", err);
+        });
+      }
+    },
+    [selectedLayerId, createSnapshot, pushHistory, playerState]
+  );
+
   // Track unsaved changes when code differs from last saved
   useEffect(() => {
     if (currentTrackId && code !== lastSavedCodeRef.current) {
@@ -1238,7 +1276,7 @@ Request: ${inputValue}`;
         {/* Top Bar */}
         <TopBar
           playerState={playerState}
-          onLoadPreset={setCode}
+          onLoadPreset={handleLoadPreset}
           currentTrackName={currentTrackName}
           onOpenTracks={() => setShowTrackBrowser(true)}
           hasUnsavedChanges={hasUnsavedChanges}
