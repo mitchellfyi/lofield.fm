@@ -60,7 +60,7 @@ The preview functionality is stubbed with a TODO comment at `PresetBrowser.tsx:3
 - [x] **Unsaved changes warning**: The existing confirmation dialog still works correctly
 - [x] Tests written and passing (if applicable)
 - [x] Quality gates pass
-- [ ] Changes committed with task reference
+- [x] Changes committed with task reference
 
 ---
 
