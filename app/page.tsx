@@ -64,13 +64,25 @@ export default function Home() {
       {/* Hero section */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-3 w-3 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400/50" />
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500 bg-clip-text text-transparent tracking-tight">
+            <span className="text-cyan-400 font-medium text-sm uppercase tracking-wider">
               LoField Music Lab
-            </h1>
+            </span>
           </div>
-          <p className="text-slate-400 mb-8 text-lg">Chat to create lofi beats with Tone.js</p>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 max-w-3xl mx-auto leading-tight">
+            <span className="bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent">
+              Create Music with AI.
+            </span>
+            <br />
+            <span className="bg-gradient-to-r from-cyan-300 via-cyan-400 to-cyan-500 bg-clip-text text-transparent">
+              No Experience Needed.
+            </span>
+          </h1>
+          <p className="text-slate-400 mb-8 text-lg max-w-xl mx-auto">
+            Describe the sound you want in plain English. AI generates playable Tone.js code
+            instantly. Works in your browser, completely free.
+          </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/studio"
@@ -85,7 +97,7 @@ export default function Home() {
                     d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
                   />
                 </svg>
-                Open Music Studio
+                Start Creating Free
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/30 to-cyan-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(6,182,212,0.1)_0%,_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -146,6 +158,40 @@ export default function Home() {
 
             {/* Reflection effect */}
             <div className="absolute inset-x-0 -bottom-px h-32 bg-gradient-to-b from-transparent via-slate-950/50 to-slate-950 pointer-events-none" />
+          </div>
+
+          {/* How it works */}
+          <div className="mt-16 mb-12">
+            <h2 className="text-lg font-semibold text-center text-cyan-100 mb-8">How It Works</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
+              <div className="text-center">
+                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold">
+                  1
+                </div>
+                <h3 className="text-sm font-semibold text-white mb-1">Describe Your Sound</h3>
+                <p className="text-xs text-slate-400">
+                  Tell AI what you want: &quot;chill lo-fi beat with jazzy chords&quot;
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold">
+                  2
+                </div>
+                <h3 className="text-sm font-semibold text-white mb-1">AI Generates Code</h3>
+                <p className="text-xs text-slate-400">
+                  Real Tone.js code is created instantly, ready to play
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold">
+                  3
+                </div>
+                <h3 className="text-sm font-semibold text-white mb-1">Listen & Tweak</h3>
+                <p className="text-xs text-slate-400">
+                  Hit play, adjust controls, and iterate until it&apos;s perfect
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Feature highlights */}
