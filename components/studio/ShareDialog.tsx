@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useShare } from "@/lib/hooks/useShare";
 import type { PrivacyLevel } from "@/lib/types/share";
+import { SocialShareButtons } from "@/components/share/SocialShareButtons";
 
 interface ShareDialogProps {
   isOpen: boolean;
   trackId: string | null;
   trackName?: string;
+  genre?: string;
   onClose: () => void;
   onToast: (message: string, type: "success" | "error") => void;
 }
@@ -18,7 +20,14 @@ const PRIVACY_OPTIONS: { value: PrivacyLevel; label: string; description: string
   { value: "public", label: "Public", description: "Discoverable by anyone" },
 ];
 
-export function ShareDialog({ isOpen, trackId, trackName, onClose, onToast }: ShareDialogProps) {
+export function ShareDialog({
+  isOpen,
+  trackId,
+  trackName,
+  genre,
+  onClose,
+  onToast,
+}: ShareDialogProps) {
   const { shareInfo, loading, error, generateShare, updatePrivacy, revokeShare, copyShareUrl } =
     useShare(trackId);
 
@@ -162,6 +171,16 @@ export function ShareDialog({ isOpen, trackId, trackName, onClose, onToast }: Sh
                 </p>
               )}
             </div>
+          )}
+
+          {/* Social Share Buttons (when link exists) */}
+          {hasShareLink && shareInfo.shareUrl && (
+            <SocialShareButtons
+              url={shareInfo.shareUrl}
+              trackName={trackName || "My Track"}
+              genre={genre}
+              onShare={(platform) => onToast(`Opening ${platform}...`, "success")}
+            />
           )}
 
           {/* Generate/Regenerate Button */}
