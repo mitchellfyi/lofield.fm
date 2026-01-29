@@ -1,11 +1,11 @@
 # AI Agent Project Manifest
-# Generated: 2026-01-27T19:18:13Z
+# Generated: 2026-01-29T21:15:49Z
 
 version: 1
 
 project:
   name: "lofield.fm"
-  description: "AI-powered lofi music creation platform with Tone.js"
+  description: ""
 
 # Git configuration (auto-detected)
 git:
@@ -14,20 +14,28 @@ git:
 
 # Domains and URLs associated with this project
 domains:
-  production: "https://lofield.fm"
+  # production: "https://example.com"
+  # staging: "https://staging.example.com"
 
 # External tool integrations
 tools:
-  github:
-    enabled: true
-    repo: "mitchellfyi/lofield.fm"
+  # jira:
+  #   enabled: false
+  #   project_key: ""
+  #   base_url: ""
+  # github:
+  #   enabled: true
+  #   repo: "user/repo"
+  # linear:
+  #   enabled: false
+  #   team_id: ""
 
 # Quality gate commands (auto-detected or configured)
 quality:
-  test_command: "npm test"
-  lint_command: "npm run lint"
-  format_command: "npm run format"
-  build_command: "npm run build"
+  test_command: ""
+  lint_command: ""
+  format_command: ""
+  build_command: ""
 
 # Agent behavior settings
 agent:
@@ -42,3 +50,33 @@ agent:
   model: "opus"
   max_retries: 2
   parallel_workers: 2
+
+# Output settings (override global defaults)
+# output:
+#   progress_mode: true    # One-line progress updates
+#   verbose: false         # Show full agent output
+#   quiet: false           # Minimal output
+
+# Phase timeouts in seconds (override global defaults)
+# Increase these if tasks are complex and hitting timeouts
+# See: doyaken config show
+# timeouts:
+#   expand: 900       # 15 min
+#   triage: 540       # 9 min
+#   plan: 900         # 15 min
+#   implement: 5400   # 90 min
+#   test: 1800        # 30 min
+#   docs: 900         # 15 min
+#   review: 1800      # 30 min
+#   verify: 900       # 15 min
+
+# Skip phases (set to true to skip)
+# skip_phases:
+#   expand: false
+#   triage: false
+#   plan: false
+#   implement: false
+#   test: false
+#   docs: false
+#   review: false
+#   verify: false
