@@ -30,6 +30,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? `A lofi beat by ${track.author_name} on LoField Music Lab`
     : "A lofi beat created on LoField Music Lab";
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://lofield.fm";
+  const ogImageUrl = `${baseUrl}/api/og/${token}`;
+  const shareUrl = `${baseUrl}/share/${token}`;
+
   return {
     title,
     description,
@@ -38,11 +42,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: "music.song",
       siteName: "LoField Music Lab",
+      url: shareUrl,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${track.name} - LoField Music Lab`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImageUrl],
     },
   };
 }
