@@ -9,6 +9,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { PRESETS } from "../lib/audio/presets/index";
 
+// Featured preset IDs - only these will be marked as featured on the explore page
+const FEATURED_PRESET_IDS = ["lofi-chill", "chillwave", "nu-disco"];
+
 // Load environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,6 +39,7 @@ async function seedPresets() {
 
     if (existing) {
       // Update existing preset
+      const isFeatured = FEATURED_PRESET_IDS.includes(preset.id);
       const { error } = await supabase
         .from("tracks")
         .update({
@@ -45,7 +49,7 @@ async function seedPresets() {
           tags: preset.tags,
           privacy: "public",
           is_system: true,
-          is_featured: true, // Feature all presets
+          is_featured: isFeatured,
         })
         .eq("id", existing.id);
 
@@ -58,6 +62,7 @@ async function seedPresets() {
       // Insert new preset
       // Note: We need a user_id, so we'll use a system user or make it nullable
       // For now, we'll skip user_id since it should be optional for system tracks
+      const isFeatured = FEATURED_PRESET_IDS.includes(preset.id);
       const { error } = await supabase.from("tracks").insert({
         name: preset.name,
         current_code: preset.code,
@@ -68,7 +73,7 @@ async function seedPresets() {
         plays: 0,
         privacy: "public",
         is_system: true,
-        is_featured: true,
+        is_featured: isFeatured,
         // user_id is intentionally omitted - handled by default/policy
       });
 

@@ -16,6 +16,12 @@ import { pop } from "./pop";
 import { rock } from "./rock";
 import { hiphop } from "./hiphop";
 import { trance } from "./trance";
+import { downtempo } from "./downtempo";
+import { chillwave } from "./chillwave";
+import { jazzFusion } from "./jazz-fusion";
+import { bossaNova } from "./bossa-nova";
+import { dreampop } from "./dreampop";
+import { nuDisco } from "./nu-disco";
 
 export const PRESETS = [
   lofiChill,
@@ -28,6 +34,12 @@ export const PRESETS = [
   rock,
   hiphop,
   trance,
+  downtempo,
+  chillwave,
+  jazzFusion,
+  bossaNova,
+  dreampop,
+  nuDisco,
 ];
 
 export function getPresetById(id: string) {
