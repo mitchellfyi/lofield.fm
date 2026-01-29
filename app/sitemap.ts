@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { getAllGenreSlugs } from "@/lib/content/genres";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://lofield.fm";
@@ -25,6 +26,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
   ];
+
+  // Genre landing pages
+  const genrePages: MetadataRoute.Sitemap = getAllGenreSlugs().map((slug) => ({
+    url: `${baseUrl}/genres/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
 
   // Try to get public tracks for dynamic URLs
   let trackPages: MetadataRoute.Sitemap = [];
@@ -56,5 +65,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticPages, ...trackPages];
+  return [...staticPages, ...genrePages, ...trackPages];
 }

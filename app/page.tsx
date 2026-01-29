@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { WebsiteJsonLd, SoftwareApplicationJsonLd } from "@/components/seo/JsonLd";
+import { GENRE_CONTENT } from "@/lib/content/genres";
 
 export const metadata: Metadata = {
   title: "LoField Music Lab - AI-Powered Music Creation",
@@ -212,6 +213,24 @@ export default function Home() {
                 BPM, reverb, delay and more with visual layers
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Genre Links */}
+        <div className="w-full max-w-4xl mx-auto px-4 pb-16">
+          <h2 className="text-lg font-semibold text-cyan-100 mb-4 text-center">
+            Create Music by Genre
+          </h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {GENRE_CONTENT.map((genre) => (
+              <Link
+                key={genre.slug}
+                href={`/genres/${genre.slug}`}
+                className="px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-300 hover:text-cyan-300 hover:border-cyan-500/50 transition-colors"
+              >
+                {genre.name}
+              </Link>
+            ))}
           </div>
         </div>
       </main>
