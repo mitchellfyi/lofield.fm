@@ -143,8 +143,27 @@ export function RecordingTimeline({
 
   if (!recording || recording.events.length === 0) {
     return (
-      <div className="h-12 rounded-lg bg-slate-900/50 border border-slate-700/50 flex items-center justify-center">
-        <span className="text-xs text-slate-500">No recorded events</span>
+      <div className="rounded-lg bg-slate-900/50 border border-slate-700/50 p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+            <svg
+              className="w-4 h-4 text-rose-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10" strokeWidth="2" />
+              <circle cx="12" cy="12" r="3" fill="currentColor" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-medium text-slate-300 mb-1">Recording Timeline</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Record your tweaks and automation while playing. Hit the record button, adjust knobs,
+              and your changes are captured here for playback.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
