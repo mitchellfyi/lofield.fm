@@ -1,9 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { WebsiteJsonLd, SoftwareApplicationJsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = {
+  title: "LoField Music Lab - AI-Powered Music Creation",
+  description:
+    "Create music with AI in seconds. Describe the vibe you want and AI generates playable code instantly. Free online music studio for lo-fi, ambient, house, techno, and more.",
+  openGraph: {
+    title: "LoField Music Lab - AI-Powered Music Creation",
+    description:
+      "Create music with AI in seconds. Describe the vibe you want and AI generates playable code instantly.",
+  },
+};
 
 export default function Home() {
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://lofield.fm";
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white relative">
+      <WebsiteJsonLd
+        url={siteUrl}
+        name="LoField Music Lab"
+        description="Create music with AI. Describe the vibe you want and AI generates Tone.js code that plays instantly."
+      />
+      <SoftwareApplicationJsonLd
+        name="LoField Music Lab"
+        description="AI-powered music creation studio. Generate lo-fi beats, ambient soundscapes, house, techno, and more with natural language."
+        url={siteUrl}
+        applicationCategory="MultimediaApplication"
+        operatingSystem="Web Browser"
+      />
       {/* Animated background effect */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/20 via-transparent to-transparent opacity-50 pointer-events-none" />
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
