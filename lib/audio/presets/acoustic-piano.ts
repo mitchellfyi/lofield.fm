@@ -19,27 +19,41 @@ Tone.Transport.swing = 0;
 
 // ─────────────────────────────────────────────────────────────
 // Room Acoustics - Concert hall reverb
+// On mobile: use lighter effects to prevent crackling
 // ─────────────────────────────────────────────────────────────
 const limiter = new Tone.Limiter(-2).toDestination();
 const masterComp = new Tone.Compressor({
   threshold: -20, ratio: 2, attack: 0.05, release: 0.2
 }).connect(limiter);
 
-// Concert hall reverb - longer decay for realism
-const hallReverb = new Tone.Reverb({
-  decay: 3.5,
-  wet: 0.25,
-  preDelay: 0.02
-}).connect(masterComp);
+// Use lighter reverb on mobile (Freeverb instead of Convolver-based Reverb)
+let mainOutput;
+if (__isMobile) {
+  // Freeverb is much lighter on CPU than Reverb (no ConvolverNode)
+  const lightReverb = new Tone.Freeverb({
+    roomSize: 0.7,
+    dampening: 3000,
+    wet: 0.2
+  }).connect(masterComp);
+  mainOutput = lightReverb;
+} else {
+  // Full concert hall reverb for desktop
+  const hallReverb = new Tone.Reverb({
+    decay: 3.5,
+    wet: 0.25,
+    preDelay: 0.02
+  }).connect(masterComp);
 
-// Subtle stereo widening via chorus (simulates multiple strings)
-const stringChorus = new Tone.Chorus({
-  frequency: 0.5,
-  delayTime: 3.5,
-  depth: 0.15,
-  wet: 0.12
-}).connect(hallReverb);
-stringChorus.start();
+  // Subtle stereo widening via chorus (simulates multiple strings)
+  const stringChorus = new Tone.Chorus({
+    frequency: 0.5,
+    delayTime: 3.5,
+    depth: 0.15,
+    wet: 0.12
+  }).connect(hallReverb);
+  stringChorus.start();
+  mainOutput = stringChorus;
+}
 
 // ─────────────────────────────────────────────────────────────
 // Piano Voice - FM synthesis with hammer mechanics
@@ -67,11 +81,12 @@ const piano = new Tone.PolySynth(Tone.FMSynth, {
     sustain: 0.05,            // Minimal sustained brightness
     release: 0.8              // Gradual harmonic decay
   }
-}).connect(stringChorus);
+}).connect(mainOutput);
 piano.volume.value = -6;
 
 // Second voice for string body resonance (sympathetic vibration)
-const resonance = new Tone.PolySynth(Tone.Synth, {
+// Skip on mobile to reduce CPU load
+const resonance = __isMobile ? null : new Tone.PolySynth(Tone.Synth, {
   oscillator: { type: "sine" },
   envelope: {
     attack: 0.02,
@@ -79,8 +94,8 @@ const resonance = new Tone.PolySynth(Tone.Synth, {
     sustain: 0.1,
     release: 2.0
   }
-}).connect(hallReverb);
-resonance.volume.value = -22;
+}).connect(masterComp);
+if (resonance) resonance.volume.value = -22;
 
 // Hammer thump - simulates mechanical action
 const hammerThump = new Tone.MembraneSynth({
@@ -102,8 +117,8 @@ const humanize = (v) => v * (0.92 + Math.random() * 0.16);
 const playPiano = (note, time, velocity) => {
   const vel = humanize(velocity);
   piano.triggerAttackRelease(note, "2n", time, vel);
-  // Add sympathetic resonance one octave down (quieter)
-  if (velocity > 0.4) {
+  // Add sympathetic resonance one octave down (quieter) - desktop only
+  if (resonance && velocity > 0.4) {
     const resonanceNote = Tone.Frequency(note).transpose(-12).toNote();
     resonance.triggerAttackRelease(resonanceNote, "4n", time, vel * 0.3);
   }

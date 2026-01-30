@@ -42,11 +42,28 @@ class AudioRuntime {
   private playCallCount = 0;
   private stopCallCount = 0;
   private iosListenerAttached = false;
+  private _isMobile: boolean | null = null;
 
   private constructor() {
     // Private constructor for singleton
     this.exposeTestAPI();
     this.setupIOSAudioHandling();
+  }
+
+  /**
+   * Detect if running on a mobile device
+   * Cached after first call for performance
+   */
+  isMobile(): boolean {
+    if (this._isMobile !== null) return this._isMobile;
+    if (typeof navigator === "undefined") {
+      this._isMobile = false;
+      return false;
+    }
+    this._isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    return this._isMobile;
   }
 
   /**
@@ -185,6 +202,7 @@ class AudioRuntime {
 
   /**
    * Initialize Tone.js audio engine (must be called after user gesture)
+   * On mobile devices, uses larger audio buffers to prevent crackling
    */
   async init(): Promise<void> {
     if (this.initialized) {
@@ -199,6 +217,27 @@ class AudioRuntime {
     this.notifyListeners();
 
     try {
+      // On mobile devices, configure audio context for stability over low latency
+      // This prevents crackling caused by buffer underruns on slower hardware
+      if (this.isMobile()) {
+        // "playback" uses larger buffers (~0.5s latency) for smooth playback
+        // Default "interactive" uses small buffers (~0.01s) which causes crackling
+        const mobileContext = new AudioContext({
+          latencyHint: "playback",
+          sampleRate: 44100, // Standard sample rate for compatibility
+        });
+        Tone.setContext(mobileContext);
+
+        // Schedule events further in advance for mobile
+        // Default is 0.1s, increase to 0.3s for stability
+        Tone.getContext().lookAhead = 0.3;
+
+        this.addEvent({
+          type: "init",
+          message: "Mobile audio context configured (playback mode)",
+        });
+      }
+
       // Start Tone.js audio context (requires user gesture)
       await Tone.start();
       this.initCallCount++;
@@ -206,7 +245,7 @@ class AudioRuntime {
       this.state = "ready";
       this.addEvent({
         type: "init",
-        message: "Audio initialized successfully",
+        message: `Audio initialized successfully${this.isMobile() ? " (mobile optimized)" : ""}`,
       });
       this.notifyListeners();
     } catch (err) {
@@ -310,10 +349,11 @@ class AudioRuntime {
       const trackedTone = createTrackedTone();
 
       // Build the play function - user code gets the tracked Tone object
-      const playFunction = new Function("Tone", instrumentedCode);
+      // Also provide __isMobile helper so presets can use lighter effects on mobile
+      const playFunction = new Function("Tone", "__isMobile", instrumentedCode);
 
-      // Execute the code with tracked Tone
-      playFunction(trackedTone);
+      // Execute the code with tracked Tone and mobile detection helper
+      playFunction(trackedTone, this.isMobile());
 
       // Store cleanup function for this session
       window.__toneCleanup = () => {
