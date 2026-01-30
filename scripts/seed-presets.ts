@@ -10,7 +10,14 @@ import { createClient } from "@supabase/supabase-js";
 import { PRESETS } from "../lib/audio/presets/index";
 
 // Featured preset IDs - only these will be marked as featured on the explore page
-const FEATURED_PRESET_IDS = ["lofi-chill", "chillwave", "nu-disco"];
+const FEATURED_PRESET_IDS = [
+  "lofi-chill",
+  "chillwave",
+  "nu-disco",
+  "acoustic-piano",
+  "acoustic-guitar",
+  "acoustic-drums",
+];
 
 // Load environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

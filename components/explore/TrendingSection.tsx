@@ -108,11 +108,11 @@ export function TrendingSection({
       {/* Scrollable Track Cards */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
+        className="flex gap-4 overflow-x-auto pt-3 pb-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
         style={{ scrollbarWidth: "thin" }}
       >
         {tracks.map((track) => (
-          <div key={track.id} className="flex-shrink-0 w-64">
+          <div key={track.id} className="flex-shrink-0 w-64 overflow-visible">
             <ExploreTrackCard
               track={track}
               isPlaying={currentTrackId === track.id && isAudioPlaying}
