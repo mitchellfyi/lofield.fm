@@ -1,11 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useApiKey } from "@/lib/hooks/useApiKey";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
+import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { UsageDisplay } from "@/components/usage/UsageDisplay";
+
+interface Profile {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  email: string | null;
+}
 
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -13,6 +23,28 @@ export default function SettingsPage() {
   const [showModal, setShowModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/profile");
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user, fetchProfile]);
 
   const handleDeleteKey = async () => {
     if (
@@ -47,7 +79,7 @@ export default function SettingsPage() {
   };
 
   // Show loading state
-  if (authLoading || keyLoading) {
+  if (authLoading || keyLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center">
         <div className="text-slate-400">Loading...</div>
@@ -178,6 +210,11 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Profile Section */}
+          <div className="mt-6">
+            <ProfileEditor initialProfile={profile} onUpdate={fetchProfile} />
           </div>
 
           {/* Usage Section */}
