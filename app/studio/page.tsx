@@ -38,6 +38,7 @@ import { RecordingTimeline } from "@/components/studio/RecordingTimeline";
 import { RecordingPanel } from "@/components/studio/RecordingPanel";
 import { CommandPalette, useCommandPalette } from "@/components/shared/CommandPalette";
 import { type Command } from "@/lib/commands/registry";
+import { SpectrumAnalyzer } from "@/components/studio/SpectrumAnalyzer";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
@@ -1623,6 +1624,11 @@ Request: ${inputValue}`;
                     />
                   </div>
                 )}
+
+                {/* Spectrum Analyzer */}
+                <div className="shrink-0">
+                  <SpectrumAnalyzer height={80} showLabels={true} peakHold={true} />
+                </div>
 
                 {/* Console Panel */}
                 <div className="shrink-0">
