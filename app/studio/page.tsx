@@ -36,6 +36,8 @@ import { RecordButton } from "@/components/studio/RecordButton";
 import { ActionsBar } from "@/components/studio/ActionsBar";
 import { RecordingTimeline } from "@/components/studio/RecordingTimeline";
 import { RecordingPanel } from "@/components/studio/RecordingPanel";
+import { CommandPalette, useCommandPalette } from "@/components/shared/CommandPalette";
+import { type Command } from "@/lib/commands/registry";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
@@ -696,7 +698,7 @@ function StudioContent() {
     }
   }, [messages, audioLoaded, playCode, currentTrackId, createRevision]);
 
-  const stop = () => {
+  const stop = useCallback(() => {
     if (!audioLoaded) {
       showToast("Audio system not ready.", "error");
       return;
@@ -709,7 +711,7 @@ function StudioContent() {
       const errorMsg = err instanceof Error ? err.message : String(err);
       showToast(`Failed to stop: ${errorMsg}`, "error");
     }
-  };
+  }, [audioLoaded, showToast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1221,6 +1223,150 @@ Request: ${inputValue}`;
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleSave, handleUndo, handleRedo]);
 
+  // Command palette
+  const { open: commandPaletteOpen, setOpen: setCommandPaletteOpen } = useCommandPalette();
+
+  // Build commands list for command palette
+  const commands = useMemo<Command[]>(() => {
+    const cmds: Command[] = [
+      // Playback commands
+      {
+        id: "play",
+        name: "Play",
+        shortcut: "Space",
+        section: "playback",
+        handler: () => playCode(combineLayers(layers)),
+        disabled: playerState === "loading" || playerState === "error",
+      },
+      {
+        id: "stop",
+        name: "Stop",
+        section: "playback",
+        handler: stop,
+        disabled: playerState !== "playing",
+      },
+      {
+        id: "toggle-live-mode",
+        name: liveMode ? "Disable Live Mode" : "Enable Live Mode",
+        section: "playback",
+        handler: () => setLiveMode(!liveMode),
+      },
+      // File commands
+      {
+        id: "save",
+        name: "Save Track",
+        shortcut: "⌘S",
+        section: "file",
+        handler: handleSave,
+      },
+      {
+        id: "save-as",
+        name: "Save Track As...",
+        section: "file",
+        handler: () => setShowSaveAsModal(true),
+      },
+      {
+        id: "open-tracks",
+        name: "Open Track Browser",
+        section: "file",
+        handler: () => setShowTrackBrowser(true),
+      },
+      {
+        id: "export",
+        name: "Export Audio",
+        section: "file",
+        handler: () => setShowExportModal(true),
+      },
+      {
+        id: "share",
+        name: "Share Track",
+        section: "file",
+        handler: () => setShowShareDialog(true),
+        disabled: !currentTrackId,
+      },
+      // Edit commands
+      {
+        id: "undo",
+        name: "Undo",
+        shortcut: "⌘Z",
+        section: "edit",
+        handler: handleUndo,
+        disabled: !canUndo,
+      },
+      {
+        id: "redo",
+        name: "Redo",
+        shortcut: "⌘⇧Z",
+        section: "edit",
+        handler: handleRedo,
+        disabled: !canRedo,
+      },
+      {
+        id: "copy-code",
+        name: "Copy Code to Clipboard",
+        section: "edit",
+        handler: () => {
+          navigator.clipboard.writeText(code);
+          showToast("Code copied to clipboard", "success");
+        },
+      },
+      {
+        id: "reset-to-default",
+        name: "Reset to Default Code",
+        section: "edit",
+        handler: () => setCode(DEFAULT_CODE),
+      },
+      // View commands
+      {
+        id: "revision-history",
+        name: "View Revision History",
+        section: "view",
+        handler: () => setShowRevisionHistory(true),
+        disabled: !currentTrackId || revisions.length === 0,
+      },
+      {
+        id: "toggle-timeline",
+        name: timelineExpanded ? "Collapse Timeline" : "Expand Timeline",
+        section: "view",
+        handler: () => setTimelineExpanded(!timelineExpanded),
+      },
+      // Navigation commands
+      {
+        id: "go-home",
+        name: "Go to Home Page",
+        section: "navigation",
+        handler: () => {
+          window.location.href = "/";
+        },
+      },
+      {
+        id: "go-explore",
+        name: "Go to Explore Page",
+        section: "navigation",
+        handler: () => {
+          window.location.href = "/explore";
+        },
+      },
+    ];
+    return cmds;
+  }, [
+    layers,
+    playerState,
+    liveMode,
+    handleSave,
+    handleUndo,
+    handleRedo,
+    canUndo,
+    canRedo,
+    currentTrackId,
+    revisions.length,
+    timelineExpanded,
+    code,
+    showToast,
+    playCode,
+    stop,
+  ]);
+
   // Column resize handling
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1687,6 +1833,13 @@ Request: ${inputValue}`;
         trackName={currentTrackName ?? undefined}
         onClose={() => setShowShareDialog(false)}
         onToast={showToast}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        commands={commands}
       />
     </>
   );
