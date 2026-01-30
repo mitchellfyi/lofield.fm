@@ -11,7 +11,12 @@ interface ExploreTrackCardProps {
   onPlay: (track: PublicTrack) => void;
   onTagClick?: (tag: string) => void;
   onGenreClick?: (genre: string) => void;
+  /** Show trending badge for high-play tracks */
+  showTrendingBadge?: boolean;
 }
+
+/** Threshold for showing trending badge (plays count) */
+const TRENDING_THRESHOLD = 10;
 
 /**
  * Card component for displaying a public track in the explore grid
@@ -24,7 +29,9 @@ export function ExploreTrackCard({
   onPlay,
   onTagClick,
   onGenreClick,
+  showTrendingBadge = true,
 }: ExploreTrackCardProps) {
+  const isTrending = showTrendingBadge && !track.is_featured && track.plays >= TRENDING_THRESHOLD;
   const handlePlay = () => {
     onPlay(track);
   };
@@ -57,8 +64,21 @@ export function ExploreTrackCard({
     >
       {/* Featured badge */}
       {track.is_featured && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[10px] font-bold text-white shadow-lg">
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-[10px] font-bold text-white shadow-lg flex items-center gap-1">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+          </svg>
           Featured
+        </div>
+      )}
+
+      {/* Trending badge */}
+      {isTrending && (
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-[10px] font-bold text-white shadow-lg flex items-center gap-1">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 23c-4.97 0-9-4.03-9-9 0-3.53 2.04-6.58 5-8.05V4c0-.55.45-1 1-1s1 .45 1 1v1.95c2.96 1.47 5 4.52 5 8.05 0 4.97-4.03 9-9 9zm-1-16.12c-2.51 1.19-4 3.65-4 6.12 0 3.86 3.14 7 7 7s7-3.14 7-7c0-2.47-1.49-4.93-4-6.12V8c0 .55-.45 1-1 1s-1-.45-1-1V6.88z" />
+          </svg>
+          Trending
         </div>
       )}
 

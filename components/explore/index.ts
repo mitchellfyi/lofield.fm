@@ -5,4 +5,5 @@ export { ExploreTrackCard } from "./ExploreTrackCard";
 export { ExploreFilters } from "./ExploreFilters";
 export { ExplorePlayer, markUserInitiatedStop } from "./ExplorePlayer";
 export { TrackGrid } from "./TrackGrid";
+export { TrendingSection } from "./TrendingSection";
 export { WaveformPreview } from "./WaveformPreview";

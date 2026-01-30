@@ -7,9 +7,11 @@ import { usePlayQueue } from "@/lib/hooks/usePlayQueue";
 import {
   ExploreFilters,
   TrackGrid,
+  TrendingSection,
   ExplorePlayer,
   markUserInitiatedStop,
 } from "@/components/explore";
+import { useFeaturedTracks } from "@/lib/hooks/useFeaturedTracks";
 import type { PublicTrack } from "@/lib/types/explore";
 import { getAudioRuntime } from "@/lib/audio/runtime";
 
@@ -57,7 +59,9 @@ function ExploreLoadingSkeleton() {
 function ExploreContent() {
   const explore = useExplore();
   const queue = usePlayQueue();
+  const featured = useFeaturedTracks();
   const [loadingTrackId, setLoadingTrackId] = useState<string | null>(null);
+  const [showAllTracks, setShowAllTracks] = useState(false);
 
   // Get audio runtime state to know if currently playing
   const runtime = getAudioRuntime();
@@ -163,66 +167,147 @@ function ExploreContent() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 py-6 pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Filters sidebar */}
-          <aside className="lg:col-span-1">
-            <ExploreFilters
-              filters={explore.filters}
-              genres={explore.genres}
-              availableTags={explore.availableTags}
-              bpmRange={explore.bpmRange}
-              onGenreChange={explore.setGenre}
-              onTagToggle={explore.toggleTag}
-              onBpmChange={explore.setBpmRange}
-              onSortChange={explore.setSort}
-              onClear={explore.clearFilters}
-            />
-          </aside>
-
-          {/* Track grid */}
-          <div className="lg:col-span-3">
-            {explore.error ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-red-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-slate-300 mb-2">Failed to load tracks</h3>
-                <p className="text-sm text-slate-500 mb-4">{explore.error}</p>
-                <button
-                  onClick={() => explore.refresh()}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : (
-              <TrackGrid
-                tracks={explore.tracks}
-                loading={explore.loading}
-                hasMore={explore.hasMore}
+        {/* Featured Sections - show when no filters active */}
+        {!explore.filters.genre && explore.filters.tags.length === 0 && !showAllTracks && (
+          <div className="mb-8">
+            {/* Featured Section */}
+            {featured.data?.featured && featured.data.featured.length > 0 && (
+              <TrendingSection
+                title="Featured"
+                icon="star"
+                tracks={featured.data.featured}
                 currentTrackId={queue.currentTrack?.id || null}
                 loadingTrackId={loadingTrackId}
                 isAudioPlaying={isPlaying}
-                onLoadMore={explore.loadMore}
                 onPlayTrack={handlePlayTrack}
                 onTagClick={handleTagClick}
                 onGenreClick={handleGenreClick}
               />
             )}
+
+            {/* Trending Section */}
+            {featured.data?.trending && featured.data.trending.length > 0 && (
+              <TrendingSection
+                title="Trending"
+                icon="fire"
+                tracks={featured.data.trending}
+                currentTrackId={queue.currentTrack?.id || null}
+                loadingTrackId={loadingTrackId}
+                isAudioPlaying={isPlaying}
+                onPlayTrack={handlePlayTrack}
+                onTagClick={handleTagClick}
+                onGenreClick={handleGenreClick}
+              />
+            )}
+
+            {/* New Section */}
+            {featured.data?.recent && featured.data.recent.length > 0 && (
+              <TrendingSection
+                title="New Tracks"
+                icon="clock"
+                tracks={featured.data.recent}
+                currentTrackId={queue.currentTrack?.id || null}
+                loadingTrackId={loadingTrackId}
+                isAudioPlaying={isPlaying}
+                onPlayTrack={handlePlayTrack}
+                onTagClick={handleTagClick}
+                onGenreClick={handleGenreClick}
+              />
+            )}
+
+            {/* Show All Tracks button */}
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={() => setShowAllTracks(true)}
+                className="px-6 py-2 rounded-lg text-sm font-medium bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 hover:border-cyan-500/50 transition-all"
+              >
+                Browse All Tracks
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Full grid view with filters */}
+        {(showAllTracks || explore.filters.genre || explore.filters.tags.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Filters sidebar */}
+            <aside className="lg:col-span-1">
+              <div className="space-y-4">
+                {showAllTracks && !explore.filters.genre && explore.filters.tags.length === 0 && (
+                  <button
+                    onClick={() => setShowAllTracks(false)}
+                    className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                      />
+                    </svg>
+                    Back to Featured
+                  </button>
+                )}
+                <ExploreFilters
+                  filters={explore.filters}
+                  genres={explore.genres}
+                  availableTags={explore.availableTags}
+                  bpmRange={explore.bpmRange}
+                  onGenreChange={explore.setGenre}
+                  onTagToggle={explore.toggleTag}
+                  onBpmChange={explore.setBpmRange}
+                  onSortChange={explore.setSort}
+                  onClear={explore.clearFilters}
+                />
+              </div>
+            </aside>
+
+            {/* Track grid */}
+            <div className="lg:col-span-3">
+              {explore.error ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+                    <svg
+                      className="w-8 h-8 text-red-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-slate-300 mb-2">Failed to load tracks</h3>
+                  <p className="text-sm text-slate-500 mb-4">{explore.error}</p>
+                  <button
+                    onClick={() => explore.refresh()}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : (
+                <TrackGrid
+                  tracks={explore.tracks}
+                  loading={explore.loading}
+                  hasMore={explore.hasMore}
+                  currentTrackId={queue.currentTrack?.id || null}
+                  loadingTrackId={loadingTrackId}
+                  isAudioPlaying={isPlaying}
+                  onLoadMore={explore.loadMore}
+                  onPlayTrack={handlePlayTrack}
+                  onTagClick={handleTagClick}
+                  onGenreClick={handleGenreClick}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Player bar */}
