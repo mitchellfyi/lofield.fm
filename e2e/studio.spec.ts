@@ -38,6 +38,10 @@ async function waitForToneLoad(page: Page) {
 
 test.describe("LoField Music Studio E2E Tests", () => {
   test.beforeEach(async ({ page }) => {
+    // Mark tutorial as completed before loading page to prevent overlay from blocking interactions
+    await page.addInitScript(() => {
+      localStorage.setItem("lofield_tutorial_completed", "true");
+    });
     await page.goto("/studio");
     await waitForToneLoad(page);
   });
