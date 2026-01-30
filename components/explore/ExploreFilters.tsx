@@ -17,6 +17,7 @@ interface ExploreFiltersProps {
 
 const SORT_OPTIONS: { value: ExploreSortOption; label: string }[] = [
   { value: "popular", label: "Popular" },
+  { value: "most_liked", label: "Most Liked" },
   { value: "newest", label: "Newest" },
   { value: "random", label: "Random" },
 ];

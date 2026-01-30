@@ -1,6 +1,7 @@
 "use client";
 
 import type { PublicTrack } from "@/lib/types/explore";
+import { LikeButton } from "./LikeButton";
 import { WaveformPreview } from "./WaveformPreview";
 
 interface ExploreTrackCardProps {
@@ -172,18 +173,21 @@ export function ExploreTrackCard({
       )}
 
       {/* Stats */}
-      <div className="flex items-center gap-3 text-xs text-slate-500">
-        <span className="flex items-center gap-1">
-          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-          {track.plays.toLocaleString()}
-        </span>
-        {track.is_system && (
-          <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px]">
-            Preset
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            {track.plays.toLocaleString()}
           </span>
-        )}
+          {track.is_system && (
+            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px]">
+              Preset
+            </span>
+          )}
+        </div>
+        <LikeButton trackId={track.id} initialCount={track.like_count} />
       </div>
     </div>
   );

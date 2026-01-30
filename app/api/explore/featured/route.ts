@@ -69,6 +69,7 @@ export async function GET() {
       tags: (track.tags as string[]) || [],
       ai_tags: (track.ai_tags as string[]) || [],
       plays: (track.plays as number) || 0,
+      like_count: (track.like_count as number) || 0,
       is_featured: (track.is_featured as boolean) || false,
       is_system: (track.is_system as boolean) || false,
       created_at: track.created_at as string,

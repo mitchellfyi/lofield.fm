@@ -15,6 +15,7 @@ export interface PublicTrack {
   tags: string[];
   ai_tags: string[];
   plays: number;
+  like_count: number;
   is_featured: boolean;
   is_system: boolean;
   created_at: string;
@@ -36,7 +37,7 @@ export interface ExploreQuery {
 /**
  * Sort options for explore tracks
  */
-export type ExploreSortOption = "newest" | "popular" | "random";
+export type ExploreSortOption = "newest" | "popular" | "most_liked" | "random";
 
 /**
  * Response from the explore API
@@ -119,6 +120,7 @@ export function toPublicTrack(row: Record<string, unknown>): PublicTrack {
     tags: (row.tags as string[]) || [],
     ai_tags: (row.ai_tags as string[]) || [],
     plays: (row.plays as number) || 0,
+    like_count: (row.like_count as number) || 0,
     is_featured: (row.is_featured as boolean) || false,
     is_system: (row.is_system as boolean) || false,
     created_at: row.created_at as string,

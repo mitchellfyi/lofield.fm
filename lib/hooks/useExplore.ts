@@ -44,7 +44,10 @@ function parseFiltersFromURL(searchParams: URLSearchParams): ExploreFilterState 
   const bpmMax = bpmMaxParam ? parseInt(bpmMaxParam, 10) : DEFAULT_EXPLORE_FILTERS.bpmMax;
   const sortParam = searchParams.get("sort");
   const sort: ExploreSortOption =
-    sortParam === "newest" || sortParam === "popular" || sortParam === "random"
+    sortParam === "newest" ||
+    sortParam === "popular" ||
+    sortParam === "most_liked" ||
+    sortParam === "random"
       ? sortParam
       : DEFAULT_EXPLORE_FILTERS.sort;
 

@@ -70,6 +70,11 @@ export async function GET(request: Request) {
           .order("plays", { ascending: false })
           .order("created_at", { ascending: false });
         break;
+      case "most_liked":
+        query = query
+          .order("like_count", { ascending: false })
+          .order("created_at", { ascending: false });
+        break;
       case "random":
         // For random, we'll fetch more and shuffle client-side
         // Supabase doesn't support random ordering natively
@@ -97,6 +102,7 @@ export async function GET(request: Request) {
       tags: track.tags || [],
       ai_tags: track.ai_tags || [],
       plays: track.plays || 0,
+      like_count: track.like_count || 0,
       is_featured: track.is_featured || false,
       is_system: track.is_system || false,
       created_at: track.created_at,
