@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 // In production, use Redis or similar
 const playRecords = new Map<string, number>();
 const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hour per track per fingerprint
+const MAX_RECORDS = 10000; // Prevent unbounded memory growth
 
 // Clean up old records periodically
 setInterval(
@@ -53,7 +54,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, counted: false });
     }
 
-    // Record this play
+    // Record this play (with size limit to prevent memory leak)
+    if (playRecords.size >= MAX_RECORDS) {
+      // Evict oldest entries when at capacity
+      const entries = Array.from(playRecords.entries());
+      entries.sort((a, b) => a[1] - b[1]); // Sort by timestamp
+      const toDelete = entries.slice(0, Math.floor(MAX_RECORDS * 0.1)); // Delete oldest 10%
+      for (const [key] of toDelete) {
+        playRecords.delete(key);
+      }
+    }
     playRecords.set(rateKey, Date.now());
 
     // Increment play count in database

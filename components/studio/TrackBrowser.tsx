@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useTracks } from "@/lib/hooks/useTracks";
+import { ConfirmDialog, useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { Track, ProjectWithTrackCount } from "@/lib/types/tracks";
 
 interface TrackBrowserProps {
@@ -38,6 +39,7 @@ export function TrackBrowser({
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const { confirm, dialogProps } = useConfirmDialog();
 
   const {
     tracks,
@@ -119,6 +121,28 @@ export function TrackBrowser({
     }
     await updateTrack(track.id, { name: editName.trim() });
     setEditingTrackId(null);
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    const confirmed = await confirm({
+      title: "Delete Project",
+      message: "Delete this project and all its tracks? This action cannot be undone.",
+      variant: "danger",
+    });
+    if (confirmed) {
+      deleteProject(projectId);
+    }
+  };
+
+  const handleDeleteTrack = async (trackId: string) => {
+    const confirmed = await confirm({
+      title: "Delete Track",
+      message: "Delete this track? This action cannot be undone.",
+      variant: "danger",
+    });
+    if (confirmed) {
+      deleteTrack(trackId);
+    }
   };
 
   return (
@@ -282,11 +306,7 @@ export function TrackBrowser({
                         </svg>
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm("Delete this project and all its tracks?")) {
-                            deleteProject(project.id);
-                          }
-                        }}
+                        onClick={() => handleDeleteProject(project.id)}
                         className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
                         title="Delete"
                       >
@@ -384,9 +404,7 @@ export function TrackBrowser({
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    if (confirm("Delete this track?")) {
-                                      deleteTrack(track.id);
-                                    }
+                                    handleDeleteTrack(track.id);
                                   }}
                                   className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
                                   title="Delete"
@@ -538,6 +556,8 @@ export function TrackBrowser({
           </button>
         </div>
       </div>
+
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

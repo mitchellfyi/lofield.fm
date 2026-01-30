@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { ConfirmDialog, useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface UserWithUsage {
   id: string;
@@ -27,6 +28,7 @@ export default function AdminUsersPage() {
     requestsPerMinute: 0,
     tier: "",
   });
+  const { confirm, dialogProps } = useConfirmDialog();
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -81,7 +83,12 @@ export default function AdminUsersPage() {
   };
 
   const handleClearFlags = async (userId: string) => {
-    if (!confirm("Clear all abuse flags for this user?")) return;
+    const confirmed = await confirm({
+      title: "Clear Abuse Flags",
+      message: "Clear all abuse flags for this user?",
+      variant: "warning",
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
         method: "DELETE",
@@ -286,6 +293,8 @@ export default function AdminUsersPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

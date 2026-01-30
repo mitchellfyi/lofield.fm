@@ -198,6 +198,7 @@ export function ExplorePlayer({
               disabled={!hasPrevious && !currentTrack}
               className="p-2 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Previous"
+              aria-label="Previous track"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
@@ -209,6 +210,7 @@ export function ExplorePlayer({
               onClick={handlePlayPause}
               disabled={playerState === "loading"}
               className="p-3 rounded-full bg-cyan-500 text-white hover:bg-cyan-400 disabled:opacity-50 transition-colors"
+              aria-label={playerState === "playing" ? "Pause" : "Play"}
             >
               {playerState === "loading" ? (
                 <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -243,6 +245,7 @@ export function ExplorePlayer({
               disabled={!hasNext}
               className="p-2 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Next"
+              aria-label="Next track"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
@@ -254,6 +257,7 @@ export function ExplorePlayer({
               onClick={handleStop}
               className="p-2 rounded-full text-slate-400 hover:text-red-400 hover:bg-slate-700/50 transition-colors"
               title="Stop"
+              aria-label="Stop playback"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 6h12v12H6z" />
@@ -284,6 +288,8 @@ export function ExplorePlayer({
                   : "text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50"
               }`}
               title={shuffle ? "Shuffle on" : "Shuffle off"}
+              aria-label={shuffle ? "Disable shuffle" : "Enable shuffle"}
+              aria-pressed={shuffle}
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
@@ -299,6 +305,8 @@ export function ExplorePlayer({
                   : "text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50"
               }`}
               title={autoPlay ? "Auto-play on" : "Auto-play off"}
+              aria-label={autoPlay ? "Disable auto-play" : "Enable auto-play"}
+              aria-pressed={autoPlay}
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" />

@@ -7,6 +7,7 @@ import { useApiKey } from "@/lib/hooks/useApiKey";
 import { ApiKeyModal } from "@/components/settings/ApiKeyModal";
 import { ProfileEditor } from "@/components/settings/ProfileEditor";
 import { UsageDisplay } from "@/components/usage/UsageDisplay";
+import { ConfirmDialog, useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface Profile {
   id: string;
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const { confirm, dialogProps } = useConfirmDialog();
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -47,13 +49,14 @@ export default function SettingsPage() {
   }, [user, fetchProfile]);
 
   const handleDeleteKey = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete your API key? You will need to add a new key to use AI chat."
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "Delete API Key",
+      message:
+        "Are you sure you want to delete your API key? You will need to add a new key to use AI chat.",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
 
     setDeleting(true);
     setDeleteError(null);
@@ -237,6 +240,8 @@ export default function SettingsPage() {
         onClose={() => setShowModal(false)}
         onSuccess={handleKeySuccess}
       />
+
+      <ConfirmDialog {...dialogProps} />
     </>
   );
 }

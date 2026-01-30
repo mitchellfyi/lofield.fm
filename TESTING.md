@@ -1,6 +1,6 @@
 # Testing Infrastructure
 
-This document describes the automated testing setup for the Strudel MVP.
+This document describes the automated testing setup for lofield.fm.
 
 ## Overview
 
@@ -38,7 +38,7 @@ npm run test:all
 ### Unit Tests (`lib/**/*.test.ts`)
 
 - `llmContract.test.ts` - Code extraction, validation, retry logic
-- `runtime.test.ts` - Strudel runtime state management
+- `runtime.test.ts` - Audio runtime state management
 
 ### E2E Tests (`e2e/strudel.spec.ts`)
 
@@ -114,7 +114,7 @@ Tests run automatically on every PR via GitHub Actions (`.github/workflows/tests
 
 ### Mocking for Unit Tests
 
-Unit tests mock the Strudel globals:
+Unit tests mock the audio engine globals:
 
 ```typescript
 global.window = { initStrudel: vi.fn(), hush: vi.fn() } as any;
@@ -123,8 +123,8 @@ global.window = { initStrudel: vi.fn(), hush: vi.fn() } as any;
 ### E2E Test Pattern
 
 ```typescript
-// Wait for Strudel to load
-await waitForStrudelLoad(page);
+// Wait for audio engine to load
+await waitForAudioLoad(page);
 
 // Interact with UI
 await page.getByRole("button", { name: "Play" }).click();

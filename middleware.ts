@@ -1,5 +1,31 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+
+/**
+ * Security headers to protect against common web vulnerabilities
+ */
+const securityHeaders = {
+  // Prevent MIME type sniffing
+  "X-Content-Type-Options": "nosniff",
+  // Prevent clickjacking
+  "X-Frame-Options": "DENY",
+  // XSS protection for legacy browsers
+  "X-XSS-Protection": "1; mode=block",
+  // Control referrer information
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  // Permissions Policy (formerly Feature Policy)
+  "Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
+};
+
+/**
+ * Add security headers to a response
+ */
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
 
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
@@ -28,10 +54,12 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/sign-in";
     url.searchParams.set("next", request.nextUrl.pathname);
-    return Response.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    return addSecurityHeaders(redirectResponse);
   }
 
-  return supabaseResponse;
+  // Add security headers to the response
+  return addSecurityHeaders(supabaseResponse);
 }
 
 export const config = {

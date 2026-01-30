@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { PublicTrack } from "@/lib/types/explore";
 import { LikeButton } from "./LikeButton";
 import { WaveformPreview } from "./WaveformPreview";
@@ -50,7 +51,10 @@ export function ExploreTrackCard({
   };
 
   // Combine user tags and AI tags, deduplicate
-  const allTags = [...new Set([...track.tags, ...track.ai_tags])];
+  const allTags = useMemo(
+    () => [...new Set([...track.tags, ...track.ai_tags])],
+    [track.tags, track.ai_tags]
+  );
 
   return (
     <div
