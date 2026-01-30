@@ -22,6 +22,9 @@ import { jazzFusion } from "./jazz-fusion";
 import { bossaNova } from "./bossa-nova";
 import { dreampop } from "./dreampop";
 import { nuDisco } from "./nu-disco";
+import { acousticPiano } from "./acoustic-piano";
+import { acousticGuitar } from "./acoustic-guitar";
+import { acousticDrums } from "./acoustic-drums";
 
 export const PRESETS = [
   lofiChill,
@@ -40,6 +43,9 @@ export const PRESETS = [
   bossaNova,
   dreampop,
   nuDisco,
+  acousticPiano,
+  acousticGuitar,
+  acousticDrums,
 ];
 
 export function getPresetById(id: string) {
