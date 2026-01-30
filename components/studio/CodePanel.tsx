@@ -13,6 +13,7 @@ import {
   visualizationTheme,
   setActiveLines,
 } from "@/lib/codemirror/visualizationExtension";
+import { toneAutocomplete } from "@/lib/editor/toneCompletions";
 
 interface CodePanelProps {
   code: string;
@@ -200,6 +201,8 @@ export function CodePanel({
               activeLinesField,
               activeLinesPlugin,
               visualizationTheme,
+              // Tone.js autocomplete
+              toneAutocomplete,
             ]}
             basicSetup={{
               lineNumbers: true,
@@ -209,7 +212,7 @@ export function CodePanel({
               indentOnInput: true,
               bracketMatching: true,
               closeBrackets: true,
-              autocompletion: false,
+              autocompletion: false, // Using custom toneAutocomplete instead
               highlightSelectionMatches: false,
             }}
           />
