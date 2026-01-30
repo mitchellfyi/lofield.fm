@@ -151,6 +151,7 @@ export function ChatPanel({
             placeholder="Describe your beat..."
             className="flex-1 px-3 sm:px-4 py-3 sm:py-2.5 bg-slate-950/50 text-cyan-100 placeholder-slate-500 border border-cyan-500/30 rounded-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all duration-200 text-base sm:text-sm"
             disabled={isLoading}
+            data-tutorial="chat-input"
           />
           <button
             type="submit"

@@ -38,7 +38,10 @@ export function TweaksPanel({ tweaks, onTweaksChange }: TweaksPanelProps) {
   };
 
   return (
-    <div className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm overflow-hidden">
+    <div
+      className="rounded-lg bg-slate-950/50 border border-cyan-500/20 backdrop-blur-sm overflow-hidden"
+      data-tutorial="tweaks-panel"
+    >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-3 py-2 border-b border-cyan-500/20 bg-slate-900/50 hover:bg-slate-900/70 transition-colors flex items-center justify-between gap-2"

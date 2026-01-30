@@ -35,6 +35,7 @@ export function PlayerControls({
           onClick={onPlay}
           disabled={!canPlay}
           className="flex-1 px-8 py-4 rounded-sm font-bold text-base bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 hover:from-cyan-500 hover:via-cyan-400 hover:to-cyan-500 disabled:from-slate-700 disabled:via-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 disabled:shadow-none border border-cyan-500/30 disabled:border-slate-600 relative overflow-hidden group backdrop-blur-sm"
+          data-tutorial="play-button"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             {isLoading ? (

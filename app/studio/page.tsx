@@ -39,6 +39,8 @@ import { RecordingPanel } from "@/components/studio/RecordingPanel";
 import { CommandPalette, useCommandPalette } from "@/components/shared/CommandPalette";
 import { type Command } from "@/lib/commands/registry";
 import { SpectrumAnalyzer } from "@/components/studio/SpectrumAnalyzer";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { isTutorialCompleted, resetTutorial } from "@/lib/tutorial/steps";
 import type { UIMessage } from "@ai-sdk/react";
 import type { Track } from "@/lib/types/tracks";
 import { type TweaksConfig, DEFAULT_TWEAKS } from "@/lib/types/tweaks";
@@ -1227,6 +1229,31 @@ Request: ${inputValue}`;
   // Command palette
   const { open: commandPaletteOpen, setOpen: setCommandPaletteOpen } = useCommandPalette();
 
+  // Tutorial state - shows on first visit
+  const [showTutorial, setShowTutorial] = useState(false);
+  const tutorialInitializedRef = useRef(false);
+
+  // Check if this is the user's first visit (after component mounts)
+  useEffect(() => {
+    if (tutorialInitializedRef.current) return;
+    tutorialInitializedRef.current = true;
+
+    // Small delay to let the UI settle before showing tutorial
+    const timer = setTimeout(() => {
+      if (!isTutorialCompleted()) {
+        setShowTutorial(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handler to restart tutorial (can be triggered from help menu)
+  const handleRestartTutorial = useCallback(() => {
+    resetTutorial();
+    setShowTutorial(true);
+  }, []);
+
   // Build commands list for command palette
   const commands = useMemo<Command[]>(() => {
     const cmds: Command[] = [
@@ -1348,6 +1375,13 @@ Request: ${inputValue}`;
           window.location.href = "/explore";
         },
       },
+      // Help commands
+      {
+        id: "restart-tutorial",
+        name: "Restart Tutorial",
+        section: "navigation",
+        handler: handleRestartTutorial,
+      },
     ];
     return cmds;
   }, [
@@ -1366,6 +1400,7 @@ Request: ${inputValue}`;
     showToast,
     playCode,
     stop,
+    handleRestartTutorial,
   ]);
 
   // Column resize handling
@@ -1685,7 +1720,7 @@ Request: ${inputValue}`;
                 className="flex flex-col backdrop-blur-sm min-w-0"
                 style={{ width: `${100 - rightColumnWidth}%` }}
               >
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0" data-tutorial="code-panel">
                   <CodePanel
                     code={code}
                     onChange={handleCodeChange}
@@ -1847,6 +1882,9 @@ Request: ${inputValue}`;
         onOpenChange={setCommandPaletteOpen}
         commands={commands}
       />
+
+      {/* Tutorial Overlay */}
+      <TutorialOverlay isActive={showTutorial} onComplete={() => setShowTutorial(false)} />
     </>
   );
 }
