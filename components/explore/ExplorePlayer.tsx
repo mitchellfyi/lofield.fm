@@ -47,6 +47,9 @@ function mapRuntimeState(runtimeState: PlayerState): ExplorePlayerState {
  * Persistent player bar for the explore page
  * Shows current track, playback controls, and progress
  */
+// Number of complete loops (32 bars each) before auto-advancing to next track
+const LOOPS_BEFORE_AUTO_ADVANCE = 2;
+
 export function ExplorePlayer({
   currentTrack,
   autoPlay,
@@ -62,6 +65,8 @@ export function ExplorePlayer({
   const runtimeRef = useRef(getAudioRuntime());
   const lastPlayedTrackRef = useRef<string | null>(null);
   const transportState = useTransportState();
+  const loopCountRef = useRef(0);
+  const lastBarRef = useRef(0);
 
   // Use useSyncExternalStore for runtime state to avoid setState in effects
   const playerState = useSyncExternalStore(
@@ -84,23 +89,51 @@ export function ExplorePlayer({
     // Play new track if different from last
     if (currentTrack.id !== lastPlayedTrackRef.current) {
       lastPlayedTrackRef.current = currentTrack.id;
+      loopCountRef.current = 0; // Reset loop count for new track
+      lastBarRef.current = 0;
       runtimeRef.current.play(currentTrack.current_code).catch((err) => {
         console.error("Failed to play track:", err);
       });
     }
   }, [currentTrack]);
 
-  // Store latest callback props in refs for use in subscription
+  // Store latest callback props in refs for use in subscriptions
   const autoPlayRef = useRef(autoPlay);
   const hasNextRef = useRef(hasNext);
   const onPlayNextRef = useRef(onPlayNext);
 
-  // Update refs when props change (in effect to avoid render-time assignment)
+  // Keep refs in sync with props (must use useEffect, not during render)
   useEffect(() => {
     autoPlayRef.current = autoPlay;
     hasNextRef.current = hasNext;
     onPlayNextRef.current = onPlayNext;
   }, [autoPlay, hasNext, onPlayNext]);
+
+  // Track loop completion for auto-advance
+  // Tracks loop every 32 bars - detect when bar resets from 32 to 1
+  useEffect(() => {
+    const currentBar = transportState.bar;
+    const lastBar = lastBarRef.current;
+
+    // Detect loop completion: bar went from high (near 32) to low (1-2)
+    if (lastBar >= 30 && currentBar <= 2 && transportState.playing) {
+      loopCountRef.current += 1;
+
+      // Auto-advance after configured number of loops
+      if (
+        autoPlayRef.current &&
+        hasNextRef.current &&
+        loopCountRef.current >= LOOPS_BEFORE_AUTO_ADVANCE
+      ) {
+        // Use setTimeout to avoid calling during render
+        setTimeout(() => {
+          onPlayNextRef.current();
+        }, 0);
+      }
+    }
+
+    lastBarRef.current = currentBar;
+  }, [transportState.bar, transportState.playing]);
 
   // Monitor for track end - using refs to avoid stale closure
   useEffect(() => {
