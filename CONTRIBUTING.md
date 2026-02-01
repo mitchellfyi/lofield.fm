@@ -53,22 +53,23 @@ This project uses Husky for git hooks:
 
 ## Scripts
 
-| Script                 | Description                         |
-| ---------------------- | ----------------------------------- |
-| `npm run dev`          | Start development server            |
-| `npm run build`        | Build for production                |
-| `npm run lint`         | Run ESLint                          |
-| `npm run lint:fix`     | Run ESLint with auto-fix            |
-| `npm run format`       | Format all files with Prettier      |
-| `npm run format:check` | Check formatting                    |
-| `npm run typecheck`    | Run TypeScript type check           |
-| `npm run quality`      | Run lint + typecheck + format check |
-| `npm run quality:full` | Run quality + unit tests            |
-| `npm test`             | Run unit tests                      |
-| `npm run test:watch`   | Run tests in watch mode             |
-| `npm run test:e2e`     | Run E2E tests                       |
-| `npm run test:all`     | Run all tests                       |
-| `npm run ci`           | Full CI check (quality + all tests) |
+| Script                  | Description                         |
+| ----------------------- | ----------------------------------- |
+| `npm run dev`           | Start development server            |
+| `npm run build`         | Build for production                |
+| `npm run lint`          | Run ESLint                          |
+| `npm run lint:fix`      | Run ESLint with auto-fix            |
+| `npm run format`        | Format all files with Prettier      |
+| `npm run format:check`  | Check formatting                    |
+| `npm run typecheck`     | Run TypeScript type check           |
+| `npm run quality`       | Run lint + typecheck + format check |
+| `npm run quality:full`  | Run quality + unit tests            |
+| `npm test`              | Run unit tests                      |
+| `npm run test:coverage` | Run tests with coverage report      |
+| `npm run test:watch`    | Run tests in watch mode             |
+| `npm run test:e2e`      | Run E2E tests                       |
+| `npm run test:all`      | Run all tests                       |
+| `npm run ci`            | Full CI check (quality + all tests) |
 
 ## Pull Request Process
 
