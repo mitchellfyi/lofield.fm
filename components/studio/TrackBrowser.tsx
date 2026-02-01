@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useTracks } from "@/lib/hooks/useTracks";
 import { ConfirmDialog, useConfirmDialog } from "@/components/ui/ConfirmDialog";
-import type { Track, ProjectWithTrackCount } from "@/lib/types/tracks";
+import { ProjectListItem } from "./ProjectListItem";
+import { TrackListItem } from "./TrackListItem";
+import { NewTrackForm } from "./NewTrackForm";
+import { NewTrackButton } from "./NewTrackButton";
+import { NewProjectForm } from "./NewProjectForm";
+import { NewProjectButton } from "./NewProjectButton";
+import type { Track } from "@/lib/types/tracks";
 
 interface TrackBrowserProps {
   isOpen: boolean;
@@ -32,13 +38,8 @@ export function TrackBrowser({
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newTrackName, setNewTrackName] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
   const [showNewTrack, setShowNewTrack] = useState(false);
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
-  const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
   const { confirm, dialogProps } = useConfirmDialog();
 
   const {
@@ -49,20 +50,16 @@ export function TrackBrowser({
     updateTrack,
   } = useTracks(selectedProjectId);
 
-  // Refresh projects when modal opens to ensure fresh data
   useEffect(() => {
     if (isOpen) {
       refreshProjects();
     }
   }, [isOpen, refreshProjects]);
 
-  // Auto-expand first project when projects load - intentional one-time initialization
   useEffect(() => {
     if (projects.length > 0 && expandedProjects.size === 0) {
-      // This is intentional initialization when data first loads
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setExpandedProjects(new Set([projects[0].id]));
-
       setSelectedProjectId(projects[0].id);
     }
   }, [projects, expandedProjects.size]);
@@ -72,55 +69,31 @@ export function TrackBrowser({
   const toggleExpanded = (projectId: string) => {
     setExpandedProjects((prev) => {
       if (prev.has(projectId)) {
-        // Collapsing - just remove this project
         const next = new Set(prev);
         next.delete(projectId);
         return next;
       } else {
-        // Expanding - select this project and collapse others
         setSelectedProjectId(projectId);
         return new Set([projectId]);
       }
     });
   };
 
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return;
-    const project = await createProject(newProjectName.trim());
+  const handleCreateProject = async (name: string) => {
+    const project = await createProject(name);
     if (project) {
-      setNewProjectName("");
       setShowNewProject(false);
       setExpandedProjects((prev) => new Set(prev).add(project.id));
       setSelectedProjectId(project.id);
     }
   };
 
-  const handleCreateTrack = async (projectId: string) => {
-    if (!newTrackName.trim()) return;
-    const track = await createTrack(projectId, newTrackName.trim());
+  const handleCreateTrack = async (projectId: string, name: string) => {
+    const track = await createTrack(projectId, name);
     if (track) {
-      setNewTrackName("");
       setShowNewTrack(false);
       onSelectTrack(track);
     }
-  };
-
-  const handleRenameProject = async (project: ProjectWithTrackCount) => {
-    if (!editName.trim() || editName === project.name) {
-      setEditingProjectId(null);
-      return;
-    }
-    await updateProject(project.id, editName.trim());
-    setEditingProjectId(null);
-  };
-
-  const handleRenameTrack = async (track: Track) => {
-    if (!editName.trim() || editName === track.name) {
-      setEditingTrackId(null);
-      return;
-    }
-    await updateTrack(track.id, { name: editName.trim() });
-    setEditingTrackId(null);
   };
 
   const handleDeleteProject = async (projectId: string) => {
@@ -165,7 +138,6 @@ export function TrackBrowser({
 
         {/* Content */}
         <div className="p-4 max-h-96 overflow-y-auto">
-          {/* Offline/cached data indicator */}
           {isUsingCache && projects.length > 0 && (
             <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -231,316 +203,54 @@ export function TrackBrowser({
             </div>
           ) : (
             <div className="space-y-2">
-              {/* Projects List */}
               {projects.map((project) => (
-                <div key={project.id} className="group">
-                  {/* Project Header */}
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700/50 transition-colors">
-                    <button
-                      onClick={() => toggleExpanded(project.id)}
-                      className="text-slate-400 hover:text-cyan-400 transition-colors"
-                    >
-                      <svg
-                        className={`w-4 h-4 transition-transform ${
-                          expandedProjects.has(project.id) ? "rotate-90" : ""
-                        }`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clipRule="evenodd"
+                <ProjectListItem
+                  key={project.id}
+                  project={project}
+                  isExpanded={expandedProjects.has(project.id)}
+                  onToggleExpand={() => toggleExpanded(project.id)}
+                  onRename={(name) => updateProject(project.id, name)}
+                  onDelete={() => handleDeleteProject(project.id)}
+                >
+                  {tracksLoading ? (
+                    <div className="text-sm text-slate-500 py-2 pl-4">Loading tracks...</div>
+                  ) : (
+                    <>
+                      {tracks.map((track) => (
+                        <TrackListItem
+                          key={track.id}
+                          track={track}
+                          isSelected={currentTrackId === track.id}
+                          onSelect={() => onSelectTrack(track)}
+                          onRename={(name) => updateTrack(track.id, { name })}
+                          onDelete={() => handleDeleteTrack(track.id)}
                         />
-                      </svg>
-                    </button>
-
-                    {editingProjectId === project.id ? (
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onBlur={() => handleRenameProject(project)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleRenameProject(project);
-                          if (e.key === "Escape") setEditingProjectId(null);
-                        }}
-                        className="flex-1 px-2 py-1 bg-slate-600 border border-cyan-500/50 rounded text-white text-sm focus:outline-none focus:border-cyan-400"
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        className="flex-1 text-white font-medium cursor-pointer"
-                        onClick={() => toggleExpanded(project.id)}
-                      >
-                        {project.name}
-                      </span>
-                    )}
-
-                    <span className="text-xs text-slate-500">
-                      {project.track_count} track{project.track_count !== 1 ? "s" : ""}
-                    </span>
-
-                    {/* Project Actions */}
-                    <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-                      <button
-                        onClick={() => {
-                          setEditingProjectId(project.id);
-                          setEditName(project.name);
-                        }}
-                        className="p-1 text-slate-400 hover:text-cyan-400 transition-colors"
-                        title="Rename"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProject(project.id)}
-                        className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
-                        title="Delete"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Tracks List (expanded) */}
-                  {expandedProjects.has(project.id) && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      {tracksLoading ? (
-                        <div className="text-sm text-slate-500 py-2 pl-4">Loading tracks...</div>
+                      ))}
+                      {showNewTrack && selectedProjectId === project.id ? (
+                        <NewTrackForm
+                          onSubmit={(name) => handleCreateTrack(project.id, name)}
+                          onCancel={() => setShowNewTrack(false)}
+                        />
                       ) : (
-                        <>
-                          {tracks.map((track) => (
-                            <div
-                              key={track.id}
-                              className={`group flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                                currentTrackId === track.id
-                                  ? "bg-cyan-600/20 border border-cyan-500/50"
-                                  : "hover:bg-slate-700/50"
-                              }`}
-                              onClick={() => onSelectTrack(track)}
-                            >
-                              <svg
-                                className="w-4 h-4 text-cyan-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                                />
-                              </svg>
-
-                              {editingTrackId === track.id ? (
-                                <input
-                                  type="text"
-                                  value={editName}
-                                  onChange={(e) => setEditName(e.target.value)}
-                                  onBlur={() => handleRenameTrack(track)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleRenameTrack(track);
-                                    if (e.key === "Escape") setEditingTrackId(null);
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex-1 px-2 py-1 bg-slate-600 border border-cyan-500/50 rounded text-white text-sm focus:outline-none focus:border-cyan-400"
-                                  autoFocus
-                                />
-                              ) : (
-                                <span className="flex-1 text-slate-200 text-sm">{track.name}</span>
-                              )}
-
-                              {/* Track Actions */}
-                              <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingTrackId(track.id);
-                                    setEditName(track.name);
-                                  }}
-                                  className="p-1 text-slate-400 hover:text-cyan-400 transition-colors"
-                                  title="Rename"
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                    />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteTrack(track.id);
-                                  }}
-                                  className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
-                                  title="Delete"
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* New Track Form */}
-                          {showNewTrack && selectedProjectId === project.id ? (
-                            <div className="flex items-center gap-2 px-3 py-2">
-                              <input
-                                type="text"
-                                value={newTrackName}
-                                onChange={(e) => setNewTrackName(e.target.value)}
-                                placeholder="Track name..."
-                                className="flex-1 px-3 py-1.5 bg-slate-700 border border-cyan-500/30 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleCreateTrack(project.id);
-                                  if (e.key === "Escape") {
-                                    setShowNewTrack(false);
-                                    setNewTrackName("");
-                                  }
-                                }}
-                              />
-                              <button
-                                onClick={() => handleCreateTrack(project.id)}
-                                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-sm rounded-lg transition-colors"
-                              >
-                                Add
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShowNewTrack(false);
-                                  setNewTrackName("");
-                                }}
-                                className="px-3 py-1.5 text-slate-400 hover:text-white text-sm transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setSelectedProjectId(project.id);
-                                setShowNewTrack(true);
-                              }}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 4v16m8-8H4"
-                                />
-                              </svg>
-                              New Track
-                            </button>
-                          )}
-                        </>
+                        <NewTrackButton
+                          onClick={() => {
+                            setSelectedProjectId(project.id);
+                            setShowNewTrack(true);
+                          }}
+                        />
                       )}
-                    </div>
+                    </>
                   )}
-                </div>
+                </ProjectListItem>
               ))}
 
-              {/* New Project Form */}
               {showNewProject ? (
-                <div className="flex items-center gap-2 px-3 py-2 mt-4 border-t border-slate-700 pt-4">
-                  <input
-                    type="text"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    placeholder="Project name..."
-                    className="flex-1 px-3 py-2 bg-slate-700 border border-cyan-500/30 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleCreateProject();
-                      if (e.key === "Escape") {
-                        setShowNewProject(false);
-                        setNewProjectName("");
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={handleCreateProject}
-                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-colors"
-                  >
-                    Create
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowNewProject(false);
-                      setNewProjectName("");
-                    }}
-                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <NewProjectForm
+                  onSubmit={handleCreateProject}
+                  onCancel={() => setShowNewProject(false)}
+                />
               ) : (
-                <button
-                  onClick={() => setShowNewProject(true)}
-                  className="flex items-center gap-2 w-full px-3 py-3 mt-2 text-cyan-400 hover:text-cyan-300 hover:bg-slate-700/50 rounded-lg transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  New Project
-                </button>
+                <NewProjectButton onClick={() => setShowNewProject(true)} />
               )}
             </div>
           )}
