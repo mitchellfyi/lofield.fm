@@ -117,7 +117,7 @@ describe("/api/explore", () => {
 
       mockClient = { from: fromMock };
 
-      fromMock.mockImplementation((table: string) => {
+      fromMock.mockImplementation(() => {
         const builder: Record<string, unknown> = {};
         const chainMethods = ["select", "overlaps", "gte", "lte", "order", "range", "not", "is"];
         chainMethods.forEach((method) => {
@@ -217,7 +217,7 @@ describe("/api/explore", () => {
 
       mockClient = { from: fromMock };
 
-      fromMock.mockImplementation((table: string) => {
+      fromMock.mockImplementation(() => {
         const builder: Record<string, unknown> = {};
         const chainMethods = ["select", "eq", "overlaps", "gte", "lte", "range", "not", "is"];
         chainMethods.forEach((method) => {
@@ -257,7 +257,7 @@ describe("/api/explore", () => {
 
       mockClient = { from: fromMock };
 
-      fromMock.mockImplementation((table: string) => {
+      fromMock.mockImplementation(() => {
         const builder: Record<string, unknown> = {};
         const chainMethods = ["select", "eq", "overlaps", "gte", "lte", "order", "not", "is"];
         chainMethods.forEach((method) => {
@@ -299,7 +299,7 @@ describe("/api/explore", () => {
 
       mockClient = { from: fromMock };
 
-      fromMock.mockImplementation((table: string) => {
+      fromMock.mockImplementation(() => {
         const builder: Record<string, unknown> = {};
         const chainMethods = ["select", "eq", "overlaps", "gte", "lte", "order", "not", "is"];
         chainMethods.forEach((method) => {

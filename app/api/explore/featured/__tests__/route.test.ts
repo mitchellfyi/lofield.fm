@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createGetRequest, parseJsonResponse } from "@/lib/test-utils/api-route";
+import { parseJsonResponse } from "@/lib/test-utils/api-route";
 
 // Mock the Supabase service client
 let mockClient: Record<string, unknown>;
@@ -110,7 +110,6 @@ describe("/api/explore/featured", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/explore/featured");
       const response = await GET();
       const { status, data } = await parseJsonResponse<{
         featured: unknown[];
@@ -156,7 +155,6 @@ describe("/api/explore/featured", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/explore/featured");
       const response = await GET();
       const { status, data } = await parseJsonResponse<{
         featured: unknown[];
@@ -223,7 +221,6 @@ describe("/api/explore/featured", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/explore/featured");
       const response = await GET();
       const { status, data } = await parseJsonResponse<{
         featured: unknown[];
@@ -258,7 +255,6 @@ describe("/api/explore/featured", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/explore/featured");
       const response = await GET();
 
       expect(response.headers.get("Cache-Control")).toBe(

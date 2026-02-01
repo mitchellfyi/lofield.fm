@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MOCK_USER, MOCK_ADMIN_USER } from "@/lib/test-utils/supabase-mock";
-import { createGetRequest, parseJsonResponse } from "@/lib/test-utils/api-route";
+import { parseJsonResponse } from "@/lib/test-utils/api-route";
 
 // Mock the Supabase clients
 let mockClient: Record<string, unknown>;
@@ -43,7 +43,6 @@ describe("/api/admin/stats", () => {
         from: vi.fn(),
       };
 
-      const request = createGetRequest("/api/admin/stats");
       const response = await GET();
 
       expect(response.status).toBe(401);
@@ -61,7 +60,6 @@ describe("/api/admin/stats", () => {
         from: vi.fn(),
       };
 
-      const request = createGetRequest("/api/admin/stats");
       const response = await GET();
 
       expect(response.status).toBe(403);
@@ -70,7 +68,6 @@ describe("/api/admin/stats", () => {
 
     it("returns stats for admin user", async () => {
       const fromMock = vi.fn();
-      let callCount = 0;
 
       mockClient = {
         auth: {
@@ -83,7 +80,6 @@ describe("/api/admin/stats", () => {
       };
 
       fromMock.mockImplementation((table: string) => {
-        callCount++;
         const builder: Record<string, unknown> = {};
         const chainMethods = ["select", "eq", "gte"];
         chainMethods.forEach((method) => {
@@ -122,7 +118,6 @@ describe("/api/admin/stats", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/admin/stats");
       const response = await GET();
       const { status, data } = await parseJsonResponse<{
         totalUsers: number;
@@ -167,7 +162,6 @@ describe("/api/admin/stats", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/admin/stats");
       const response = await GET();
       const { status, data } = await parseJsonResponse<{
         totalUsers: number;
@@ -215,7 +209,6 @@ describe("/api/admin/stats", () => {
         return builder;
       });
 
-      const request = createGetRequest("/api/admin/stats");
       const response = await GET();
 
       // Should be allowed since user is now in admin list
