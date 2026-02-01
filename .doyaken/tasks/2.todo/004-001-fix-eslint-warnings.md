@@ -15,6 +15,7 @@ app/api/explore/featured/__tests__/route.test.ts - 4 warnings
 ```
 
 All are `@typescript-eslint/no-unused-vars` warnings for:
+
 - `request` variables that are assigned but never used
 - `table` callback parameters that are defined but never used
 

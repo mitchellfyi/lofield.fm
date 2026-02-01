@@ -9,6 +9,7 @@
 **Intent**: IMPROVE
 
 The `app/studio/page.tsx` file is **1612 lines** - significantly exceeding the recommended 500 line limit. This large monolithic component:
+
 - Makes the code harder to understand and maintain
 - Increases cognitive load when debugging
 - Makes testing individual features difficult
@@ -17,6 +18,7 @@ The `app/studio/page.tsx` file is **1612 lines** - significantly exceeding the r
 ### Current Architecture Analysis
 
 The studio page manages **13+ major state domains**:
+
 1. **Code/Editor State**: code, validationErrors, liveMode
 2. **Layer System**: layers[], selectedLayerId
 3. **Tweaks System**: tweaks (bpm, swing, filter, reverb, delay)
@@ -36,6 +38,7 @@ The file already uses **11 specialized hooks** but centralizes all callback hand
 ### Codebase Patterns
 
 The codebase follows mature patterns suitable for this refactor:
+
 - **Prop-passing with callbacks**: Used by TweaksPanel, LayersPanel, CodePanel
 - **Hook-based state**: useHistory, useRecording, useRevisions extract complex logic
 - **Context providers**: ToastProvider wraps content for notifications
@@ -44,18 +47,22 @@ The codebase follows mature patterns suitable for this refactor:
 ### Key Files to Modify/Create
 
 **Page file:**
+
 - `app/studio/page.tsx` (1612 → <400 lines)
 
 **New hooks:**
+
 - `lib/hooks/useStudioEditor.ts` - Code, layers, tweaks, and history coordination
 - `lib/hooks/useStudioPlayback.ts` - Audio runtime, recording capture/playback coordination
 - `lib/hooks/useStudioTracks.ts` - Track loading, saving, drafts, revisions coordination
 
 **New components:**
+
 - `components/studio/layouts/DesktopLayout.tsx` - Three-column desktop layout
 - `components/studio/layouts/RecordingControls.tsx` - Recording timeline + playback controls
 
 **New commands file:**
+
 - `lib/commands/studioCommands.ts` - Factory function for studio command palette commands
 
 ---
@@ -80,6 +87,7 @@ The codebase follows mature patterns suitable for this refactor:
 ## Notes
 
 **In Scope:**
+
 - Extract state coordination into 3 new hooks
 - Extract command palette commands to separate file
 - Extract desktop layout and recording controls as components
@@ -87,6 +95,7 @@ The codebase follows mature patterns suitable for this refactor:
 - Preserve all existing functionality
 
 **Out of Scope:**
+
 - Changing component behavior or features
 - Adding new features or tests
 - Mobile layout refactoring (MobileTabs is already a separate component)
@@ -94,18 +103,21 @@ The codebase follows mature patterns suitable for this refactor:
 - Changing the hook patterns already used (useHistory, useRecording, etc.)
 
 **Assumptions:**
+
 - The existing hooks (useHistory, useRecording, etc.) will remain unchanged
 - Child components will continue receiving props as before
 - The ToastProvider wrapper pattern will remain at page level
 - Context/refs patterns in the existing code work correctly
 
 **Edge Cases:**
+
 - History restoration must prevent re-pushing (existing isRestoringFromHistoryRef pattern)
 - Live mode updates must be debounced (existing liveUpdateTimeoutRef pattern)
 - Global model ref pattern must be preserved for chat transport body function
 - Recording automation playback must stay synced with audio playback state
 
 **Risks:**
+
 - **Circular dependencies**: New hooks coordinate state that references each other. Mitigation: Keep hooks focused on single domains, pass callbacks as parameters
 - **State synchronization bugs**: Extracting state may break timing of updates. Mitigation: Test playback, recording, and undo/redo flows thoroughly
 - **Ref leakage**: Refs must stay in the right scope. Mitigation: Keep refs in the hooks that own the related state
@@ -116,19 +128,19 @@ The codebase follows mature patterns suitable for this refactor:
 
 ### Gap Analysis
 
-| Criterion | Status | Gap |
-|-----------|--------|-----|
-| `page.tsx` under 400 lines | none | Currently 1612 lines, needs full extraction |
-| `useStudioEditor` hook | none | Need to create new hook for code/layers/tweaks/history |
-| `useStudioPlayback` hook | none | Need to create new hook for audio/recording coordination |
-| `useStudioTracks` hook | none | Need to create new hook for track CRUD/drafts/revisions |
-| Commands extracted | none | ~130 lines in useMemo need extraction to factory function |
-| `DesktopLayout.tsx` | none | ~280 lines of desktop layout JSX need extraction |
-| `RecordingControls.tsx` | none | ~100 lines of recording controls JSX need extraction |
-| TypeScript interfaces | partial | Existing hooks have interfaces; new hooks need them |
-| No functionality changes | full | Pure refactor - just moving code |
-| Tests pass | full | Existing tests don't directly test page.tsx |
-| Quality gates pass | full | Currently passing |
+| Criterion                  | Status  | Gap                                                       |
+| -------------------------- | ------- | --------------------------------------------------------- |
+| `page.tsx` under 400 lines | none    | Currently 1612 lines, needs full extraction               |
+| `useStudioEditor` hook     | none    | Need to create new hook for code/layers/tweaks/history    |
+| `useStudioPlayback` hook   | none    | Need to create new hook for audio/recording coordination  |
+| `useStudioTracks` hook     | none    | Need to create new hook for track CRUD/drafts/revisions   |
+| Commands extracted         | none    | ~130 lines in useMemo need extraction to factory function |
+| `DesktopLayout.tsx`        | none    | ~280 lines of desktop layout JSX need extraction          |
+| `RecordingControls.tsx`    | none    | ~100 lines of recording controls JSX need extraction      |
+| TypeScript interfaces      | partial | Existing hooks have interfaces; new hooks need them       |
+| No functionality changes   | full    | Pure refactor - just moving code                          |
+| Tests pass                 | full    | Existing tests don't directly test page.tsx               |
+| Quality gates pass         | full    | Currently passing                                         |
 
 ### Risks
 
@@ -229,13 +241,13 @@ The codebase follows mature patterns suitable for this refactor:
 
 ### Checkpoints
 
-| After Step | Verify |
-|------------|--------|
-| Step 3 | All three hooks compile, no circular dependencies |
-| Step 4 | Commands factory compiles, exports Command[] |
-| Step 6 | All new components/hooks render without errors |
-| Step 9 | Studio page renders identically to before refactor |
-| Step 10 | `npm run quality` passes, line count < 400 |
+| After Step | Verify                                             |
+| ---------- | -------------------------------------------------- |
+| Step 3     | All three hooks compile, no circular dependencies  |
+| Step 4     | Commands factory compiles, exports Command[]       |
+| Step 6     | All new components/hooks render without errors     |
+| Step 9     | Studio page renders identically to before refactor |
+| Step 10    | `npm run quality` passes, line count < 400         |
 
 ### Test Plan
 
@@ -279,6 +291,7 @@ The codebase follows mature patterns suitable for this refactor:
 - Strategy: Bottom-up - create hooks/components first, then integrate
 
 Key decisions:
+
 - Keep AI chat state in page.tsx (not extracted) - tightly coupled to form submission
 - Keep modal visibility states in page.tsx - simple booleans, not worth hook
 - Keep keyboard shortcuts in page.tsx - depends on many handlers
@@ -287,6 +300,7 @@ Key decisions:
 ### 2026-02-01 19:37 - Triage Complete
 
 Quality gates:
+
 - Lint: `npm run lint`
 - Types: `npm run typecheck`
 - Tests: `npm test`
@@ -294,11 +308,13 @@ Quality gates:
 - Full quality: `npm run quality` (lint + typecheck + format:check)
 
 Task validation:
+
 - Context: clear - file size verified (1612 lines), architecture well-documented
 - Criteria: specific - line count target (<400), named hooks/components, testable
 - Dependencies: none - no blocked tasks, existing hooks remain unchanged
 
 Complexity:
+
 - Files: some - 1 major file to refactor, 6 new files to create
 - Risk: medium - large refactor but mechanical; existing patterns documented
 

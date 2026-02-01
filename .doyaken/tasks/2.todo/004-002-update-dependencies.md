@@ -8,15 +8,15 @@
 
 Several dependencies have newer patch/minor versions available:
 
-| Package | Current | Latest | Risk |
-|---------|---------|--------|------|
-| @ai-sdk/openai | 3.0.23 | 3.0.25 | Low |
-| @ai-sdk/react | 3.0.64 | 3.0.69 | Low |
-| @doyaken/doyaken | 0.1.14 | 0.1.16 | Low |
-| @playwright/test | 1.58.0 | 1.58.1 | Low |
-| ai | 6.0.62 | 6.0.67 | Low |
-| react | 19.2.3 | 19.2.4 | Low |
-| react-dom | 19.2.3 | 19.2.4 | Low |
+| Package          | Current | Latest | Risk |
+| ---------------- | ------- | ------ | ---- |
+| @ai-sdk/openai   | 3.0.23  | 3.0.25 | Low  |
+| @ai-sdk/react    | 3.0.64  | 3.0.69 | Low  |
+| @doyaken/doyaken | 0.1.14  | 0.1.16 | Low  |
+| @playwright/test | 1.58.0  | 1.58.1 | Low  |
+| ai               | 6.0.62  | 6.0.67 | Low  |
+| react            | 19.2.3  | 19.2.4 | Low  |
+| react-dom        | 19.2.3  | 19.2.4 | Low  |
 
 **Note:** `@types/node` has a major version jump (20 → 25) - evaluate separately.
 

@@ -5,12 +5,12 @@
 
 ## Summary
 
-| Status | Count |
-|--------|-------|
-| Blocked | 0 |
-| Todo | 4 |
-| Doing | 1 |
-| Done | 0 |
+| Status  | Count |
+| ------- | ----- |
+| Blocked | 0     |
+| Todo    | 4     |
+| Doing   | 1     |
+| Done    | 0     |
 
 ---
 
