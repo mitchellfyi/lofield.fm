@@ -9,6 +9,7 @@ import { TimelineBar } from "@/components/studio/TimelineBar";
 import { TweaksPanel } from "@/components/studio/TweaksPanel";
 import { LayersPanel } from "@/components/studio/LayersPanel";
 import { MiniTimeline } from "@/components/studio/MiniTimeline";
+import { QuickShareButtons } from "@/components/share/QuickShareButtons";
 import { type TweaksConfig } from "@/lib/types/tweaks";
 import { type AudioLayer } from "@/lib/types/audioLayer";
 
@@ -35,6 +36,8 @@ export interface MobileTabsProps {
   selectedLayerId: string | null;
   onLayersChange: (layers: AudioLayer[]) => void;
   onSelectLayer: (layerId: string | null) => void;
+  currentTrackName?: string | null;
+  onShareAction?: (platform: string) => void;
 }
 
 export function MobileTabs({
@@ -60,6 +63,8 @@ export function MobileTabs({
   selectedLayerId,
   onLayersChange,
   onSelectLayer,
+  currentTrackName,
+  onShareAction,
 }: MobileTabsProps) {
   const [activeTab, setActiveTab] = useState<"chat" | "controls" | "code">("chat");
   const isPlaying = playerState === "playing";
@@ -210,6 +215,13 @@ export function MobileTabs({
 
           {/* Mini Timeline */}
           <MiniTimeline />
+
+          {/* Quick Share Buttons - only visible when playing */}
+          <QuickShareButtons
+            isPlaying={isPlaying}
+            trackName={currentTrackName}
+            onShare={onShareAction}
+          />
         </div>
       </div>
     </div>

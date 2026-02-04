@@ -13,6 +13,7 @@ import { ApiKeyPrompt } from "@/components/studio/ApiKeyPrompt";
 import { CodePanel } from "@/components/studio/CodePanel";
 import { PlayerControls } from "@/components/studio/PlayerControls";
 import { RecordButton } from "@/components/studio/RecordButton";
+import { QuickShareButtons } from "@/components/share/QuickShareButtons";
 import type { PlayerState, RuntimeEvent } from "@/lib/audio/runtime";
 import type { TweaksConfig } from "@/lib/types/tweaks";
 import type { AudioLayer } from "@/lib/types/audioLayer";
@@ -89,6 +90,10 @@ export interface DesktopLayoutProps {
   onStartRecording: () => void;
   onStopRecording: () => void;
   recordingElapsedMs: number;
+
+  // Track info for sharing
+  currentTrackName?: string | null;
+  onShareAction?: (platform: string) => void;
 }
 
 /**
@@ -143,6 +148,8 @@ export function DesktopLayout({
   onStartRecording,
   onStopRecording,
   recordingElapsedMs,
+  currentTrackName,
+  onShareAction,
 }: DesktopLayoutProps) {
   // Column resize state
   const [leftColumnWidth, setLeftColumnWidth] = useState(256);
@@ -357,23 +364,33 @@ export function DesktopLayout({
 
           {/* Player Controls */}
           <div className="px-4 py-4 border-t border-cyan-500/20 bg-slate-900/50">
-            <PlayerControls
-              playerState={playerState}
-              audioLoaded={audioLoaded}
-              onPlay={onPlay}
-              onStop={onStop}
-              hideTimeline
-              recordButton={
-                <RecordButton
-                  isRecording={isRecording}
-                  onStartRecording={onStartRecording}
-                  onStopRecording={onStopRecording}
-                  elapsedMs={recordingElapsedMs}
-                  disabled={playerState !== "playing" && !isRecording}
-                  disabledReason="Start playback to record"
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <PlayerControls
+                  playerState={playerState}
+                  audioLoaded={audioLoaded}
+                  onPlay={onPlay}
+                  onStop={onStop}
+                  hideTimeline
+                  recordButton={
+                    <RecordButton
+                      isRecording={isRecording}
+                      onStartRecording={onStartRecording}
+                      onStopRecording={onStopRecording}
+                      elapsedMs={recordingElapsedMs}
+                      disabled={playerState !== "playing" && !isRecording}
+                      disabledReason="Start playback to record"
+                    />
+                  }
                 />
-              }
-            />
+              </div>
+              {/* Quick Share Buttons - only visible when playing */}
+              <QuickShareButtons
+                isPlaying={playerState === "playing"}
+                trackName={currentTrackName}
+                onShare={onShareAction}
+              />
+            </div>
           </div>
         </div>
       </div>

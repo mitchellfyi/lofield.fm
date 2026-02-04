@@ -491,6 +491,8 @@ function StudioContent() {
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
             recordingElapsedMs={recording.elapsedMs}
+            currentTrackName={tracks.currentTrackName}
+            onShareAction={(platform) => showToast(`Shared via ${platform}!`, "success")}
           />
 
           <div className="md:hidden flex flex-col flex-1">
@@ -517,6 +519,8 @@ function StudioContent() {
               selectedLayerId={editor.selectedLayerId}
               onLayersChange={editor.handleLayersChange}
               onSelectLayer={editor.handleSelectLayer}
+              currentTrackName={tracks.currentTrackName}
+              onShareAction={(platform) => showToast(`Shared via ${platform}!`, "success")}
             />
           </div>
         </div>
