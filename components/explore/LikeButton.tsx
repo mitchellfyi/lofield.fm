@@ -36,14 +36,15 @@ export function LikeButton({
     }
   };
 
-  const sizeClasses = size === "sm" ? "w-3.5 h-3.5" : "w-5 h-5";
-  const buttonClasses = size === "sm" ? "p-1" : "p-1.5";
+  const sizeClasses = size === "sm" ? "w-4 h-4" : "w-5 h-5";
+  // Ensure minimum 44px touch target for mobile accessibility
+  const buttonClasses = size === "sm" ? "min-w-11 min-h-11 p-2" : "min-w-11 min-h-11 p-2";
 
   return (
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`group flex items-center gap-1 ${buttonClasses} rounded-full transition-all ${
+      className={`group flex items-center justify-center gap-1 ${buttonClasses} rounded-full transition-all ${
         liked ? "text-rose-400 hover:text-rose-300" : "text-slate-400 hover:text-rose-400"
       } ${loading ? "opacity-50 cursor-wait" : ""}`}
       aria-label={liked ? "Unlike track" : "Like track"}

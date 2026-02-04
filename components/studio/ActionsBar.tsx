@@ -49,8 +49,9 @@ export function ActionsBar({
   onOpenHistory,
   hasRevisions = false,
 }: ActionsBarProps) {
+  // min-h-11 ensures 44px minimum touch target on mobile
   const buttonBase =
-    "flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 shrink-0";
+    "flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 min-h-11 rounded text-xs font-medium transition-all duration-200 shrink-0";
   const buttonDefault =
     "text-slate-300 hover:text-cyan-300 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30";
   const buttonDisabled = "text-slate-500 cursor-not-allowed";

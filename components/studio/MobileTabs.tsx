@@ -72,11 +72,11 @@ export function MobileTabs({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tab Navigation */}
+      {/* Tab Navigation - min-h-12 ensures adequate touch targets */}
       <div className="flex border-b border-cyan-500/20 bg-slate-900/50">
         <button
           onClick={() => setActiveTab("chat")}
-          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+          className={`flex-1 px-4 py-3 min-h-12 text-sm font-semibold transition-all duration-200 ${
             activeTab === "chat"
               ? "text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10"
               : "text-slate-400 active:text-cyan-300"
@@ -86,7 +86,7 @@ export function MobileTabs({
         </button>
         <button
           onClick={() => setActiveTab("controls")}
-          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+          className={`flex-1 px-4 py-3 min-h-12 text-sm font-semibold transition-all duration-200 ${
             activeTab === "controls"
               ? "text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10"
               : "text-slate-400 active:text-cyan-300"
@@ -96,7 +96,7 @@ export function MobileTabs({
         </button>
         <button
           onClick={() => setActiveTab("code")}
-          className={`flex-1 px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+          className={`flex-1 px-4 py-3 min-h-12 text-sm font-semibold transition-all duration-200 ${
             activeTab === "code"
               ? "text-cyan-400 border-b-2 border-cyan-500 bg-cyan-500/10"
               : "text-slate-400 active:text-cyan-300"

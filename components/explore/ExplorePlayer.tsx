@@ -224,12 +224,12 @@ export function ExplorePlayer({
           </div>
 
           {/* Main controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* Previous */}
             <button
               onClick={handlePrevious}
               disabled={!hasPrevious && !currentTrack}
-              className="p-2 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="min-w-11 min-h-11 p-2.5 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               title="Previous"
               aria-label="Previous track"
             >
@@ -242,7 +242,7 @@ export function ExplorePlayer({
             <button
               onClick={handlePlayPause}
               disabled={playerState === "loading"}
-              className="p-3 rounded-full bg-cyan-500 text-white hover:bg-cyan-400 disabled:opacity-50 transition-colors"
+              className="min-w-12 min-h-12 p-3 rounded-full bg-cyan-500 text-white hover:bg-cyan-400 disabled:opacity-50 transition-colors flex items-center justify-center"
               aria-label={playerState === "playing" ? "Pause" : "Play"}
             >
               {playerState === "loading" ? (
@@ -276,7 +276,7 @@ export function ExplorePlayer({
             <button
               onClick={handleNext}
               disabled={!hasNext}
-              className="p-2 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="min-w-11 min-h-11 p-2.5 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               title="Next"
               aria-label="Next track"
             >
@@ -288,7 +288,7 @@ export function ExplorePlayer({
             {/* Stop */}
             <button
               onClick={handleStop}
-              className="p-2 rounded-full text-slate-400 hover:text-red-400 hover:bg-slate-700/50 transition-colors"
+              className="min-w-11 min-h-11 p-2.5 rounded-full text-slate-400 hover:text-red-400 hover:bg-slate-700/50 transition-colors flex items-center justify-center"
               title="Stop"
               aria-label="Stop playback"
             >
@@ -315,7 +315,7 @@ export function ExplorePlayer({
             {/* Shuffle */}
             <button
               onClick={onToggleShuffle}
-              className={`p-2 rounded-full transition-colors ${
+              className={`min-w-11 min-h-11 p-2.5 rounded-full transition-colors flex items-center justify-center ${
                 shuffle
                   ? "text-cyan-400 bg-cyan-500/20"
                   : "text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50"
@@ -324,7 +324,7 @@ export function ExplorePlayer({
               aria-label={shuffle ? "Disable shuffle" : "Enable shuffle"}
               aria-pressed={shuffle}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
               </svg>
             </button>
@@ -332,7 +332,7 @@ export function ExplorePlayer({
             {/* Auto-play */}
             <button
               onClick={onToggleAutoPlay}
-              className={`p-2 rounded-full transition-colors ${
+              className={`min-w-11 min-h-11 p-2.5 rounded-full transition-colors flex items-center justify-center ${
                 autoPlay
                   ? "text-cyan-400 bg-cyan-500/20"
                   : "text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50"
@@ -341,7 +341,7 @@ export function ExplorePlayer({
               aria-label={autoPlay ? "Disable auto-play" : "Enable auto-play"}
               aria-pressed={autoPlay}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" />
               </svg>
             </button>

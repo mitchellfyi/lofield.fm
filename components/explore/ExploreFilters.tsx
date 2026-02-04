@@ -68,15 +68,15 @@ export function ExploreFilters({
   return (
     <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-4 space-y-4">
       {/* Header with sort and clear */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <h2 className="text-sm font-semibold text-cyan-100">Filters</h2>
           {hasActiveFilters && (
             <button
               onClick={onClear}
-              className="text-xs text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1"
+              className="text-xs text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1 px-2 py-2 min-h-11 rounded"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -91,11 +91,11 @@ export function ExploreFilters({
 
         {/* Sort dropdown */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Sort:</span>
+          <span className="text-xs text-slate-400 hidden sm:inline">Sort:</span>
           <select
             value={filters.sort}
             onChange={(e) => onSortChange(e.target.value as ExploreSortOption)}
-            className="text-xs bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="text-xs bg-slate-700 border border-slate-600 rounded px-3 py-2 min-h-11 text-slate-200 focus:outline-none focus:border-cyan-500"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -110,10 +110,10 @@ export function ExploreFilters({
       {genres.length > 0 && (
         <div>
           <h3 className="text-xs font-medium text-slate-400 mb-2">Genre</h3>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onGenreChange(null)}
-              className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+              className={`text-xs px-3 py-2 min-h-11 rounded-full transition-colors flex items-center justify-center ${
                 filters.genre === null
                   ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/50"
                   : "bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:border-cyan-500/30"
@@ -125,7 +125,7 @@ export function ExploreFilters({
               <button
                 key={genre}
                 onClick={() => onGenreChange(genre)}
-                className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                className={`text-xs px-3 py-2 min-h-11 rounded-full transition-colors flex items-center justify-center ${
                   filters.genre === genre
                     ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/50"
                     : "bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:border-cyan-500/30"
@@ -142,12 +142,12 @@ export function ExploreFilters({
       {availableTags.length > 0 && (
         <div>
           <h3 className="text-xs font-medium text-slate-400 mb-2">Tags</h3>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {displayedTags.map((tag) => (
               <button
                 key={tag}
                 onClick={() => onTagToggle(tag)}
-                className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+                className={`text-xs px-3 py-2 min-h-11 rounded-full transition-colors flex items-center justify-center ${
                   filters.tags.includes(tag)
                     ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/50"
                     : "bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:border-cyan-500/30"
@@ -159,7 +159,7 @@ export function ExploreFilters({
             {availableTags.length > 12 && (
               <button
                 onClick={() => setShowAllTags(!showAllTags)}
-                className="text-xs px-2.5 py-1 text-slate-500 hover:text-cyan-400 transition-colors"
+                className="text-xs px-3 py-2 min-h-11 text-slate-500 hover:text-cyan-400 transition-colors flex items-center justify-center"
               >
                 {showAllTags ? "Show less" : `+${availableTags.length - 12} more`}
               </button>
@@ -181,9 +181,9 @@ export function ExploreFilters({
             onBlur={handleBpmBlur}
             min={bpmRange.min}
             max={bpmRange.max}
-            className="w-20 text-xs bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="w-16 sm:w-20 text-sm bg-slate-700 border border-slate-600 rounded px-2 py-2 min-h-11 text-slate-200 focus:outline-none focus:border-cyan-500"
           />
-          <span className="text-slate-500">to</span>
+          <span className="text-slate-500 text-sm">to</span>
           <input
             type="number"
             value={localBpmMax}
@@ -191,7 +191,7 @@ export function ExploreFilters({
             onBlur={handleBpmBlur}
             min={bpmRange.min}
             max={bpmRange.max}
-            className="w-20 text-xs bg-slate-700 border border-slate-600 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="w-16 sm:w-20 text-sm bg-slate-700 border border-slate-600 rounded px-2 py-2 min-h-11 text-slate-200 focus:outline-none focus:border-cyan-500"
           />
         </div>
       </div>

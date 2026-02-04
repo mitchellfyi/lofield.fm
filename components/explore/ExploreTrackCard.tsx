@@ -108,9 +108,9 @@ export function ExploreTrackCard({
           </div>
         </div>
 
-        {/* Play indicator */}
+        {/* Play indicator - min 44px for touch targets */}
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+          className={`w-11 h-11 min-w-11 min-h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
             isPlaying
               ? "bg-cyan-500 text-white"
               : isLoading
@@ -156,21 +156,21 @@ export function ExploreTrackCard({
         />
       </div>
 
-      {/* Tags */}
+      {/* Tags - increased touch targets for mobile */}
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {allTags.slice(0, 5).map((tag) => (
+          {allTags.slice(0, 4).map((tag) => (
             <button
               key={tag}
               onClick={(e) => handleTagClick(e, tag)}
-              className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"
+              className="text-[11px] px-2.5 py-1.5 min-h-8 rounded-full bg-slate-700/50 text-slate-400 border border-slate-600/50 hover:border-cyan-500/50 hover:text-cyan-400 transition-colors flex items-center"
             >
               {tag}
             </button>
           ))}
-          {allTags.length > 5 && (
-            <span className="text-[10px] px-2 py-0.5 text-slate-500">
-              +{allTags.length - 5} more
+          {allTags.length > 4 && (
+            <span className="text-[11px] px-2.5 py-1.5 min-h-8 text-slate-500 flex items-center">
+              +{allTags.length - 4}
             </span>
           )}
         </div>
