@@ -16,6 +16,7 @@ import { SaveAsModal } from "@/components/studio/SaveAsModal";
 import { ToastProvider, useToast } from "@/components/studio/ToastProvider";
 import { ActionsBar } from "@/components/studio/ActionsBar";
 import { CommandPalette, useCommandPalette } from "@/components/shared/CommandPalette";
+import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/shared/KeyboardShortcutsModal";
 import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { MobileTabs } from "@/components/studio/MobileTabs";
 import { DesktopLayout } from "@/components/studio/layouts/DesktopLayout";
@@ -274,6 +275,13 @@ function StudioContent() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         tracks.handleSave();
@@ -286,11 +294,19 @@ function StudioContent() {
       } else if ((e.metaKey || e.ctrlKey) && e.key === "y") {
         e.preventDefault();
         editor.handleRedo();
+      } else if (e.key === " " && !isTyping) {
+        // Space bar for play/pause (only when not typing)
+        e.preventDefault();
+        if (playerState === "playing") {
+          stop();
+        } else if (playerState !== "loading") {
+          playCode(combineLayers(editor.layers));
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [tracks, editor]);
+  }, [tracks, editor, playerState, stop, playCode]);
 
   // Tutorial
   const [showTutorial, setShowTutorial] = useState(false);
@@ -311,6 +327,9 @@ function StudioContent() {
 
   // Command palette
   const { open: cmdOpen, setOpen: setCmdOpen } = useCommandPalette();
+  
+  // Keyboard shortcuts help modal
+  const { isOpen: shortcutsOpen, open: openShortcuts, close: closeShortcuts } = useKeyboardShortcutsModal();
   // The handlers are memoized callbacks that internally use refs, but they're only
   // executed in event handlers, not during render. This is safe.
   /* eslint-disable react-hooks/refs */
@@ -415,6 +434,7 @@ function StudioContent() {
           currentTrackName={tracks.currentTrackName}
           onOpenTracks={() => tracks.setShowTrackBrowser(true)}
           hasUnsavedChanges={tracks.hasUnsavedChanges}
+          onOpenKeyboardShortcuts={openShortcuts}
         />
 
         <ActionsBar
@@ -572,6 +592,7 @@ function StudioContent() {
         onToast={showToast}
       />
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} commands={commands} />
+      <KeyboardShortcutsModal isOpen={shortcutsOpen} onClose={closeShortcuts} />
       <TutorialOverlay isActive={showTutorial} onComplete={() => setShowTutorial(false)} />
     </>
   );
