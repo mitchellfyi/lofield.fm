@@ -16,7 +16,10 @@ import { SaveAsModal } from "@/components/studio/SaveAsModal";
 import { ToastProvider, useToast } from "@/components/studio/ToastProvider";
 import { ActionsBar } from "@/components/studio/ActionsBar";
 import { CommandPalette, useCommandPalette } from "@/components/shared/CommandPalette";
-import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/shared/KeyboardShortcutsModal";
+import {
+  KeyboardShortcutsModal,
+  useKeyboardShortcutsModal,
+} from "@/components/shared/KeyboardShortcutsModal";
 import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { MobileTabs } from "@/components/studio/MobileTabs";
 import { DesktopLayout } from "@/components/studio/layouts/DesktopLayout";
@@ -278,9 +281,7 @@ function StudioContent() {
       // Don't trigger shortcuts if user is typing in an input/textarea
       const target = e.target as HTMLElement;
       const isTyping =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+        target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
@@ -327,9 +328,13 @@ function StudioContent() {
 
   // Command palette
   const { open: cmdOpen, setOpen: setCmdOpen } = useCommandPalette();
-  
+
   // Keyboard shortcuts help modal
-  const { isOpen: shortcutsOpen, open: openShortcuts, close: closeShortcuts } = useKeyboardShortcutsModal();
+  const {
+    isOpen: shortcutsOpen,
+    open: openShortcuts,
+    close: closeShortcuts,
+  } = useKeyboardShortcutsModal();
   // The handlers are memoized callbacks that internally use refs, but they're only
   // executed in event handlers, not during render. This is safe.
   /* eslint-disable react-hooks/refs */
