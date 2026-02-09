@@ -119,3 +119,64 @@ lib/           - Shared utilities, hooks, types
 ## Questions?
 
 Open an issue for any questions about contributing.
+
+## CI/CD
+
+### Workflows
+
+| Workflow   | File                           | Triggers                                          | Purpose                                                                                   |
+| ---------- | ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **CI**     | `.github/workflows/ci.yml`     | PRs to `main`, pushes to `main`                   | Runs formatting, linting, type checking, unit tests, E2E tests, security audit, and build |
+| **Deploy** | `.github/workflows/deploy.yml` | Push to `main` (after CI passes), manual dispatch | Runs Supabase database migrations to production                                           |
+
+### CI Jobs
+
+The CI workflow runs these jobs:
+
+1. **Quality Checks** — Prettier formatting, ESLint, TypeScript type checking (runs first, fails fast)
+2. **Unit Tests** — Vitest test suite (runs in parallel with quality)
+3. **Security Audit** — `npm audit` for critical vulnerabilities (runs in parallel)
+4. **E2E Tests** — Playwright browser tests (runs after quality + unit tests pass)
+5. **Build** — Next.js production build (runs after quality + unit tests pass)
+
+### Running Checks Locally
+
+Run the full CI suite locally before pushing:
+
+```bash
+# All quality checks (lint + typecheck + format check)
+npm run quality
+
+# Unit tests
+npm test
+
+# Full CI (quality + all tests)
+npm run ci
+
+# Security audit
+npm audit --audit-level=critical
+
+# Build
+npm run build
+```
+
+### How Deploys Work
+
+1. Code is merged to `main` (requires CI to pass via branch protection)
+2. The **Deploy** workflow triggers automatically on push to `main`
+3. It first runs the full **CI** workflow as a gate — deploy only proceeds if CI passes
+4. Supabase database migrations are applied to production
+5. A deploy summary (commit SHA, environment, timestamp) is posted as a workflow annotation
+6. Only one deploy runs at a time (concurrency group cancels in-progress deploys)
+
+Vercel handles the application deployment separately via its GitHub integration.
+
+### Rollback
+
+To roll back a bad deploy, use the manual workflow dispatch:
+
+1. Go to **Actions → Deploy → Run workflow**
+2. Enter the commit SHA of the last known good deploy
+3. The workflow will check out that specific commit and run migrations
+
+For application rollback, use Vercel's deployment history to revert to a previous deployment.
