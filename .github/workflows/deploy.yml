@@ -26,6 +26,8 @@ jobs:
       ref: ${{ inputs.commit_sha || '' }}
     permissions:
       contents: read
+      actions: write
+    secrets: inherit
 
   migrate:
     name: Run Supabase Migrations
