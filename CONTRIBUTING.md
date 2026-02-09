@@ -124,10 +124,10 @@ Open an issue for any questions about contributing.
 
 ### Workflows
 
-| Workflow   | File                           | Triggers                                          | Purpose                                                                                   |
-| ---------- | ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **CI**     | `.github/workflows/ci.yml`     | PRs to `main`, pushes to `main`                   | Runs formatting, linting, type checking, unit tests, E2E tests, security audit, and build |
-| **Deploy** | `.github/workflows/deploy.yml` | Push to `main` (after CI passes), manual dispatch | Runs Supabase database migrations to production                                           |
+| Workflow   | File                           | Triggers                                                      | Purpose                                                                                   |
+| ---------- | ------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **CI**     | `.github/workflows/ci.yml`     | PRs to `main`, pushes to `main`, reusable via workflow_call   | Runs formatting, linting, type checking, unit tests, E2E tests, security audit, and build |
+| **Deploy** | `.github/workflows/deploy.yml` | After CI passes on `main` (via workflow_run), manual dispatch | Runs Supabase database migrations to production                                           |
 
 ### CI Jobs
 
@@ -163,8 +163,8 @@ npm run build
 ### How Deploys Work
 
 1. Code is merged to `main` (requires CI to pass via branch protection)
-2. The **Deploy** workflow triggers automatically on push to `main`
-3. It first runs the full **CI** workflow as a gate — deploy only proceeds if CI passes
+2. The **CI** workflow runs on push to `main`
+3. When CI completes successfully, the **Deploy** workflow triggers automatically via `workflow_run`
 4. Supabase database migrations are applied to production
 5. A deploy summary (commit SHA, environment, timestamp) is posted as a workflow annotation
 6. Only one deploy runs at a time (concurrency group cancels in-progress deploys)
@@ -177,6 +177,7 @@ To roll back a bad deploy, use the manual workflow dispatch:
 
 1. Go to **Actions → Deploy → Run workflow**
 2. Enter the commit SHA of the last known good deploy
-3. The workflow will check out that specific commit and run migrations
+3. The workflow runs the full CI suite against that exact commit before deploying
+4. If CI passes, migrations are applied from that commit
 
 For application rollback, use Vercel's deployment history to revert to a previous deployment.
