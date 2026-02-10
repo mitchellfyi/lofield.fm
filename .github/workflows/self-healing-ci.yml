@@ -204,13 +204,26 @@ ${logsSection}`;
               const issue = await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `[CI Fix] Build failure on \`main\` (${workflowDetails.shortSha})`,
+                title: `[CI Fix] CI failure on \`main\` (${workflowDetails.shortSha})`,
                 body: issueBody,
-                labels: ['ci-fix', 'automated'],
-                assignees: ['copilot']
+                labels: ['ci-fix', 'automated']
               });
               
               console.log(`Created issue #${issue.data.number}`);
+              
+              // Try to assign to copilot (may fail if copilot user doesn't exist)
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.data.number,
+                  assignees: ['copilot']
+                });
+                console.log('Assigned issue to @copilot');
+              } catch (error) {
+                console.log('Could not assign to @copilot:', error.message);
+                console.log('The @copilot mention in the issue body should still trigger Copilot');
+              }
             } else if (issueCheck.commentCount < 3) {
               // Add comment to existing issue
               const commentBody = `## New Failure Detected

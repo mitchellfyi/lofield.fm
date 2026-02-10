@@ -49,10 +49,10 @@ This document provides step-by-step instructions for testing the self-healing CI
    - Check that the workflow ran after the CI failure
    - Go to Issues
    - Verify a new issue exists with:
-     - Title: `[CI Fix] Build failure on main (<short SHA>)`
+     - Title: `[CI Fix] CI failure on main (<short SHA>)`
      - Labels: `ci-fix`, `automated`
-     - Assignee: `@copilot`
      - Body contains failure logs and proper instructions
+     - (Assignment to `@copilot` may or may not work depending on repository setup)
 
 **Expected Result**: A new issue is created with all required elements.
 
@@ -175,7 +175,9 @@ This document provides step-by-step instructions for testing the self-healing CI
    git pull
    git checkout -b fix/restore-tests
    # Remove the intentional failures added in previous tests
-   git checkout <commit-before-test-1> -- lib/__tests__/errors.test.ts
+   # Use git log to find the commit SHA before Test 1
+   # Then restore the file: git restore --source=<COMMIT_SHA> lib/__tests__/errors.test.ts
+   # Or manually remove the test lines that were added
    git add .
    git commit -m "fix: restore tests to passing state"
    git push origin fix/restore-tests

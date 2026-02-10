@@ -29,11 +29,11 @@ The self-healing CI workflow automatically creates GitHub issues when CI fails o
 
 6. **Issue Creation**:
    - Creates a well-structured issue with:
-     - Clear title: `[CI Fix] Build failure on main (<short SHA>)`
+     - Clear title: `[CI Fix] CI failure on main (<short SHA>)`
      - Link to the failed workflow run
      - Specific instructions for Copilot (fix code, don't skip tests, don't add workarounds)
      - Truncated failure logs in code blocks
-     - Assignment to `@copilot`
+     - Attempts to assign to `@copilot` (gracefully handles if the user doesn't exist in the repository)
 
 ## Issue Format
 
@@ -98,6 +98,18 @@ The workflow requires minimal permissions:
 - `issues: write` - Create issues and comments
 - `actions: read` - Read workflow run details
 - `checks: read` - Read check run status
+
+## GitHub Copilot Integration
+
+The workflow attempts to assign issues to `@copilot`. This assignment may succeed or fail depending on your repository setup:
+
+- **If it succeeds**: Copilot will be automatically assigned and should respond to the issue
+- **If it fails**: The workflow gracefully handles the error and continues. GitHub Copilot can still pick up the issue through:
+  - The `ci-fix` label (if Copilot watches this label)
+  - Manual assignment by a maintainer
+  - Copilot's issue monitoring system
+
+The issue body contains clear instructions and failure logs regardless of whether the assignment succeeds, so Copilot can work on it once notified.
 
 ## Auto-Merge Implementation (Optional)
 
