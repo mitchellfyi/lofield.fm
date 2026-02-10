@@ -1,0 +1,260 @@
+name: Self-Healing CI
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  issues: write
+  actions: read
+  checks: read
+
+jobs:
+  create-fix-issue:
+    name: Create CI Fix Issue
+    runs-on: ubuntu-latest
+    # Only run when CI failed (not cancelled or skipped)
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Ensure labels exist
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const labels = [
+              { name: 'ci-fix', color: 'd73a4a', description: 'Automated CI failure fix request' },
+              { name: 'automated', color: '0e8a16', description: 'Created by automation' }
+            ];
+            
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name
+                });
+                console.log(`Label "${label.name}" already exists`);
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description
+                  });
+                  console.log(`Created label "${label.name}"`);
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+      - name: Fetch workflow run details
+        id: workflow-details
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const sha = context.payload.workflow_run.head_sha;
+            const shortSha = sha.substring(0, 7);
+            
+            // Get jobs for this workflow run
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+            
+            // Filter failed jobs
+            const failedJobs = jobs.data.jobs.filter(job => job.conclusion === 'failure');
+            
+            if (failedJobs.length === 0) {
+              console.log('No failed jobs found');
+              return {
+                failedJobs: [],
+                sha,
+                shortSha,
+                runUrl: context.payload.workflow_run.html_url
+              };
+            }
+            
+            // Fetch logs for each failed job (truncated)
+            const jobLogs = [];
+            for (const job of failedJobs) {
+              try {
+                const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  job_id: job.id
+                });
+                
+                // Convert logs to string and truncate to last 200 lines
+                const logText = logs.data;
+                const logLines = logText.split('\n');
+                const truncatedLines = logLines.slice(-200);
+                const truncatedLog = truncatedLines.join('\n');
+                
+                jobLogs.push({
+                  name: job.name,
+                  log: truncatedLog
+                });
+              } catch (error) {
+                console.error(`Failed to fetch logs for job ${job.name}:`, error);
+                jobLogs.push({
+                  name: job.name,
+                  log: 'Failed to fetch logs'
+                });
+              }
+            }
+            
+            return {
+              failedJobs: failedJobs.map(j => j.name),
+              jobLogs,
+              sha,
+              shortSha,
+              runUrl: context.payload.workflow_run.html_url
+            };
+
+      - name: Check for existing open issue
+        id: check-issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'ci-fix,automated'
+            });
+            
+            if (issues.data.length > 0) {
+              const issue = issues.data[0];
+              console.log(`Found existing issue: #${issue.number}`);
+              
+              // Count existing comments from this workflow
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number
+              });
+              
+              const workflowComments = comments.data.filter(
+                c => c.user.login === 'github-actions[bot]' && c.body.includes('## New Failure Detected')
+              );
+              
+              return {
+                exists: true,
+                number: issue.number,
+                commentCount: workflowComments.length
+              };
+            }
+            
+            return {
+              exists: false,
+              number: null,
+              commentCount: 0
+            };
+
+      - name: Create or update issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const workflowDetails = ${{ steps.workflow-details.outputs.result }};
+            const issueCheck = ${{ steps.check-issue.outputs.result }};
+            
+            if (workflowDetails.failedJobs.length === 0) {
+              console.log('No failed jobs to report');
+              return;
+            }
+            
+            // Build failure logs section
+            let logsSection = '';
+            for (const jobLog of workflowDetails.jobLogs) {
+              logsSection += `### Job: ${jobLog.name}\n\n\`\`\`\n${jobLog.log}\n\`\`\`\n\n`;
+            }
+            
+            if (!issueCheck.exists) {
+              // Create new issue
+              const issueBody = `## CI Failure — Auto-generated
+
+The CI workflow failed on branch \`main\` at commit \`${workflowDetails.sha}\`.
+
+**Failed run:** ${workflowDetails.runUrl}
+
+## Task
+
+Analyze the failure logs below and fix the code that is causing CI to fail.
+
+**Rules:**
+- Fix the root cause in the source code, tests, or configuration
+- Do NOT skip, disable, or mark any tests as expected failures
+- Do NOT add \`continue-on-error\` or any other workaround that masks the failure
+- Run the full test suite locally before submitting your PR
+- Keep your changes minimal and focused on the fix
+
+## Failure Logs
+
+${logsSection}`;
+
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[CI Fix] Build failure on \`main\` (${workflowDetails.shortSha})`,
+                body: issueBody,
+                labels: ['ci-fix', 'automated'],
+                assignees: ['copilot']
+              });
+              
+              console.log(`Created issue #${issue.data.number}`);
+            } else if (issueCheck.commentCount < 3) {
+              // Add comment to existing issue
+              const commentBody = `## New Failure Detected
+
+The CI workflow failed again on branch \`main\` at commit \`${workflowDetails.sha}\`.
+
+**Failed run:** ${workflowDetails.runUrl}
+
+## Failure Logs
+
+${logsSection}`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueCheck.number,
+                body: commentBody
+              });
+              
+              console.log(`Added comment to issue #${issueCheck.number}`);
+            } else {
+              // Max retries reached - add needs-human label
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueCheck.number,
+                labels: ['needs-human']
+              });
+              
+              const commentBody = `## Maximum Retry Limit Reached
+
+This issue has been automatically updated 3 times without resolution. Human intervention is now required.
+
+**Latest failed run:** ${workflowDetails.runUrl}
+**Latest commit:** \`${workflowDetails.sha}\`
+
+Please review the issue and resolve it manually.`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueCheck.number,
+                body: commentBody
+              });
+              
+              console.log(`Added needs-human label to issue #${issueCheck.number}`);
+            }

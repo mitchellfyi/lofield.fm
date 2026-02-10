@@ -21,3 +21,6 @@ coverage/
 # Playwright
 playwright-report/
 test-results/
+
+# Workflows with embedded scripts
+.github/workflows/self-healing-ci.yml
