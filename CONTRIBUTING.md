@@ -124,10 +124,11 @@ Open an issue for any questions about contributing.
 
 ### Workflows
 
-| Workflow   | File                           | Triggers                                                      | Purpose                                                                                   |
-| ---------- | ------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **CI**     | `.github/workflows/ci.yml`     | PRs to `main`, pushes to `main`, reusable via workflow_call   | Runs formatting, linting, type checking, unit tests, E2E tests, security audit, and build |
-| **Deploy** | `.github/workflows/deploy.yml` | After CI passes on `main` (via workflow_run), manual dispatch | Runs Supabase database migrations to production                                           |
+| Workflow            | File                                    | Triggers                                                      | Purpose                                                                                   |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **CI**              | `.github/workflows/ci.yml`              | PRs to `main`, pushes to `main`, reusable via workflow_call   | Runs formatting, linting, type checking, unit tests, E2E tests, security audit, and build |
+| **Deploy**          | `.github/workflows/deploy.yml`          | After CI passes on `main` (via workflow_run), manual dispatch | Runs Supabase database migrations to production                                           |
+| **Self-Healing CI** | `.github/workflows/self-healing-ci.yml` | After CI fails on `main` (via workflow_run)                   | Creates GitHub issues assigned to @copilot for autonomous CI failure remediation          |
 
 ### CI Jobs
 
@@ -181,3 +182,20 @@ To roll back a bad deploy, use the manual workflow dispatch:
 4. If CI passes, migrations are applied from that commit
 
 For application rollback, use Vercel's deployment history to revert to a previous deployment.
+
+### Self-Healing CI
+
+When CI fails on the `main` branch, the **Self-Healing CI** workflow automatically:
+
+1. Detects the failure and fetches logs from failed jobs
+2. Checks for existing open issues with the `ci-fix` label
+3. Creates a new issue or adds a comment to the existing issue with:
+   - Link to the failed workflow run
+   - Truncated failure logs (last 200 lines per job)
+   - Clear instructions for fixing the root cause
+4. Assigns the issue to `@copilot` for autonomous fixing
+5. Rate limits to 3 automated updates per issue, then adds `needs-human` label
+
+This acts as a safety net for regressions that slip through code review. See [docs/self-healing-ci.md](../docs/self-healing-ci.md) for details.
+
+**Important**: This is NOT a replacement for proper CI hygiene. Always fix failing tests before merging.
