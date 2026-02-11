@@ -56,8 +56,9 @@ export const activeLinesPlugin = ViewPlugin.fromClass(
 
     update(update: ViewUpdate) {
       // Rebuild decorations when active lines change
-      const oldActiveLines = update.startState.field(activeLinesField);
-      const newActiveLines = update.state.field(activeLinesField);
+      // Using false as second arg to return undefined if field not found, avoiding type mismatch issues
+      const oldActiveLines = update.startState.field(activeLinesField, false);
+      const newActiveLines = update.state.field(activeLinesField, false);
 
       if (oldActiveLines !== newActiveLines || update.docChanged) {
         this.decorations = this.buildDecorations(update.view);
@@ -65,8 +66,10 @@ export const activeLinesPlugin = ViewPlugin.fromClass(
     }
 
     buildDecorations(view: EditorView): DecorationSet {
-      const activeLines = view.state.field(activeLinesField);
+      const activeLines = view.state.field(activeLinesField, false);
       const builder = new RangeSetBuilder<Decoration>();
+
+      if (!activeLines) return builder.finish();
 
       // Sort line numbers and add decorations
       const sortedLines = Array.from(activeLines).sort((a, b) => a - b);
