@@ -2,7 +2,7 @@ name: Auto-Approve Copilot PRs
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -20,17 +20,17 @@ jobs:
           GH_TOKEN: ${{ secrets.MITCHELL_PAT }}
         run: |
           echo "Checking for Copilot PRs..."
-          
+
           # Get all open PRs from Copilot
           PRS=$(gh pr list -R ${{ github.repository }} --author "app/copilot-swe-agent" --state open --json number,isDraft,headRefOid,title)
-          
+
           echo "Found PRs: $PRS"
-          
+
           if [ "$PRS" = "[]" ]; then
             echo "No open Copilot PRs found"
             exit 0
           fi
-          
+
           # Process each PR
           echo "$PRS" | jq -c '.[]' | while read -r pr; do
             PR_NUMBER=$(echo "$pr" | jq -r '.number')
@@ -64,6 +64,6 @@ jobs:
             fi
             
           done
-          
+
           echo ""
           echo "Done processing Copilot PRs"
