@@ -3,12 +3,15 @@ name: "AI Automation: Copilot Bootstrap"
 # Handles Copilot PRs:
 # - Marks PR ready when Copilot finishes (requests review)
 # - Adds ai-fix label to trigger PR handler
+# - Also triggers for ai/* branches (Claude-created fix branches)
 
 on:
   push:
     branches:
       - 'copilot/**'
       - 'copilot/*'
+      - 'ai/**'
+      - 'ai/*'
 
 permissions:
   contents: read
@@ -97,9 +100,10 @@ jobs:
             exit 0
           fi
           
-          gh pr comment $PR_NUM --repo $REPO --body "🤖 **Copilot Bootstrap Complete**
-
-Copilot has finished. The PR Handler will now:
-1. Wait for CI to complete
-2. Request code review if needed
-3. Auto-merge when approved"
+          BODY="🤖 **Copilot Bootstrap Complete**"
+          BODY="${BODY}"$'\n\n'"Copilot has finished. The PR Handler will now:"
+          BODY="${BODY}"$'\n'"• Wait for CI to complete"
+          BODY="${BODY}"$'\n'"• Request code review if needed"
+          BODY="${BODY}"$'\n'"• Auto-merge when approved"
+          
+          gh pr comment $PR_NUM --repo $REPO --body "$BODY"
