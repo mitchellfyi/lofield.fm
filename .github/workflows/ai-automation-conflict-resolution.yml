@@ -32,25 +32,25 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           REPO="${{ github.repository }}"
-          
+
           echo "::group::Checking for conflicting PRs"
-          
+
           # Get all open PRs on AI-managed branches
           PRS=$(gh pr list --repo "$REPO" --state open --json number,headRefName,labels \
             --jq '.[] | select(
               (.headRefName | (startswith("copilot/") or startswith("ai/"))) or
               (.labels[].name | (. == "ai-fix" or . == "ai-maintenance"))
             ) | .number' || echo "")
-          
+
           if [ -z "$PRS" ]; then
             echo "No AI-managed PRs to check"
             echo "conflicting_prs=" >> $GITHUB_OUTPUT
             echo "::endgroup::"
             exit 0
           fi
-          
+
           echo "Found PRs: $PRS"
-          
+
           CONFLICTING=""
           for PR_NUM in $PRS; do
             echo "Checking PR #$PR_NUM..."
@@ -70,7 +70,7 @@ jobs:
               CONFLICTING="$CONFLICTING $PR_NUM"
             fi
           done
-          
+
           echo "conflicting_prs=$CONFLICTING" >> $GITHUB_OUTPUT
           echo "::endgroup::"
 
@@ -80,7 +80,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           REPO="${{ github.repository }}"
-          
+
           for PR_NUM in ${{ steps.find.outputs.conflicting_prs }}; do
             echo "::group::Asking Claude to fix PR #$PR_NUM"
             
@@ -102,22 +102,22 @@ jobs:
             
             gh pr comment $PR_NUM --repo $REPO --body "⚠️ **Merge Conflict Detected**
 
-This PR has a merge conflict with \`main\`.
+            This PR has a merge conflict with \`main\`.
 
-@claude Please resolve by merging main and fixing conflicts:
+            @claude Please resolve by merging main and fixing conflicts:
 
-\`\`\`bash
-git fetch origin main
-git merge origin/main
-\`\`\`
+            \`\`\`bash
+            git fetch origin main
+            git merge origin/main
+            \`\`\`
 
-Edit conflicting files to resolve them (look for \`<<<<<<<\`, \`=======\`, \`>>>>>>>\` markers), then:
+            Edit conflicting files to resolve them (look for \`<<<<<<<\`, \`=======\`, \`>>>>>>>\` markers), then:
 
-\`\`\`bash
-git add .
-git commit -m 'fix: Merge main and resolve conflicts'
-git push
-\`\`\`"
+            \`\`\`bash
+            git add .
+            git commit -m 'fix: Merge main and resolve conflicts'
+            git push
+            \`\`\`"
             
             echo "✓ Asked Claude to fix PR #$PR_NUM"
             echo "::endgroup::"
