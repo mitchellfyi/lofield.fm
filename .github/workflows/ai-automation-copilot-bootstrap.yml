@@ -1,7 +1,9 @@
 name: "AI Automation: Copilot Bootstrap"
 
-# This workflow handles Copilot PRs that need workflow approval and automation
-# Triggers on push to copilot/* branches (more reliable than review_requested for bots)
+# This workflow handles Copilot PRs:
+# - Approves pending workflow runs
+# - Marks PR ready when Copilot finishes
+# - Detects merge conflicts and asks Copilot to fix them
 
 on:
   push:
@@ -11,6 +13,15 @@ on:
   
   pull_request:
     types: [opened, synchronize]
+    branches:
+      - main
+
+  # Check for conflicts when main changes
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
 
@@ -51,7 +62,6 @@ jobs:
           
           echo "::group::Approving workflows for commit $HEAD_SHA"
           
-          # Get all workflow runs for this commit that need approval
           PENDING_RUNS=$(gh api repos/$REPO/actions/runs \
             --jq ".workflow_runs[] | select(.head_sha == \"$HEAD_SHA\" and .status == \"action_required\") | .id" 2>/dev/null || echo "")
           
@@ -62,14 +72,13 @@ jobs:
               echo "Approving workflow run $RUN_ID..."
               gh api repos/$REPO/actions/runs/$RUN_ID/approve -X POST \
                 && echo "✓ Approved run $RUN_ID" \
-                || echo "✗ Could not approve run $RUN_ID (may already be approved)"
+                || echo "✗ Could not approve run $RUN_ID"
             done
           fi
           echo "::endgroup::"
 
   # ──────────────────────────────────────────────────────────────────────
   # Job 2: Check if Copilot is done and mark PR ready
-  # Triggered by push to copilot/* branches - polls for review request
   # ──────────────────────────────────────────────────────────────────────
   handle-copilot-ready:
     if: |
@@ -88,7 +97,6 @@ jobs:
           echo "::group::Checking Copilot PR status"
           echo "Branch: $BRANCH"
           
-          # Find open PR for this branch
           PR_JSON=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number,isDraft,title,reviewRequests --jq '.[0] // empty')
           
           if [ -z "$PR_JSON" ]; then
@@ -103,17 +111,16 @@ jobs:
           
           echo "Found PR #$PR_NUM (draft: $IS_DRAFT)"
           
-          # Check if review requested from mitchellfyi (Copilot's signal that it's done)
           REQUESTED=$(echo "$PR_JSON" | jq -r '.reviewRequests[].login' 2>/dev/null || echo "")
           echo "Review requested from: ${REQUESTED:-none}"
           
           if echo "$REQUESTED" | grep -q "mitchellfyi"; then
-            echo "✓ Copilot has requested review from mitchellfyi - it's done!"
+            echo "✓ Copilot has requested review - it's done!"
             echo "ready=true" >> $GITHUB_OUTPUT
             echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
             echo "is_draft=$IS_DRAFT" >> $GITHUB_OUTPUT
           else
-            echo "Review not yet requested from mitchellfyi - Copilot still working"
+            echo "Review not yet requested - Copilot still working"
             echo "ready=false" >> $GITHUB_OUTPUT
           fi
           echo "::endgroup::"
@@ -129,9 +136,9 @@ jobs:
           echo "Marking PR #$PR_NUM as ready for review..."
           gh pr ready $PR_NUM --repo $REPO \
             && echo "✓ PR marked as ready for review" \
-            || echo "✗ Could not mark PR ready (may already be ready)"
+            || echo "✗ Could not mark PR ready"
 
-      - name: Add ai-fix label to trigger PR handler
+      - name: Add ai-fix label
         if: steps.check.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
@@ -139,10 +146,9 @@ jobs:
           PR_NUM="${{ steps.check.outputs.pr_number }}"
           REPO="${{ github.repository }}"
           
-          echo "Adding ai-fix label to trigger PR handler workflow..."
           gh pr edit $PR_NUM --repo $REPO --add-label "ai-fix" 2>/dev/null \
             || gh api repos/$REPO/issues/$PR_NUM/labels -f labels[]="ai-fix" 2>/dev/null \
-            || echo "Label may already exist or could not be added"
+            || true
 
       - name: Comment to confirm automation activated
         if: steps.check.outputs.ready == 'true'
@@ -152,11 +158,10 @@ jobs:
           PR_NUM="${{ steps.check.outputs.pr_number }}"
           REPO="${{ github.repository }}"
           
-          # Check if we already commented (avoid duplicates)
           EXISTING=$(gh api repos/$REPO/issues/$PR_NUM/comments --jq '[.[] | select(.body | contains("Copilot Bootstrap Complete"))] | length' 2>/dev/null || echo "0")
           
           if [ "$EXISTING" -gt 0 ]; then
-            echo "Already commented on this PR - skipping"
+            echo "Already commented - skipping"
             exit 0
           fi
           
@@ -171,3 +176,105 @@ The PR Handler will now:
 1. Wait for CI to complete
 2. Request code review if needed
 3. Auto-merge when approved"
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Job 3: Check for merge conflicts on Copilot PRs and ask Copilot to fix
+  # Runs on push to copilot branches AND when main changes (workflow_run)
+  # ──────────────────────────────────────────────────────────────────────
+  check-conflicts:
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref_name, 'copilot/')) ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Copilot PRs with conflicts
+        id: find
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          REPO="${{ github.repository }}"
+          
+          echo "::group::Checking for conflicting Copilot PRs"
+          
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Check just this branch's PR
+            BRANCH="${{ github.ref_name }}"
+            PRS=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number,headRefName --jq '.[].number' || echo "")
+          else
+            # Main changed - check all copilot/* PRs
+            PRS=$(gh pr list --repo "$REPO" --state open --json number,headRefName \
+              --jq '.[] | select(.headRefName | startswith("copilot/")) | .number' || echo "")
+          fi
+          
+          if [ -z "$PRS" ]; then
+            echo "No Copilot PRs to check"
+            echo "conflicting_prs=" >> $GITHUB_OUTPUT
+            echo "::endgroup::"
+            exit 0
+          fi
+          
+          CONFLICTING=""
+          for PR_NUM in $PRS; do
+            echo "Checking PR #$PR_NUM..."
+            
+            # Get mergeable status (may need a moment to compute)
+            sleep 2
+            MERGEABLE=$(gh api repos/$REPO/pulls/$PR_NUM --jq '.mergeable // "unknown"' 2>/dev/null || echo "unknown")
+            MERGEABLE_STATE=$(gh api repos/$REPO/pulls/$PR_NUM --jq '.mergeable_state // "unknown"' 2>/dev/null || echo "unknown")
+            
+            echo "  mergeable: $MERGEABLE, state: $MERGEABLE_STATE"
+            
+            if [ "$MERGEABLE" = "false" ] || [ "$MERGEABLE_STATE" = "dirty" ]; then
+              echo "  ⚠️ PR #$PR_NUM has conflicts!"
+              CONFLICTING="$CONFLICTING $PR_NUM"
+            fi
+          done
+          
+          echo "conflicting_prs=$CONFLICTING" >> $GITHUB_OUTPUT
+          echo "::endgroup::"
+
+      - name: Ask Copilot to fix conflicts
+        if: steps.find.outputs.conflicting_prs != ''
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          REPO="${{ github.repository }}"
+          
+          for PR_NUM in ${{ steps.find.outputs.conflicting_prs }}; do
+            echo "::group::Asking Copilot to fix PR #$PR_NUM"
+            
+            # Check if we already asked recently (avoid spam)
+            RECENT_ASK=$(gh api repos/$REPO/issues/$PR_NUM/comments \
+              --jq '[.[] | select(.body | contains("merge conflict") and contains("@copilot"))] | sort_by(.created_at) | last | .created_at // ""' 2>/dev/null || echo "")
+            
+            if [ -n "$RECENT_ASK" ]; then
+              # Check if ask was within last hour
+              ASK_TIME=$(date -d "$RECENT_ASK" +%s 2>/dev/null || echo "0")
+              NOW=$(date +%s)
+              AGE=$((NOW - ASK_TIME))
+              
+              if [ "$AGE" -lt 3600 ]; then
+                echo "Already asked Copilot within the last hour - skipping"
+                echo "::endgroup::"
+                continue
+              fi
+            fi
+            
+            # Get conflicting files if possible
+            CONFLICTS=$(gh api repos/$REPO/pulls/$PR_NUM --jq '.mergeable_state' 2>/dev/null || echo "unknown")
+            
+            gh pr comment $PR_NUM --repo $REPO --body "⚠️ **Merge Conflict Detected**
+
+This PR has a merge conflict with the \`main\` branch and cannot be merged automatically.
+
+@copilot Please resolve the merge conflicts by:
+1. Fetching the latest \`main\` branch
+2. Rebasing or merging \`main\` into this branch
+3. Resolving any conflicts (especially in \`config/routes.rb\`, \`db/schema.rb\`, or layout files)
+4. Pushing the resolved changes
+
+Once resolved, the automation will continue."
+            
+            echo "✓ Asked Copilot to fix conflicts on PR #$PR_NUM"
+            echo "::endgroup::"
+          done
