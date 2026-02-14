@@ -265,15 +265,23 @@ The PR Handler will now:
             
             gh pr comment $PR_NUM --repo $REPO --body "⚠️ **Merge Conflict Detected**
 
-This PR has a merge conflict with the \`main\` branch and cannot be merged automatically.
+This PR has a merge conflict with the \`main\` branch.
 
-@copilot Please resolve the merge conflicts by:
-1. Fetching the latest \`main\` branch
-2. Rebasing or merging \`main\` into this branch
-3. Resolving any conflicts (especially in \`config/routes.rb\`, \`db/schema.rb\`, or layout files)
-4. Pushing the resolved changes
+@copilot Please resolve by merging main and fixing conflicts:
 
-Once resolved, the automation will continue."
+\`\`\`bash
+git fetch origin main
+git merge origin/main
+\`\`\`
+
+This will create conflict markers. Edit the conflicting files to resolve them (look for \`<<<<<<<\`, \`=======\`, \`>>>>>>>\` markers), then commit:
+
+\`\`\`bash
+git add .
+git commit -m 'fix: Merge main and resolve conflicts'
+\`\`\`
+
+Common conflict files: \`config/routes.rb\`, \`db/schema.rb\`, \`app/views/layouts/application.html.erb\`"
             
             echo "✓ Asked Copilot to fix conflicts on PR #$PR_NUM"
             echo "::endgroup::"
