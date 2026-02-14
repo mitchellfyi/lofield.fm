@@ -274,6 +274,9 @@ jobs:
           ERROR_LOGS=$(cat /tmp/error_logs.txt)
           CLAUDE_OUTCOME="${{ steps.claude.outcome }}"
 
+          # Configure git auth (token from checkout may be lost after claude-code-action)
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
           # Push any unpushed commits
           UNPUSHED=$(git rev-list --count origin/$BRANCH..HEAD 2>/dev/null || echo "0")
           if [ "$UNPUSHED" -gt 0 ]; then
