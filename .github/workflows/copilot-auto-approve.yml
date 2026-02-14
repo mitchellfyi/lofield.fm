@@ -3,7 +3,7 @@ name: Auto-Approve Copilot PRs
 on:
   # Run every 5 minutes
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: "*/5 * * * *"
   # Allow manual trigger
   workflow_dispatch:
 
@@ -22,12 +22,12 @@ jobs:
           GH_TOKEN: ${{ secrets.MITCHELL_PAT }}
         run: |
           echo "Checking for Copilot PRs requesting review from mitchellfyi..."
-          
+
           # Get open PRs from Copilot
           PRS=$(gh pr list -R ${{ github.repository }} --author "app/copilot-swe-agent" --state open --json number,isDraft,reviewRequests,headRefOid)
-          
+
           echo "Found PRs: $PRS"
-          
+
           # Process each PR
           echo "$PRS" | jq -c '.[]' | while read -r pr; do
             PR_NUMBER=$(echo "$pr" | jq -r '.number')
@@ -82,6 +82,6 @@ jobs:
               echo "mitchellfyi not in reviewers, skipping"
             fi
           done
-          
+
           echo ""
           echo "Done processing Copilot PRs"
