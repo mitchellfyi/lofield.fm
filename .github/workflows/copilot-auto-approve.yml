@@ -22,7 +22,7 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            
+
             if (pr.draft) {
               console.log('PR is a draft, marking as ready for review...');
               await github.graphql(`
@@ -46,7 +46,7 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            
+
             // Get all workflow runs for this PR's head SHA
             const runs = await github.rest.actions.listWorkflowRunsForRepo({
               owner: context.repo.owner,
@@ -54,9 +54,9 @@ jobs:
               head_sha: pr.head.sha,
               status: 'action_required'
             });
-            
+
             console.log(`Found ${runs.data.total_count} workflow runs needing approval`);
-            
+
             for (const run of runs.data.workflow_runs) {
               console.log(`Approving workflow run ${run.id} (${run.name})...`);
               try {
