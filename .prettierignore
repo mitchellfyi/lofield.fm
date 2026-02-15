@@ -22,5 +22,5 @@ coverage/
 playwright-report/
 test-results/
 
-# Workflows with embedded scripts
-.github/workflows/self-healing-ci.yml
+# Workflows - GitHub Apps cannot modify workflow files without workflows permission
+.github/workflows/*.yml
