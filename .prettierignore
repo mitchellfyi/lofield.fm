@@ -24,3 +24,7 @@ test-results/
 
 # Workflows with embedded scripts
 .github/workflows/self-healing-ci.yml
+.github/workflows/ai-automation-ci-fix.yml
+.github/workflows/ai-automation-conflict-resolution.yml
+.github/workflows/ai-automation-copilot-bootstrap.yml
+.github/workflows/ai-automation-dependabot-automerge.yml
