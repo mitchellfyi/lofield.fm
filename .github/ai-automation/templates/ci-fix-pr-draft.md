@@ -3,6 +3,7 @@
 Automated fix for CI failures. PR is in draft while the AI agent works.
 
 ### Original Failure
+
 - **Failed Run:** {{RUN_URL}}
 - **Failed Jobs:** {{FAILED_JOBS}}
 - **Failed Steps:** {{FAILED_STEPS}}
@@ -21,4 +22,5 @@ Automated fix for CI failures. PR is in draft while the AI agent works.
 Fixes #{{ISSUE_NUM}}
 
 ---
+
 _Generated with [Claude Code](https://claude.ai/code)_
