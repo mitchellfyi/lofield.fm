@@ -100,24 +100,21 @@ jobs:
               fi
             fi
             
-            gh pr comment $PR_NUM --repo $REPO --body "⚠️ **Merge Conflict Detected**
-
-This PR has a merge conflict with \`main\`.
-
-@claude Please resolve by merging main and fixing conflicts:
-
-\`\`\`bash
-git fetch origin main
-git merge origin/main
-\`\`\`
-
-Edit conflicting files to resolve them (look for \`<<<<<<<\`, \`=======\`, \`>>>>>>>\` markers), then:
-
-\`\`\`bash
-git add .
-git commit -m 'fix: Merge main and resolve conflicts'
-git push
-\`\`\`"
+            BODY="⚠️ **Merge Conflict Detected**"
+            BODY="${BODY}"$'\n\n'"This PR has a merge conflict with \`main\`."
+            BODY="${BODY}"$'\n\n'"@claude Please resolve by merging main and fixing conflicts:"
+            BODY="${BODY}"$'\n\n'"\`\`\`bash"
+            BODY="${BODY}"$'\n'"git fetch origin main"
+            BODY="${BODY}"$'\n'"git merge origin/main"
+            BODY="${BODY}"$'\n'"\`\`\`"
+            BODY="${BODY}"$'\n\n'"Edit conflicting files to resolve them (look for \`<<<<<<<\`, \`=======\`, \`>>>>>>>\` markers), then:"
+            BODY="${BODY}"$'\n\n'"\`\`\`bash"
+            BODY="${BODY}"$'\n'"git add ."
+            BODY="${BODY}"$'\n'"git commit -m 'fix: Merge main and resolve conflicts'"
+            BODY="${BODY}"$'\n'"git push"
+            BODY="${BODY}"$'\n'"\`\`\`"
+            
+            gh pr comment $PR_NUM --repo $REPO --body "$BODY"
             
             echo "✓ Asked Claude to fix PR #$PR_NUM"
             echo "::endgroup::"
