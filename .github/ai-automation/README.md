@@ -8,10 +8,10 @@ Automated CI repair, code review, interactive assistance, and test coverage repo
 
 ```yaml
 # .github/workflows/ci.yml
-name: CI  # ← Must be named "CI"
+name: CI # ← Must be named "CI"
 on:
   push:
-    branches: [main]  # ← Must run on push to main
+    branches: [main] # ← Must run on push to main
   pull_request:
     branches: [main]
 ```
@@ -23,7 +23,7 @@ on:
 name: Deploy
 on:
   workflow_run:
-    workflows: [CI]       # ← Triggers after CI
+    workflows: [CI] # ← Triggers after CI
     types: [completed]
     branches: [main]
 jobs:
