@@ -24,3 +24,4 @@ test-results/
 
 # Workflows - GitHub Apps cannot modify workflow files without workflows permission
 .github/workflows/*.yml
+.github/ai-automation/
