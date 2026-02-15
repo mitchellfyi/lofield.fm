@@ -7,6 +7,7 @@ Automated fix attempt for CI failures on `main`. No changes made yet — awaitin
 {{/if}}
 
 ### Original Failure
+
 - **Failed Run:** {{RUN_URL}}
 - **Failed Jobs:** {{FAILED_JOBS}}
 - **Failed Steps:** {{FAILED_STEPS}}
@@ -23,14 +24,19 @@ Automated fix attempt for CI failures on `main`. No changes made yet — awaitin
 </details>
 
 {{#if HAS_CHANGES}}
+
 ### Changes
+
 - **Commits:** {{COMMIT_COUNT}}
+
 ```
 {{CHANGED_FILES}}
 ```
+
 {{/if}}
 
 Fixes #{{ISSUE_NUM}}
 
 ---
+
 _Generated with [Claude Code](https://claude.ai/code)_
