@@ -35,6 +35,7 @@ If a tool isn't available, install it or skip that step and note it.
    - Commit with a descriptive message
    - Push the branch
    - Create a draft PR linking to the issue with "Fixes #{ISSUE_NUMBER}" in the body
+   - **Add the `ai-fix` label to the PR** (required for auto-merge): `gh pr edit {PR_NUMBER} --add-label "ai-fix"`
 
 4. **If not implementable** (needs clarification, question, too complex):
    - Just comment with your analysis and any questions
