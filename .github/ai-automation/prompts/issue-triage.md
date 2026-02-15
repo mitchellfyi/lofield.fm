@@ -11,6 +11,7 @@ Before running any project-specific commands (tests, linters, builds), set up th
 3. **Check for setup scripts** (.tool-versions, .nvmrc, Dockerfile, docker-compose.yml)
 
 Common setups:
+
 - **Node.js**: `npm ci` or `yarn install`
 - **Ruby**: Install Ruby version if needed, then `bundle install`
 - **Python**: `pip install -r requirements.txt` or `poetry install`
