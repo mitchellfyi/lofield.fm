@@ -20,7 +20,6 @@ This directory contains GitHub Actions workflows for automated CI repair, code r
     ├── ci-fix-issue.md
     ├── ci-fix-pr-draft.md
     ├── ci-fix-pr-done.md
-    ├── copilot-bootstrap-comment.md
     ├── conflict-detected.md
     └── ...
 ```
@@ -29,17 +28,16 @@ The workflow files live in `.github/workflows/` (GitHub requirement) and are pre
 
 ## What Each Workflow Does
 
-| Workflow               | Trigger                        | Purpose                                                    |
-| ---------------------- | ------------------------------ | ---------------------------------------------------------- |
-| `ci-fix`               | CI fails on main               | Creates issue + draft PR, Claude fixes, marks ready        |
-| `pr-handler`           | CI complete / review submitted | Retries failed fixes, handles review comments, auto-merges |
-| `code-review`          | CI passes on PR                | Reviews all PRs automatically                              |
-| `mention`              | `@claude` in comment           | Responds to direct mentions from collaborators             |
-| `copilot-bootstrap`    | Push to copilot/_ or ai/_      | Marks Copilot PRs ready when finished                      |
-| `conflict-resolution`  | PR opened/synced               | Detects merge conflicts, asks Copilot to resolve           |
-| `dependabot-automerge` | Dependabot PR + CI passes      | Auto-merges security/patch updates                         |
-| `maintenance`          | Daily schedule                 | Proactive codebase maintenance by domain                   |
-| `test-coverage`        | Weekly schedule                | Generates test coverage report                             |
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci-fix` | CI fails on main | Creates issue + draft PR, Claude fixes, marks ready |
+| `pr-handler` | CI complete / review submitted | Retries failed fixes, handles review comments, auto-merges |
+| `code-review` | CI passes on PR | Reviews all PRs automatically |
+| `mention` | `@claude` in comment | Responds to direct mentions from collaborators |
+| `conflict-resolution` | PR opened/synced | Detects merge conflicts, asks Copilot to resolve |
+| `dependabot-automerge` | Dependabot PR + CI passes | Auto-merges security/patch updates |
+| `maintenance` | Daily schedule | Proactive codebase maintenance by domain |
+| `test-coverage` | Weekly schedule | Generates test coverage report |
 
 ## Working with Prompts
 
@@ -48,13 +46,11 @@ The workflow files live in `.github/workflows/` (GitHub requirement) and are pre
 Each prompt file contains instructions for Claude. Workflows load these at runtime and combine them with dynamic context (error logs, branch names, etc.).
 
 **When to edit prompts:**
-
 - Changing Claude's behaviour or approach
 - Adding new checks or validations
 - Improving fix quality or consistency
 
 **Prompt conventions:**
-
 - Use Markdown headings for sections
 - Include concrete examples where helpful
 - Keep instructions actionable and specific
@@ -67,13 +63,11 @@ Each prompt file contains instructions for Claude. Workflows load these at runti
 Templates contain reusable text content for issues, PRs, and comments. They use `{{VARIABLE}}` placeholders that workflows substitute at runtime.
 
 **When to edit templates:**
-
 - Changing message formatting or wording
 - Adding new information fields
 - Improving clarity for humans reading the output
 
 **Template conventions:**
-
 - Use `{{VARIABLE}}` for substitution (uppercase, underscores)
 - Keep Markdown formatting simple and readable
 - Include context that helps humans understand the automation
@@ -83,7 +77,6 @@ Templates contain reusable text content for issues, PRs, and comments. They use 
 The workflow files are in `.github/workflows/ai-automation-*.yml`. Key patterns:
 
 **Loading prompts:**
-
 ```yaml
 - name: Build prompt
   run: |
@@ -91,7 +84,6 @@ The workflow files are in `.github/workflows/ai-automation-*.yml`. Key patterns:
 ```
 
 **Loading templates:**
-
 ```yaml
 - name: Build PR body
   run: |
@@ -101,7 +93,6 @@ The workflow files are in `.github/workflows/ai-automation-*.yml`. Key patterns:
 ```
 
 **Concurrency to prevent conflicts:**
-
 ```yaml
 concurrency:
   group: ai-fix-${{ github.repository }}
@@ -134,7 +125,6 @@ These workflows are used across multiple project repos. When making changes:
 4. Commit with a clear message describing the change
 
 Project repos (keep in sync):
-
 - curated.cx
 - doyaken.ai
 - evald.ai
@@ -153,10 +143,10 @@ Project repos (keep in sync):
 
 ## Common Issues
 
-| Symptom                  | Likely Cause                 | Fix                                               |
-| ------------------------ | ---------------------------- | ------------------------------------------------- |
-| Duplicate issues created | Missing deduplication check  | Add existing issue check before creation          |
-| Workflow not triggering  | Wrong event/branch filter    | Check `on:` section in workflow                   |
-| Claude not pushing       | Git auth lost after action   | Add `git remote set-url` with token               |
-| Infinite CI loop         | Draft not skipping CI        | Add `if: github.event.pull_request.draft != true` |
-| Auto-merge not working   | Missing review or failing CI | Check both conditions are met                     |
+| Symptom | Likely Cause | Fix |
+|---------|--------------|-----|
+| Duplicate issues created | Missing deduplication check | Add existing issue check before creation |
+| Workflow not triggering | Wrong event/branch filter | Check `on:` section in workflow |
+| Claude not pushing | Git auth lost after action | Add `git remote set-url` with token |
+| Infinite CI loop | Draft not skipping CI | Add `if: github.event.pull_request.draft != true` |
+| Auto-merge not working | Missing review or failing CI | Check both conditions are met |
