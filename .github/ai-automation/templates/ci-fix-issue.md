@@ -1,6 +1,7 @@
 CI failed on `main`. Attempting automatic fix.
 
 ## Details
+
 - **Failed Run:** {{RUN_URL}}
 - **Failed Jobs:** {{FAILED_JOBS}}
 - **Failed Steps:** {{FAILED_STEPS}}
@@ -18,4 +19,5 @@ CI failed on `main`. Attempting automatic fix.
 </details>
 
 ---
+
 This issue will be auto-closed when the fix PR merges.
