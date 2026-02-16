@@ -132,7 +132,9 @@ function StudioContent() {
       editor.setCode(updatedCode);
       if (playerState === "playing") {
         lastPlayedCodeRef.current = updatedCode;
-        runtimeRef.current.play(updatedCode, true).catch(() => {});
+        runtimeRef.current.play(updatedCode, true).catch((err) => {
+          setError(err instanceof Error ? err.message : String(err));
+        });
       }
     },
     [editor, playerState]
