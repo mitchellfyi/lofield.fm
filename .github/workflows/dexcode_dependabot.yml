@@ -1,0 +1,107 @@
+# Managed by DexCode template dependabot-guard@1.0.3. Edit the template, not this file.
+#
+# What this does, and deliberately does not do.
+#
+# Patch and minor updates are handed to GitHub's own auto-merge. That matters:
+# auto-merge waits for the branch's required checks and merges only when they
+# pass, so "green before merge" is enforced by the branch protection you
+# already have rather than by this workflow reading statuses and deciding for
+# itself. If a check fails, the pull request simply stays open.
+#
+# Major updates are never merged here. A major bump can pass every check and
+# still change behaviour, and a dependency file is the one place where a green
+# tick is weakest evidence. They are labelled and left for a person.
+#
+# Nothing in this workflow checks out or executes the pull request's code. It
+# reads Dependabot's own metadata and calls the GitHub API, which is why it can
+# hold write permission safely on a branch it did not review.
+name: DexCode Dependabot guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Least privilege at the root; the one job that needs write says so itself.
+permissions: {}
+
+concurrency:
+  group: dexcode-dependabot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    # Author, not title: anyone can open a pull request called "bump x".
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      # Labels are an issues resource even on a pull request, so adding one
+      # needs issues: write. Without it `gh label create` is denied and the
+      # add-label step then fails with "not found", which reads like a missing
+      # label rather than a missing permission.
+      issues: write
+    steps:
+      - name: Read Dependabot's metadata for this pull request
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for a patch or minor update
+        if: |
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # gh infers the repository from a git remote, and nothing is checked
+          # out here on purpose. Without this it fails with "not a git
+          # repository", which reads like a broken runner rather than a
+          # missing argument.
+          GH_REPO: ${{ github.repository }}
+        # --auto is the whole point: it queues the merge behind the required
+        # checks instead of merging now. Squash keeps one commit per update.
+        #
+        # It needs "Allow auto-merge" enabled on the repository. Without it
+        # this fails with a GraphQL error naming an API mutation, which tells
+        # nobody what to switch on — and it fails only for the updates whose
+        # checks are still running, because gh merges outright when they have
+        # already passed. That makes the missing setting look intermittent.
+        run: |
+          set -euo pipefail
+          if ! output="$(gh pr merge --auto --squash "$PR_URL" 2>&1)"; then
+            case "$output" in
+              *"Auto merge is not allowed"*)
+                echo "::error::Enable Settings → General → Allow auto-merge on this repository. Until then DexCode can only merge updates whose checks have already passed."
+                gh pr comment "$PR_URL" --body "DexCode could not queue this update: **Allow auto-merge** is turned off for this repository (Settings → General). Turn it on and this will merge itself once the required checks pass." || true
+                exit 1
+                ;;
+              *) echo "::error::$output"; exit 1 ;;
+            esac
+          fi
+          echo "$output"
+
+      - name: Leave a major update for a person
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DEPENDENCY: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          set -euo pipefail
+          # Created on demand so the workflow needs no repository setup before
+          # its first run. Only an "already exists" failure is ignored: the
+          # first version of this swallowed every error, so a permissions
+          # problem surfaced two lines later as a label that did not exist.
+          if ! output="$(gh label create "dexcode:major-update" \
+                --color "B60205" \
+                --description "Major dependency update — DexCode will not merge this automatically" 2>&1)"; then
+            case "$output" in
+              *"already exists"*) : ;;
+              *) echo "::error::Could not create the label: $output"; exit 1 ;;
+            esac
+          fi
+          gh pr edit "$PR_URL" --add-label "dexcode:major-update"
+          gh pr comment "$PR_URL" --body "DexCode did not merge this automatically: \`${DEPENDENCY}\` is a major update, and a passing check run is weak evidence that a major bump is safe. Review it and merge when you are happy."
