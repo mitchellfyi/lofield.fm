@@ -1,4 +1,4 @@
-# Managed by DexCode template dependabot-guard@1.0.3. Edit the template, not this file.
+# Managed by DexCode template dependabot-guard@1.1.0. Edit the template, not this file.
 #
 # What this does, and deliberately does not do.
 #
@@ -20,18 +20,30 @@ name: DexCode Dependabot guard
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  # A pull request opened before this workflow existed will never send an
+  # event, so without a sweep the whole backlog sits untouched for ever and
+  # only new updates are handled. The offset minute is deliberate: GitHub drops
+  # scheduled runs that pile up on the hour.
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
 
-# Least privilege at the root; the one job that needs write says so itself.
+# Least privilege at the root; the jobs that need write say so themselves.
 permissions: {}
 
 concurrency:
-  group: dexcode-dependabot-${{ github.event.pull_request.number }}
+  # One group per pull request for the event path, one for the whole sweep.
+  # Sharing a group would let a sweep cancel the guard that a freshly opened
+  # pull request just started.
+  group: dexcode-dependabot-${{ github.event.pull_request.number || 'sweep' }}
   cancel-in-progress: true
 
 jobs:
   guard:
     # Author, not title: anyone can open a pull request called "bump x".
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -105,3 +117,98 @@ jobs:
           fi
           gh pr edit "$PR_URL" --add-label "dexcode:major-update"
           gh pr comment "$PR_URL" --body "DexCode did not merge this automatically: \`${DEPENDENCY}\` is a major update, and a passing check run is weak evidence that a major bump is safe. Review it and merge when you are happy."
+
+  # The same policy, applied to pull requests that were already open. The event
+  # path above cannot reach them: a pull request opened before this workflow
+  # was installed never sends an event, so without this the existing backlog is
+  # never touched and only new updates are handled.
+  sweep:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Apply the policy to every open Dependabot pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        # dependabot/fetch-metadata reads the pull_request event payload, so it
+        # cannot help here. The bump is read from Dependabot's own title
+        # instead, which is the only thing this needs to decide: the policy
+        # branches on major against everything else, and nothing below checks
+        # out or runs the pull request's code.
+        run: |
+          set -euo pipefail
+
+          gh pr list \
+            --author "app/dependabot" \
+            --state open \
+            --limit 100 \
+            --json number,title,labels,autoMergeRequest \
+            > /tmp/dexcode-dependabot.json
+
+          total="$(jq 'length' /tmp/dexcode-dependabot.json)"
+          echo "Open Dependabot pull requests: ${total}"
+
+          for row in $(jq -r '.[] | @base64' /tmp/dexcode-dependabot.json); do
+            pr="$(echo "${row}" | base64 --decode)"
+            number="$(echo "${pr}" | jq -r '.number')"
+            title="$(echo "${pr}" | jq -r '.title')"
+            queued="$(echo "${pr}" | jq -r '.autoMergeRequest != null')"
+            labelled="$(echo "${pr}" | jq -r '[.labels[].name] | index("dexcode:major-update") != null')"
+
+            if [ "${queued}" = "true" ]; then
+              echo "#${number}: auto-merge already queued"
+              continue
+            fi
+            if [ "${labelled}" = "true" ]; then
+              echo "#${number}: already labelled for review"
+              continue
+            fi
+
+            # "Bump x from 1.2.3 to 2.0.0", with or without a conventional
+            # commit prefix. A grouped update carries no versions in its title
+            # and is deliberately left alone rather than guessed at.
+            if [[ "${title}" =~ from[[:space:]]+v?([0-9]+)[^[:space:]]*[[:space:]]+to[[:space:]]+v?([0-9]+)[^[:space:]]* ]]; then
+              from_major="${BASH_REMATCH[1]}"
+              to_major="${BASH_REMATCH[2]}"
+            else
+              echo "::notice::#${number} left alone: no version range in \"${title}\" (grouped updates are not swept)"
+              continue
+            fi
+
+            if [ "${from_major}" != "${to_major}" ]; then
+              # Same treatment a major gets on the event path: labelled, never
+              # merged, and the comment happens once because the label above is
+              # checked first.
+              if ! output="$(gh label create "dexcode:major-update" \
+                    --color "B60205" \
+                    --description "Major dependency update — DexCode will not merge this automatically" 2>&1)"; then
+                case "${output}" in
+                  *"already exists"*) : ;;
+                  *) echo "::error::Could not create the label: ${output}"; exit 1 ;;
+                esac
+              fi
+              gh pr edit "${number}" --add-label "dexcode:major-update"
+              gh pr comment "${number}" --body "DexCode did not merge this automatically: this is a major update, and a passing check run is weak evidence that a major bump is safe. Review it and merge when you are happy."
+              echo "#${number}: labelled as a major update"
+              continue
+            fi
+
+            # 0.x is treated as the event path treats it. fetch-metadata calls
+            # 0.1.0 to 0.2.0 a minor update, and a sweep that disagreed with
+            # the event path would make the outcome depend on which one got
+            # there first.
+            if ! output="$(gh pr merge --auto --squash "${number}" 2>&1)"; then
+              case "${output}" in
+                *"Auto merge is not allowed"*)
+                  echo "::error::Enable Settings → General → Allow auto-merge on this repository. Until then DexCode can only merge updates whose checks have already passed."
+                  exit 1
+                  ;;
+                *) echo "::error::#${number}: ${output}"; exit 1 ;;
+              esac
+            fi
+            echo "#${number}: auto-merge queued"
+          done
