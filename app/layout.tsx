@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import "./globals.css";
 
@@ -93,6 +94,11 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>{children}</AuthProvider>
         <Analytics />
+        <Script
+          src="https://cloud.umami.is/script.js"
+          data-website-id="905e3324-1f73-48b1-825b-4051fb807e15"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
