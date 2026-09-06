@@ -15,6 +15,7 @@ export default defineConfig({
     // jsdom exercises browser code; keep the real browser SDK without loading Node build plugins.
     alias: [{ find: /^@sentry\/nextjs$/, replacement: sentryBrowserEntry }],
     environment: "jsdom",
+    server: { deps: { inline: ["@sentry/nextjs"] } },
     exclude: ["**/node_modules/**", "**/e2e/**"],
     coverage: {
       provider: "v8",
@@ -40,6 +41,7 @@ export default defineConfig({
     },
   },
   resolve: {
+    conditions: ["browser"],
     alias: {
       "@": resolve(__dirname, "./"),
     },

@@ -1,14 +1,16 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable source maps in production for better error tracking
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
 };
 
 export default withSentryConfig(nextConfig, {
+  sentryUrl: "https://errors.m12n.org",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  telemetry: false,
   // Sentry organization and project (from environment variables)
-  org: process.env.SENTRY_ORG,
+  org: process.env.SENTRY_ORG || "ops",
   project: process.env.SENTRY_PROJECT,
 
   // Only upload source maps if auth token is available
@@ -16,6 +18,7 @@ export default withSentryConfig(nextConfig, {
 
   // Upload source maps for error tracking
   sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
     deleteSourcemapsAfterUpload: true,
   },
 

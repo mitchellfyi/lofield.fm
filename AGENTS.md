@@ -129,3 +129,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Error tracking
+
+Read [docs/error-tracking.md](docs/error-tracking.md) before changing error
+handling, instrumentation, deployment configuration, or adding a new entry point.
+Preserve the Ops-managed GlitchTip DSN and the privacy filter.
