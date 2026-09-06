@@ -119,3 +119,9 @@ See `.doyaken/manifest.yaml` for:
 - Quality gate commands
 - Agent settings
 - Integration configuration
+
+# Error tracking
+
+Read [docs/error-tracking.md](docs/error-tracking.md) before changing error
+handling, instrumentation, deployment configuration, or adding a new entry point.
+Preserve the Ops-managed GlitchTip DSN and the privacy filter.

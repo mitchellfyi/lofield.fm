@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
+    server: { deps: { inline: ["@sentry/nextjs"] } },
     exclude: ["**/node_modules/**", "**/e2e/**"],
     coverage: {
       provider: "v8",
@@ -30,6 +31,7 @@ export default defineConfig({
     },
   },
   resolve: {
+    conditions: ["browser"],
     alias: {
       "@": resolve(__dirname, "./"),
     },

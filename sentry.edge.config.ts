@@ -1,19 +1,14 @@
 import * as Sentry from "@sentry/nextjs";
+import { scrubErrorEvent } from "./lib/ops-error-tracking";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-
-  // Only enable Sentry when DSN is configured
-  enabled: !!process.env.SENTRY_DSN,
-
-  // Performance Monitoring - sample 10% of transactions in production
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-
-  // Don't send errors in development unless explicitly enabled
-  beforeSend(event) {
-    if (process.env.NODE_ENV === "development" && !process.env.SENTRY_DEBUG_DEV) {
-      return null;
-    }
-    return event;
-  },
+  enabled: process.env.NODE_ENV === "production" && Boolean(process.env.SENTRY_DSN),
+  environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV,
+  release: process.env.SENTRY_RELEASE || process.env.SOURCE_COMMIT,
+  sendDefaultPii: false,
+  sendClientReports: false,
+  tracesSampleRate: 0,
+  beforeSend: scrubErrorEvent,
+  initialScope: { tags: { ops_project_id: process.env.OPS_PROJECT_ID, runtime: "edge" } },
 });
