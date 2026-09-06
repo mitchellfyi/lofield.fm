@@ -98,14 +98,15 @@ new Tone.Oscillator(440)
 - Update code in real-time as slider moves
 
 **Context-aware ranges:**
-| Context | Range | Unit |
-|---------|-------|------|
-| Frequency | 20-20000 | Hz |
-| Volume/Gain | -60 to +6 | dB |
-| BPM | 40-240 | bpm |
-| Time | 0-10 | seconds |
-| Percentage | 0-100 | % |
-| Generic | 0-1000 | - |
+
+| Context     | Range     | Unit    |
+| ----------- | --------- | ------- |
+| Frequency   | 20-20000  | Hz      |
+| Volume/Gain | -60 to +6 | dB      |
+| BPM         | 40-240    | bpm     |
+| Time        | 0-10      | seconds |
+| Percentage  | 0-100     | %       |
+| Generic     | 0-1000    | -       |
 
 **Detection heuristics:**
 
@@ -131,13 +132,14 @@ new Tone.Oscillator(440, "sine")
 ```
 
 **Known string enumerations:**
-| Context | Options |
-|---------|---------|
-| Oscillator type | sine, square, sawtooth, triangle, custom |
-| Filter type | lowpass, highpass, bandpass, notch, allpass |
-| Envelope curve | linear, exponential |
-| Noise type | white, pink, brown |
-| Time signature | 4/4, 3/4, 6/8, etc. |
+
+| Context         | Options                                     |
+| --------------- | ------------------------------------------- |
+| Oscillator type | sine, square, sawtooth, triangle, custom    |
+| Filter type     | lowpass, highpass, bandpass, notch, allpass |
+| Envelope curve  | linear, exponential                         |
+| Noise type      | white, pink, brown                          |
+| Time signature  | 4/4, 3/4, 6/8, etc.                         |
 
 #### 2.3 Boolean Toggles
 
