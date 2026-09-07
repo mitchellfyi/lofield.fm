@@ -80,6 +80,21 @@ jobs:
             jq -r '.build_args | to_entries[] | "\(.key)=\(.value)"' "$response"
             printf '%s\n' "$delimiter"
           } >> "$GITHUB_OUTPUT"
+      - name: Retain the checksum-verified source-map helper before building
+        id: source_map_tool
+        shell: bash
+        env:
+          SOURCE_MAP_TOOL_SHA256: ${{ steps.config.outputs.source_map_tool_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          [[ "$SOURCE_MAP_TOOL_SHA256" =~ ^[a-f0-9]{64}$ ]] || exit 1
+          helper="$(mktemp "$RUNNER_TEMP/ops-source-map-tool.XXXXXX.mjs")"
+          trap 'rm -f "$helper"' ERR
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+            "$PLATFORM_URL/install/ops-sourcemaps.mjs" > "$helper"
+          printf '%s  %s\n' "$SOURCE_MAP_TOOL_SHA256" "$helper" | sha256sum -c -
+          printf 'path=%s\n' "$helper" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
         with:
           driver-opts: |
@@ -133,6 +148,7 @@ jobs:
           IMAGE_REPOSITORY: ${{ steps.config.outputs.image_repository }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
           SOURCE_MAP_TOOL_SHA256: ${{ steps.config.outputs.source_map_tool_sha256 }}
+          SOURCE_MAP_TOOL_PATH: ${{ steps.source_map_tool.outputs.path }}
         run: |
           set -Eeuo pipefail
           umask 077
@@ -144,10 +160,9 @@ jobs:
           container="$(docker create --platform linux/amd64 --entrypoint /bin/true "$image")"
           mkdir "$private/artifact"
           docker cp "$container:/opt/ops-sourcemaps/." "$private/artifact"
-          curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
-            "$PLATFORM_URL/install/ops-sourcemaps.mjs" > "$private/ops-sourcemaps.mjs"
+          cp "$SOURCE_MAP_TOOL_PATH" "$private/ops-sourcemaps.mjs"
           [[ "$SOURCE_MAP_TOOL_SHA256" =~ ^[a-f0-9]{64}$ ]] || exit 1
-          printf '%s  %s\n' "$SOURCE_MAP_TOOL_SHA256" "$private/ops-sourcemaps.mjs" | sha256sum --check
+          printf '%s  %s\n' "$SOURCE_MAP_TOOL_SHA256" "$private/ops-sourcemaps.mjs" | sha256sum -c -
           node "$private/ops-sourcemaps.mjs" verify-image "$private/artifact" "$GITHUB_SHA" "$container"
           headers="$private/headers"
           authenticate() {
@@ -218,3 +233,10 @@ jobs:
           done
           echo "Timed out waiting for deployment $deployment_id"
           exit 1
+      - name: Remove the retained source-map helper
+        if: ${{ always() }}
+        shell: bash
+        env:
+          SOURCE_MAP_TOOL_PATH: ${{ steps.source_map_tool.outputs.path }}
+        run: |
+          if [[ -n "$SOURCE_MAP_TOOL_PATH" ]]; then rm -f -- "$SOURCE_MAP_TOOL_PATH"; fi
