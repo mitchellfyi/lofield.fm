@@ -2,6 +2,23 @@
 
 This file is the source of truth for all AI coding agents working on this project.
 
+## Ops-managed services
+
+- Consult the Ops registry at `../../m12n-org/ops.m12n.org/docs/projects.md`
+  and its `docs/runbooks/project-service-changes.md` before changing deployment,
+  domains, authentication, analytics, or data services.
+- LoField uses its own official, self-hosted Coolify Supabase stack at
+  `https://supabase-lofield.m12n.org`. Never connect to Supabase Cloud. The
+  September 2026 cutover intentionally started fresh without old Cloud data.
+- Ops owns production environment values and the deployment workflow. Keep
+  public build-time values separate from server-only service and encryption keys.
+- Check Umami, GlitchTip, Supabase auth return URLs, and email configuration
+  together when a project domain changes. Preserve existing provider IDs.
+- Keep hourly R2 snapshots, 24-hour retention, and verified scratch restores.
+  Physical pruning belongs only to the weekly restore drill.
+- Do not create verification accounts or send test email without owner approval.
+  Use rolled-back SQL fixtures and rejected auth requests for routine smoke tests.
+
 ## Quick Start
 
 1. Read `PROJECT.md` for project goals and tech stack

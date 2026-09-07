@@ -104,8 +104,8 @@ Visual timeline showing:
 
 ### Prerequisites
 
-- Node.js 20+
-- A Supabase account (free tier works)
+- Node.js 24.15 or newer within the 24.x release line
+- A local Supabase CLI stack or the project's private Coolify Supabase instance
 - An OpenAI API key (users bring their own)
 
 ### Setup
@@ -124,7 +124,7 @@ Visual timeline showing:
 
    ```bash
    # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
@@ -141,7 +141,8 @@ Visual timeline showing:
 3. **Run database migrations**
 
    ```bash
-   npx supabase db push
+   npx supabase start
+   npx supabase migration up --local
    ```
 
 4. **Start development server**
@@ -153,6 +154,29 @@ Visual timeline showing:
 5. **Open the studio**
 
    Navigate to http://localhost:3000/studio
+
+### Production data service
+
+Ops owns LoField's dedicated Coolify Supabase stack. Its API endpoint is
+`https://supabase-lofield.m12n.org`; the application stays on `https://lofield.fm`.
+Ops supplies both build-time public configuration and server-only credentials.
+Never link this repository to Supabase Cloud or restore its old Cloud data.
+
+Deployment uses `.github/workflows/deploy-ops.yml`. The obsolete Cloud migration
+workflow was removed. Apply reviewed SQL migrations to the private database from
+the workload host before deploying code that needs them; do not expose PostgreSQL
+to GitHub-hosted runners. Ops's project registry records the service identity,
+auth settings and signed R2 recovery evidence.
+
+Email/password signup requires email confirmation. Google and GitHub buttons are
+hidden unless their `NEXT_PUBLIC_SUPABASE_AUTH_*_ENABLED` flag is `true`. Configure
+the matching provider in the private auth service first, with callback
+`https://supabase-lofield.m12n.org/auth/v1/callback`, then rebuild the application.
+OAuth credentials never belong in public environment variables.
+
+Run `supabase/tests/private_instance.sql` through `psql` on the workload host to
+check profile creation, row isolation, and admin routine permissions. Its fixtures
+are transactionally rolled back; it does not create lasting accounts or send mail.
 
 ### API Keys
 

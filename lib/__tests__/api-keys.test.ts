@@ -35,8 +35,8 @@ vi.mock("next/headers", () => ({
 }));
 
 // Mock Supabase SSR
-vi.mock("@supabase/ssr", () => ({
-  createServerClient: vi.fn(() => ({
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({
     from: mockFrom,
   })),
 }));
@@ -66,7 +66,7 @@ describe("api-keys service", () => {
 
     // Set up environment variables
     process.env.API_KEY_ENCRYPTION_SECRET = "test-encryption-secret-32-chars!!";
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
   });
 

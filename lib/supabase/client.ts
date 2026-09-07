@@ -1,6 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createMockClient } from "./mock";
+import { supabaseUrl } from "./url";
 
 /**
  * Check if we're running in E2E test mode
@@ -21,8 +22,5 @@ export function createClient(): SupabaseClient {
     return createMockClient() as unknown as SupabaseClient;
   }
 
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  return createBrowserClient(supabaseUrl(), process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 }

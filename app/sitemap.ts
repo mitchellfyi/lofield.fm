@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { getAllGenreSlugs } from "@/lib/content/genres";
+import { supabaseUrl } from "@/lib/supabase/url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://lofield.fm";
@@ -38,12 +39,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Try to get public tracks for dynamic URLs
   let trackPages: MetadataRoute.Sitemap = [];
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (supabaseUrl && supabaseAnonKey) {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && supabaseAnonKey) {
+    const endpoint = supabaseUrl();
     try {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const supabase = createClient(endpoint, supabaseAnonKey);
 
       const { data: tracks } = await supabase
         .from("tracks")

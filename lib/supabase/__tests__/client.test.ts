@@ -16,7 +16,7 @@ describe("Supabase Browser Client", () => {
     // Set up test environment variables
     process.env = {
       ...originalEnv,
-      NEXT_PUBLIC_SUPABASE_URL: "https://test-project.supabase.co",
+      NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key-123",
     };
   });
@@ -35,7 +35,7 @@ describe("Supabase Browser Client", () => {
       const client = createClient();
 
       expect(mockCreateBrowserClient).toHaveBeenCalledWith(
-        "https://test-project.supabase.co",
+        "http://localhost:54321",
         "test-anon-key-123"
       );
       expect(client).toBe(mockClient);
@@ -57,7 +57,7 @@ describe("Supabase Browser Client", () => {
       createClient();
 
       const [url, key] = mockCreateBrowserClient.mock.calls[0];
-      expect(url).toBe("https://test-project.supabase.co");
+      expect(url).toBe("http://localhost:54321");
       expect(key).toBe("test-anon-key-123");
     });
 
