@@ -2,7 +2,7 @@ import { pathToFileURL } from "node:url";
 import { realpathSync } from "node:fs";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { AnyMap, originalPositionFor } from "@jridgewell/trace-mapping";
+import { AnyMap, originalPositionFor, sourceContentFor } from "@jridgewell/trace-mapping";
 
 // Turbopack scope hoisting can map this native throw to a different module.
 export function verifyBrowserMapPositions(root) {
@@ -22,10 +22,10 @@ export function verifyBrowserMapPositions(root) {
       const prefix = javascript.slice(0, offset).split("\n");
       const generated = { line: prefix.length, column: prefix.at(-1).length };
       const original = originalPositionFor(map, generated);
-      const content = map.sourcesContent?.[map.sources.indexOf(original.source)];
+      const content = original.source ? sourceContentFor(map, original.source) : null;
       const statement = content?.split("\n")[original.line - 1];
       if (
-        !/\/scope\.[jt]s$/.test(original.source || "") ||
+        !/(?:^|\/)scope\.[jt]s$/.test(original.source || "") ||
         !/_breadcrumbs\s*=\s*\[\s*\.\.\.this\._breadcrumbs\s*\]/.test(statement || "")
       ) {
         throw new Error(

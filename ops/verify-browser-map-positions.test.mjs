@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, test } from "node:test";
@@ -61,4 +61,19 @@ test("rejects a build with no native probe instead of silently passing", () => {
     () => verifyBrowserMapPositions(fixture({ code: "console.log(1)" })),
     /probe is missing/
   );
+});
+
+test("resolves original content when a valid map has a sourceRoot", () => {
+  const root = fixture({ source: "scope.ts" });
+  const mapPath = join(root, "app.js.map");
+  const map = JSON.parse(readFileSync(mapPath, "utf8"));
+  map.sourceRoot = "sdk/src/";
+  writeFileSync(mapPath, JSON.stringify(map));
+  const [proof] = verifyBrowserMapPositions(root);
+  assert.equal(proof.original.source, "sdk/src/scope.ts");
+});
+
+test("accepts a source name without a parent directory", () => {
+  const [proof] = verifyBrowserMapPositions(fixture({ source: "scope.ts" }));
+  assert.equal(proof.original.source, "scope.ts");
 });
