@@ -98,7 +98,7 @@ Visual timeline showing:
 - **Supabase** for auth, database, and storage
 - **CodeMirror 6** for code editing
 - **Tailwind CSS 4** for styling
-- **Vercel** for hosting
+- **Ops/Coolify** for hosting
 
 ## Getting Started
 
@@ -227,7 +227,7 @@ Your selection persists across sessions.
 
 ## Privacy
 
-- **No tracking cookies** - Vercel Analytics uses privacy-preserving hashed IDs
+- **No analytics cookies** - Traffic analytics use the Ops-hosted Umami service
 - **Your keys, your data** - API keys are encrypted and never shared
 - **Local storage** - Model preferences stored in browser
 - **Shareable, not public** - Tracks are private unless you create a share link
