@@ -37,6 +37,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN test "$OPS_PRIVATE_SOURCE_MAPS" = "1" && npm run build \
     && node ops/prepare-next-sourcemaps.mjs .next \
+    && node ops/verify-browser-map-positions.mjs .next/static \
     && node ops/ops-sourcemaps.mjs collect /opt/ops-sourcemaps "$NEXT_PUBLIC_SENTRY_RELEASE" \
        browser .next/static /app/.next/static \
        server .next/standalone/.next/server /app/.next/server

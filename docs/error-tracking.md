@@ -87,3 +87,10 @@ anonymous, extracted-CSS and Next `server-only/empty.js` stubs. A mapping to any
 of those entries requires its original content. Every private image publication
 verifies and uploads its maps, including publish-only runs. Deployment also
 requires that step to finish successfully.
+
+Private Turbopack builds disable scope hoisting while retaining minification.
+The current compiler can otherwise map a native exception into an unrelated
+module. After map preparation, the build checks the SDK's compiled breadcrumb
+access against its original `scope.ts` statement. Missing probes, maps, original
+content, or incorrect positions fail publication. Re-enable hoisting only after
+an actual production build passes this regression and live event readback.

@@ -15,7 +15,11 @@ if (
 const nextConfig: NextConfig = {
   output: "standalone",
   productionBrowserSourceMaps: privateSourceMaps,
-  experimental: { serverSourceMaps: privateSourceMaps },
+  experimental: {
+    // Keep native exception positions accurate until Turbopack fixes hoisting maps.
+    turbopackScopeHoisting: privateSourceMaps ? false : undefined,
+    serverSourceMaps: privateSourceMaps,
+  },
   turbopack: { debugIds: privateSourceMaps },
   assetPrefix:
     privateSourceMaps && process.env.NODE_ENV === "production" ? `/_assets/${release}` : undefined,
