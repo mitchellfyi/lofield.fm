@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Test coverage output
     "coverage/**",
+    // Checksum-pinned Ops collector, validated by its contract tests.
+    "ops/ops-sourcemaps.mjs",
   ]),
 ]);
 

@@ -162,8 +162,10 @@ Ops owns LoField's dedicated Coolify Supabase stack. Its API endpoint is
 Ops supplies both build-time public configuration and server-only credentials.
 Never link this repository to Supabase Cloud or restore its old Cloud data.
 
-Deployment uses `.github/workflows/deploy-ops.yml`. The obsolete Cloud migration
-workflow was removed. Apply reviewed SQL migrations to the private database from
+Deployment uses `.github/workflows/platform-deploy.yml` to publish one private
+GHCR image after CI passes, verify its private source maps, and deploy its digest
+through Ops. See [the image and error-tracking runbook](docs/error-tracking.md).
+The obsolete Cloud migration workflow was removed. Apply reviewed SQL migrations to the private database from
 the workload host before deploying code that needs them; do not expose PostgreSQL
 to GitHub-hosted runners. Ops's project registry records the service identity,
 auth settings and signed R2 recovery evidence.

@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "quality": "npm run lint && npm run typecheck && npm run format:check",
-    "quality:full": "npm run quality && npm test",
+    "quality:full": "npm run quality && npm run test:ops && npm test",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -20,9 +20,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:all": "npm test && npm run test:e2e",
-    "ci": "npm run quality && npm run test:all",
+    "ci": "npm run quality && npm run test:ops && npm run test:all",
     "prepare": "husky || true",
-    "dk": "DOYAKEN_HOME=./node_modules/@doyaken/doyaken ./node_modules/@doyaken/doyaken/bin/doyaken"
+    "dk": "DOYAKEN_HOME=./node_modules/@doyaken/doyaken ./node_modules/@doyaken/doyaken/bin/doyaken",
+    "test:ops": "node --test ops/*.test.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -61,7 +62,9 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@jridgewell/trace-mapping": "0.3.31",
     "@playwright/test": "^1.62.1",
+    "@sentry/cli": "2.58.6",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@types/diff": "^8.0.0",
