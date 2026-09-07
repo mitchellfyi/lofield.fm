@@ -54,10 +54,7 @@ export interface AbuseFlag {
 
 // Abuse violation types
 export type ViolationType =
-  | "quota_exceeded"
-  | "rate_limit_exceeded"
-  | "suspicious_pattern"
-  | "rapid_retry";
+  "quota_exceeded" | "rate_limit_exceeded" | "suspicious_pattern" | "rapid_retry";
 
 // Usage statistics for display
 export interface UsageStats {

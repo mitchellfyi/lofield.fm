@@ -36,6 +36,16 @@ async function waitForToneLoad(page: Page) {
   );
 }
 
+test("spectrum analyzer hydrates with a stable server snapshot", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/studio");
+  await expect(page.getByRole("heading", { name: "LoField Music Lab" })).toBeVisible();
+  expect(errors.filter((message) => /getServerSnapshot|infinite loop/.test(message))).toEqual([]);
+});
+
 test.describe("LoField Music Studio E2E Tests", () => {
   test.beforeEach(async ({ page }) => {
     // Mark tutorial as completed before loading page to prevent overlay from blocking interactions

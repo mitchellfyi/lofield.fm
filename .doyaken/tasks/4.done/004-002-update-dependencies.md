@@ -75,11 +75,12 @@ Update outdated npm dependencies to their latest patch/minor versions. This is r
 - If build fails, may need to check for peer dependency conflicts
 
 **Risks:**
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Patch update introduces regression | Low | Medium | Run full test suite before commit |
-| Peer dependency conflict | Low | Low | Check npm warnings during install |
-| Build failure | Low | Medium | Verify build before commit |
+
+| Risk                               | Likelihood | Impact | Mitigation                        |
+| ---------------------------------- | ---------- | ------ | --------------------------------- |
+| Patch update introduces regression | Low        | Medium | Run full test suite before commit |
+| Peer dependency conflict           | Low        | Low    | Check npm warnings during install |
+| Build failure                      | Low        | Medium | Verify build before commit        |
 
 **Key Files:**
 

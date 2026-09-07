@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { useSyncExternalStore } from "react";
-import { getVisualizationBridge, type AudioAnalysisData } from "@/lib/audio/visualizationBridge";
+import { type AudioAnalysisData } from "@/lib/audio/visualizationBridge";
+import { useAudioAnalysis } from "@/lib/audio/useVisualization";
 
 interface SpectrumAnalyzerProps {
   /** Height of the analyzer in pixels */
@@ -59,13 +59,7 @@ export function SpectrumAnalyzer({
   const animationRef = useRef<number | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Get audio analysis data from the visualization bridge
-  const bridge = getVisualizationBridge();
-  const analysisData = useSyncExternalStore(
-    bridge.subscribeAnalysis,
-    bridge.getAnalysisSnapshot,
-    () => ({ fft: new Float32Array(64), waveform: new Float32Array(256), rms: 0 })
-  );
+  const analysisData = useAudioAnalysis();
 
   // Draw the spectrum visualization
   const draw = useCallback(
