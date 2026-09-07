@@ -25,3 +25,6 @@ test-results/
 # Workflows - GitHub Apps cannot modify workflow files without workflows permission
 .github/workflows/*.yml
 .github/ai-automation/
+
+# Checksum-pinned Ops collector; keep the upstream bytes unchanged.
+ops/ops-sourcemaps.mjs

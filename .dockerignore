@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env
+.env.*
+.doyaken
+.dex
+coverage
+playwright-report
+test-results
+supabase/.temp
+supabase/.branches
+*.tsbuildinfo

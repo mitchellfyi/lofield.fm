@@ -1,0 +1,220 @@
+name: Build and deploy through Ops
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      publish_only:
+        description: Build and publish without deploying
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+  packages: write
+  id-token: write
+
+concurrency:
+  group: platform-ffb8f879-7546-4ce5-af9c-d6c52f32f582-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: "production"
+    env:
+      PLATFORM_AUDIENCE: "https://ops.m12n.org/deploy"
+      PLATFORM_URL: "https://ops.m12n.org"
+      DOCKER_BUILD_RECORD_UPLOAD: "false"
+      PLATFORM_WORKLOAD_ID: ffb8f879-7546-4ce5-af9c-d6c52f32f582
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Wait for this revision's quality pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFY_WORKFLOW: "ci.yml"
+        run: |
+          set -Eeuo pipefail
+          for attempt in $(seq 1 120); do
+            echo "Checking quality pipeline ($attempt/120)"
+            run="$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/$VERIFY_WORKFLOW/runs" \
+              -f head_sha="$GITHUB_SHA" -f event=push -f per_page=20 \
+              --jq '.workflow_runs | sort_by(.id) | last // {}')"
+            status="$(jq -r '.status // "missing"' <<<"$run")"
+            if [[ "$status" == completed ]]; then
+              [[ "$(jq -r '.conclusion' <<<"$run")" == success ]] || { echo 'Quality pipeline did not pass'; exit 1; }
+              exit 0
+            fi
+            sleep 15
+          done
+          echo 'Timed out waiting for the quality pipeline'
+          exit 1
+
+
+      - name: Fetch public build settings using GitHub identity
+        id: config
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          headers="$(mktemp)"
+          response="$(mktemp)"
+          trap 'rm -f "$headers" "$response"' EXIT
+          chmod 600 "$headers" "$response"
+          printf 'Authorization: bearer %s\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" > "$headers"
+          token="$(curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+            --header "@$headers" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${PLATFORM_AUDIENCE}" | jq -er '.value')"
+          printf 'Authorization: Bearer %s\n' "$token" > "$headers"
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 45 \
+            --header "@$headers" \
+            "$PLATFORM_URL/api/v1/deployments/build-configuration?workload_id=$PLATFORM_WORKLOAD_ID" > "$response"
+          jq -r 'del(.build_args) | to_entries[] | "\(.key)=\(.value)"' "$response" >> "$GITHUB_OUTPUT"
+          delimiter="$(openssl rand -hex 16)"
+          {
+            printf 'build_args%s%s\n' '<<' "$delimiter"
+            jq -r '.build_args | to_entries[] | "\(.key)=\(.value)"' "$response"
+            printf '%s\n' "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+        with:
+          driver-opts: |
+            memory=6g
+            memory-swap=7g
+            cpu-quota=200000
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Confirm the deployment image stays in private GHCR
+        id: private_registry
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_REPOSITORY: ${{ steps.config.outputs.image_repository }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$IMAGE_REPOSITORY" == "ghcr.io/${GITHUB_REPOSITORY,,}" ]] || exit 1
+          owner="${GITHUB_REPOSITORY%%/*}"
+          package="${IMAGE_REPOSITORY##*/}"
+          kind="$(gh api "repos/$GITHUB_REPOSITORY" --jq '.owner.type')"
+          case "$kind" in
+            Organization) path="orgs/$owner" ;;
+            User) path="users/$owner" ;;
+            *) echo 'Unsupported package owner'; exit 1 ;;
+          esac
+          visibility="$(gh api "$path/packages/container/$package" --jq '.visibility')"
+          [[ "$visibility" == private ]] || { echo 'A pre-existing private GHCR package is required'; exit 1; }
+      - name: Build and publish the immutable image
+        id: build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
+        with:
+          context: ${{ steps.config.outputs.context }}
+          file: ${{ steps.config.outputs.dockerfile }}
+          target: ${{ steps.config.outputs.target }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.config.outputs.image_repository }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          build-args: ${{ steps.config.outputs.build_args }}
+          cache-from: type=gha,scope=ops-image
+          provenance: false
+      - name: Verify private maps from the image and hand them to Ops
+        id: source_maps
+        shell: bash
+        env:
+          IMAGE_REPOSITORY: ${{ steps.config.outputs.image_repository }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          SOURCE_MAP_TOOL_SHA256: ${{ steps.config.outputs.source_map_tool_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          private="$(mktemp -d "$RUNNER_TEMP/ops-source-maps.XXXXXX")"
+          container=""
+          trap 'if [[ -n "$container" ]]; then docker rm "$container" >/dev/null || true; fi; rm -rf "$private"' EXIT
+          image="$IMAGE_REPOSITORY@$IMAGE_DIGEST"
+          docker pull --platform linux/amd64 "$image"
+          container="$(docker create --platform linux/amd64 --entrypoint /bin/true "$image")"
+          mkdir "$private/artifact"
+          docker cp "$container:/opt/ops-sourcemaps/." "$private/artifact"
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+            "$PLATFORM_URL/install/ops-sourcemaps.mjs" > "$private/ops-sourcemaps.mjs"
+          [[ "$SOURCE_MAP_TOOL_SHA256" =~ ^[a-f0-9]{64}$ ]] || exit 1
+          printf '%s  %s\n' "$SOURCE_MAP_TOOL_SHA256" "$private/ops-sourcemaps.mjs" | sha256sum --check
+          node "$private/ops-sourcemaps.mjs" verify-image "$private/artifact" "$GITHUB_SHA" "$container"
+          headers="$private/headers"
+          authenticate() {
+            printf 'Authorization: bearer %s\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" > "$headers"
+            token="$(curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+              --header "@$headers" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${PLATFORM_AUDIENCE}" | jq -er '.value')"
+            printf 'Authorization: Bearer %s\nContent-Type: application/json\n' "$token" > "$headers"
+          }
+          authenticate
+          jq -nc --arg workload_id "$PLATFORM_WORKLOAD_ID" --arg image_reference "$image" \
+            '{workload_id:$workload_id,image_reference:$image_reference}' > "$private/request"
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 45 \
+            --retry 3 --retry-delay 5 --header "@$headers" --data-binary "@$private/request" \
+            "$PLATFORM_URL/api/v1/source_map_uploads" > "$private/response"
+          upload_id="$(jq -er '.source_map_upload_id' "$private/response")"
+          [[ "$upload_id" =~ ^[a-f0-9-]{36}$ ]] || exit 1
+          for attempt in $(seq 1 180); do
+            echo "Checking stored source maps ($attempt/180)"
+            authenticate
+            status="$(curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+              --retry 3 --retry-delay 5 --header "@$headers" \
+              "$PLATFORM_URL/api/v1/source_map_uploads/$upload_id" | jq -er '.status')"
+            case "$status" in
+              verified) echo 'Ops verified the stored maps for this image'; exit 0 ;;
+              failed) echo 'Source-map verification failed; deployment is blocked'; exit 1 ;;
+              pending|processing) sleep 10 ;;
+              *) echo 'Unexpected source-map status'; exit 1 ;;
+            esac
+          done
+          echo 'Timed out verifying private source maps; deployment is blocked'
+          exit 1
+      - name: Deploy the digest and wait for public verification
+        if: ${{ steps.source_maps.outcome == 'success' && !inputs.publish_only && vars.OPS_IMAGE_DEPLOY_ENABLED == 'true' }}
+        shell: bash
+        env:
+          IMAGE_REPOSITORY: ${{ steps.config.outputs.image_repository }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -Eeuo pipefail
+          headers="$(mktemp)"
+          payload="$(mktemp)"
+          trap 'rm -f "$headers" "$payload"' EXIT
+          chmod 600 "$headers" "$payload"
+          authenticate() {
+            printf 'Authorization: bearer %s\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" > "$headers"
+            token="$(curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+              --header "@$headers" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${PLATFORM_AUDIENCE}" | jq -er '.value')"
+            printf 'Authorization: Bearer %s\nContent-Type: application/json\n' "$token" > "$headers"
+          }
+          authenticate
+          jq -nc --arg workload_id "$PLATFORM_WORKLOAD_ID" --arg image_reference "$IMAGE_REPOSITORY@$IMAGE_DIGEST" \
+            '{workload_id:$workload_id,image_reference:$image_reference}' > "$payload"
+          deployment="$(curl --fail --silent --show-error --connect-timeout 10 --max-time 45 \
+            --retry 3 --retry-delay 5 --header "@$headers" --data-binary "@$payload" "$PLATFORM_URL/api/v1/deployments")"
+          deployment_id="$(jq -er '.deployment_id' <<<"$deployment")"
+          for attempt in $(seq 1 120); do
+            echo "Checking deployment ($attempt/120)"
+            authenticate
+            status="$(curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \
+              --retry 3 --retry-delay 5 --header "@$headers" \
+              "$PLATFORM_URL/api/v1/deployments/$deployment_id" | jq -er '.status')"
+            case "$status" in
+              succeeded) echo "Deployment $deployment_id passed public HTTPS verification"; exit 0 ;;
+              failed|cancelled) echo "Deployment $deployment_id is $status"; exit 1 ;;
+              pending|running) sleep 15 ;;
+              *) echo 'Unexpected deployment status'; exit 1 ;;
+            esac
+          done
+          echo "Timed out waiting for deployment $deployment_id"
+          exit 1

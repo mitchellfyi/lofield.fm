@@ -16,7 +16,7 @@ export default defineConfig({
     alias: [{ find: /^@sentry\/nextjs$/, replacement: sentryBrowserEntry }],
     environment: "jsdom",
     server: { deps: { inline: ["@sentry/nextjs"] } },
-    exclude: ["**/node_modules/**", "**/e2e/**"],
+    exclude: ["**/node_modules/**", "**/e2e/**", "ops/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json"],
