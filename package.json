@@ -50,7 +50,6 @@
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.95.3",
     "@uiw/react-codemirror": "^4.25.11",
-    "@vercel/analytics": "^2.0.1",
     "@vercel/og": "^1.0.2",
     "ai": "^7.0.91",
     "cmdk": "^1.1.1",

@@ -36,6 +36,20 @@ async function waitForToneLoad(page: Page) {
   );
 }
 
+test("loads Umami without requesting retired Vercel analytics", async ({ page }) => {
+  const retiredRequests: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/_vercel/insights")) {
+      retiredRequests.push(request.url());
+    }
+  });
+  await page.goto("/");
+  await expect(page.locator('script[src="https://analytics.m12n.org/script.js"]')).toHaveCount(1);
+  await page.getByRole("link", { name: "Start Creating Free" }).first().click();
+  await expect(page.getByRole("heading", { name: "LoField Music Lab" })).toBeVisible();
+  expect(retiredRequests).toEqual([]);
+});
+
 test("spectrum analyzer hydrates with a stable server snapshot", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => {
