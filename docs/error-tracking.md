@@ -37,11 +37,12 @@ The Docker build requires `OPS_PRIVATE_SOURCE_MAPS=1` and the same full commit
 SHA in `SOURCE_COMMIT`, `SENTRY_RELEASE` and `NEXT_PUBLIC_SENTRY_RELEASE`. Next
 16 generates native Turbopack debug IDs and browser/server maps. The preparation
 helper derives each final debug ID from both JavaScript and map content.
-Named original sources without source contents fail the build; only source-free
-generated wrappers may be omitted.
+Missing application source contents fail the build. The unmapped compiler stubs
+listed below may retain null content; only source-free wrapper maps may be omitted.
 
 The helper originates from Sense `64c7fffa67ddff1204574bd0313093f2593f7e56`, with
-the stricter normalization from Umami `0929b14`. The unchanged Ops collector is
+the stricter normalization from Umami `0929b14` and per-source checks from
+Simbox `4de73e9`. The unchanged Ops collector is
 checksum-pinned in `ops/ops-sourcemaps.provenance.json`; its bytes were compared
 with the deployed `/install/ops-sourcemaps.mjs` before this integration.
 
@@ -68,11 +69,14 @@ Ops workload configuration; only public values and release identifiers are
 build inputs.
 
 Run `npm run test:ops` for artifact/identity contracts. `npm run quality:full`
-and CI include those tests alongside the unit suite. Before enabling the
-source-map gate or automatic image deployment, verify the private package
-binding, exact image hashes, public map denial, original source positions and
-controlled bundled browser/server exception symbolication. A local image does
-not prove production symbolication. Follow
+and CI include those tests alongside the unit suite. Stage Ops image-build and
+source-map settings while the existing provider application continues to serve
+its source deployment. Run a publish-only workflow and verify the private package
+binding, stored map bytes, exact image hashes and public map denial. Convert the
+same provider application to the approved immutable image, preserving its identity
+and configuration, then enable image deployment. Verify public HTTPS and live
+native browser/server stacks with their original source context. A local image
+does not prove production symbolication. Follow
 [Ops' private source-map runbook](https://github.com/m12n-org/ops.m12n.org/blob/main/docs/runbooks/private-source-maps.md)
 and retain the live verification work in
 [Ops issue 16](https://github.com/m12n-org/ops.m12n.org/issues/16).
