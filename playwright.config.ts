@@ -25,9 +25,10 @@ export default defineConfig({
     },
   ],
 
-  // Start dev server before tests
+  // CI exercises a production build with isolated E2E fixtures.
   webServer: {
-    command: "npm run dev",
+    command:
+      process.env.PLAYWRIGHT_PRODUCTION === "1" ? "npm run build && npm run start" : "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

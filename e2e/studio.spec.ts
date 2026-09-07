@@ -39,7 +39,8 @@ async function waitForToneLoad(page: Page) {
 test("loads Umami without requesting retired Vercel analytics", async ({ page }) => {
   const retiredRequests: string[] = [];
   page.on("request", (request) => {
-    if (new URL(request.url()).pathname.startsWith("/_vercel/insights")) {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/_vercel/insights") || url.hostname === "va.vercel-scripts.com") {
       retiredRequests.push(request.url());
     }
   });
