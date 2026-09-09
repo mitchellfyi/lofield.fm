@@ -1,5 +1,16 @@
 # AI Agent Instructions
 
+## M12N working agreement
+
+Read [docs/m12n-standards.md](docs/m12n-standards.md) and
+[docs/project-brief.md](docs/project-brief.md) before work. They provide the
+shared delivery, research, security, cost and stewardship rules and this project's
+context. Work on main by default; use one worktree, branch and PR per repository
+when the owner requests portfolio PR delivery. Finish with verified main
+integration, green required CI and safe local/remote cleanup. Preserve this
+repository's domain rules and commands below. Weekly stewardship only creates
+an Ops decision issue; downstream work starts with a later owner assignment.
+
 This file is the source of truth for all AI coding agents working on this project.
 
 ## Ops-managed services
@@ -21,7 +32,7 @@ This file is the source of truth for all AI coding agents working on this projec
 
 ## Quick Start
 
-1. Read `PROJECT.md` for project goals and tech stack
+1. Read `docs/project-brief.md` for project goals and tech stack
 2. Check `.doyaken/tasks/` for current work items
 3. Follow the guidelines in `.doyaken/prompts/library/`
 
