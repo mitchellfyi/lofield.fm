@@ -95,13 +95,13 @@ jobs:
             "$PLATFORM_URL/install/ops-sourcemaps.mjs" > "$helper"
           printf '%s  %s\n' "$SOURCE_MAP_TOOL_SHA256" "$helper" | sha256sum -c -
           printf 'path=%s\n' "$helper" >> "$GITHUB_OUTPUT"
-      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
         with:
           driver-opts: |
             memory=6g
             memory-swap=7g
             cpu-quota=200000
-      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
