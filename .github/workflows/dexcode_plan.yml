@@ -247,7 +247,7 @@ jobs:
           path: .dex
       - name: Plan with Claude
         id: claude
-        uses: anthropics/claude-code-action@8251c103ac8c1d761882c86aba1412c7f583c844
+        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d
         with:
           github_token: ${{ github.token }}
           claude_code_oauth_token: ${{ secrets.DEXCODE_CLAUDE_OAUTH_TOKEN }}
