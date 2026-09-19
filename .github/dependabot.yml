@@ -6,6 +6,19 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 1
+    ignore:
+      # typescript-eslint rejects TS 7; remove when its supported range includes 7.x.
+      # https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.65.0
+      - dependency-name: typescript
+        versions: ["7.x"]
+      # Next's React/import/a11y plugins do not support ESLint 10 yet.
+      # Remove after their stable releases support 10 and npm run lint passes.
+      # https://github.com/jsx-eslint/eslint-plugin-react/issues/3977
+      - dependency-name: eslint
+        versions: ["10.x"]
+      # Match the Node 24-only engine, CI and Docker runtime; revisit with its upgrade.
+      - dependency-name: "@types/node"
+        versions: ["25.x", "26.x"]
     groups:
       all-dependencies:
         applies-to: version-updates

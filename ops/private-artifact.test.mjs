@@ -128,6 +128,8 @@ test("offline CLI injection adds a missing debug ID and preserves source positio
     { source: "server.ts", line: 1, column: 0, name: null }
   );
   assert.match(injected.debug_id, /^[a-f0-9-]{36}$/);
+  assert.equal(injected.debugId, undefined);
+  assert.deepEqual(injected.sourcesContent, map.sourcesContent);
   collect(settings);
   assert.equal(verifyRuntime({ output, release, root }).entries.length, 2);
 });

@@ -12,7 +12,7 @@ import { pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { AnyMap, decodedMappings, encodedMap } from "@jridgewell/trace-mapping";
-import SentryCli from "@sentry/cli";
+import { SentryCli } from "@sentry/cli";
 
 function files(root) {
   if (!lstatSync(root).isDirectory() || lstatSync(root).isSymbolicLink())

@@ -303,6 +303,26 @@ test("native IDs change when only original comments or source positions change",
   assert.notEqual(ids[0], ids[1]);
 });
 
+test("canonicalizes camel-case debug IDs without changing native source positions", () => {
+  const root = fixture();
+  const map = { ...sourceMap(), debug_id: undefined, debugId, mappings: ";AAAA" };
+  pair(root, "static/chunks/browser", map);
+  injectDebugIds(root);
+  const path = join(root, "static/chunks/browser.js");
+  const result = JSON.parse(readFileSync(`${path}.map`));
+  assert.equal(result.debugId, undefined);
+  assert.match(result.debug_id, /^[a-f0-9-]{36}$/);
+  assert.notEqual(result.debug_id, debugId);
+  assert.ok(readFileSync(path, "utf8").includes(`)[n]="${result.debug_id}"`));
+  assert.deepEqual(originalPositionFor(new AnyMap(result), { line: 2, column: 0 }), {
+    source: "input.ts",
+    line: 1,
+    column: 0,
+    name: null,
+  });
+  assert.deepEqual(result.sourcesContent, map.sourcesContent);
+});
+
 test("rejects an unsupported runtime registration instead of leaving its old ID active", () => {
   const root = fixture();
   pair(root, "static/chunks/browser");
