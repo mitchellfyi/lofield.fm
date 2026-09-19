@@ -47,7 +47,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@doyaken/doyaken": "^0.1.13",
     "@lezer/highlight": "^1.2.3",
-    "@sentry/nextjs": "10.74.0",
+    "@sentry/nextjs": "10.75.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.95.3",
     "@uiw/react-codemirror": "^4.25.11",
@@ -64,7 +64,7 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "0.3.31",
     "@playwright/test": "^1.63.0",
-    "@sentry/cli": "3.7.0",
+    "@sentry/cli": "3.8.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@types/diff": "^8.0.0",
@@ -79,7 +79,7 @@
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "lint-staged": "^17.5.1",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.7",
     "tailwindcss": "^4",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"
