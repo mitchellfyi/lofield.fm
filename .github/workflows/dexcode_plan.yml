@@ -134,7 +134,7 @@ jobs:
       - name: Plan with a platform API key
         id: codex
         if: inputs.agent_definition == 'codex-api-planner'
-        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675
         with:
           openai-api-key: ${{ secrets.DEXCODE_OPENAI_API_KEY }}
           prompt-file: .dex/prompts/dexcode_plan.md
@@ -247,7 +247,7 @@ jobs:
           path: .dex
       - name: Plan with Claude
         id: claude
-        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d
+        uses: anthropics/claude-code-action@58985842b834ed26087302ba27d07bc24ca8697a
         with:
           github_token: ${{ github.token }}
           claude_code_oauth_token: ${{ secrets.DEXCODE_CLAUDE_OAUTH_TOKEN }}
